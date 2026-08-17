@@ -257,6 +257,11 @@ impl Dag {
         self.vertices.is_empty()
     }
 
+    /// Enumerate all vertex ids (for crash recovery / DAG rebuild from store).
+    pub fn iter_vertex_ids(&self) -> impl Iterator<Item = VertexId> + '_ {
+        self.vertices.keys().copied()
+    }
+
     /// Fetch a working vertex by id.
     pub fn get(&self, id: &VertexId) -> Option<&Vertex> {
         self.vertices.get(id)

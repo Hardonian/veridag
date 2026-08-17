@@ -1408,8 +1408,13 @@ dependencies = [
  "sled",
  "thiserror 1.0.69",
  "veridag-codec",
+ "veridag-consensus",
+ "veridag-crypto",
+ "veridag-dag",
+ "veridag-execution",
  "veridag-object-state",
  "veridag-protocol-types",
+ "veridag-transaction",
 ]
 
 [[package]]

@@ -15,5 +15,15 @@ sled = { workspace = true, optional = true }
 default = []
 persistent = ["dep:sled"]
 
+[dev-dependencies]
+veridag-codec = { path = "../codec" }
+veridag-consensus = { path = "../consensus" }
+veridag-crypto = { path = "../crypto" }
+veridag-dag = { path = "../dag" }
+veridag-execution = { path = "../execution" }
+veridag-object-state = { path = "../object-state" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-transaction = { path = "../transaction" }
+
 [lints]
 workspace = true
