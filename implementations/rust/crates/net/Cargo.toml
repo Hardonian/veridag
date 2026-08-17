@@ -1,0 +1,24 @@
+[package]
+name = "veridag-net"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-dag = { path = "../dag" }
+veridag-protocol-types = { path = "../protocol-types" }
+thiserror.workspace = true
+tokio.workspace = true
+quinn.workspace = true
+rcgen.workspace = true
+rustls.workspace = true
+futures.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+veridag-consensus = { path = "../consensus" }
+
+[lints]
+workspace = true

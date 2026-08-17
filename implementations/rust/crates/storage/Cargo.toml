@@ -9,6 +9,11 @@ veridag-codec = { path = "../codec" }
 veridag-object-state = { path = "../object-state" }
 veridag-protocol-types = { path = "../protocol-types" }
 thiserror.workspace = true
+sled = { workspace = true, optional = true }
+
+[features]
+default = []
+persistent = ["dep:sled"]
 
 [lints]
 workspace = true

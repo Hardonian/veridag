@@ -1,0 +1,14 @@
+/home/scott/veridag/implementations/rust/target/debug/deps/rcgen-1c1c2c852a5c68f7.d: /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/lib.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/certificate.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/crl.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/csr.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/error.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/key_pair.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/oid.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/ring_like.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/sign_algo.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/string_types.rs
+
+/home/scott/veridag/implementations/rust/target/debug/deps/librcgen-1c1c2c852a5c68f7.rmeta: /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/lib.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/certificate.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/crl.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/csr.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/error.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/key_pair.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/oid.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/ring_like.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/sign_algo.rs /home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/string_types.rs
+
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/lib.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/certificate.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/crl.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/csr.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/error.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/key_pair.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/oid.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/ring_like.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/sign_algo.rs:
+/home/scott/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rcgen-0.13.2/src/string_types.rs:
