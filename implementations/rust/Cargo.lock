@@ -620,9 +620,13 @@ name = "veridag-consensus"
 version = "0.1.0"
 dependencies = [
  "thiserror",
+ "veridag-codec",
  "veridag-crypto",
  "veridag-dag",
+ "veridag-execution",
+ "veridag-object-state",
  "veridag-protocol-types",
+ "veridag-transaction",
 ]
 
 [[package]]

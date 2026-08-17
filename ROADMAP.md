@@ -32,16 +32,23 @@ resource accounting, state roots, receipts. Deterministic state tests.
 QUIC validator links, authentication, bounded framing, peer management, reconnect,
 backpressure.
 
-## Phase 6 — DAG
-Vertices, parent validation, round progression, persistence, propagation.
+## Phase 6 — DAG (DONE in this tree)
+`veridag-dag`: VCE-1 vertex wire form, domain-separated ids/signatures,
+validity rules, equivocation detection, quorum round progression, causal
+traversal. 14 unit tests. (Network propagation/persistence are Phase 5/9.)
 
-## Phase 7 — Baseline consensus
-Connect implementation to the formal model; validate Agreement/Finality via
-deterministic simulation.
+## Phase 7 — Baseline consensus (DONE in this tree)
+`veridag-consensus`: StaticCommittee leader schedule, pure-function commit rule
+with Shoal-style pipelining, deterministic causal ordering. Validated by
+deterministic simulation (`tests/simulation.rs`): n=4/f=1 Agreement +
+delivery-order independence.
 
-## Phase 8 — Vertical slice
-client tx → RPC → validation → mempool → batch → DAG → consensus → ordering →
-execution → state → checkpoint. Four-validator transfer end-to-end.
+## Phase 8 — Vertical slice (DONE in this tree)
+`tests/vertical_slice.rs`: client tx → batch commitment → DAG vertex →
+BaselineDagBft commit → canonical ordering → sequential execution → state root.
+Four validators derive identical committed ordering and identical final state;
+committed double-spend resolves deterministically. (RPC/mempool/checkpoint
+persistence remain Phase 5/9.)
 
 ## Phase 9 — Crash recovery
 Persistent store; crash injection across commit path; restart-safe verification.

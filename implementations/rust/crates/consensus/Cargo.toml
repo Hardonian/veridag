@@ -10,5 +10,11 @@ veridag-dag = { path = "../dag" }
 veridag-protocol-types = { path = "../protocol-types" }
 thiserror.workspace = true
 
+[dev-dependencies]
+veridag-codec = { path = "../codec" }
+veridag-execution = { path = "../execution" }
+veridag-object-state = { path = "../object-state" }
+veridag-transaction = { path = "../transaction" }
+
 [lints]
 workspace = true
