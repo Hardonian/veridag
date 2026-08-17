@@ -1,0 +1,11 @@
+[package]
+name = "veridag-protocol-types"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../codec" }
+
+[lints]
+workspace = true

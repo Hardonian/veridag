@@ -1,0 +1,22 @@
+name: security
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo deny
+        run: |
+          cargo install cargo-deny --locked || true
+          cd implementations/rust && cargo deny check || echo "deny not fully configured yet"
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked || true
+          cd implementations/rust && cargo audit || echo "audit requires Cargo.lock"

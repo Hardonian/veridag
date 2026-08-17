@@ -1,0 +1,18 @@
+[package]
+name = "veridag-execution"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+veridag-capabilities = { path = "../capabilities" }
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-merkle = { path = "../merkle" }
+veridag-object-state = { path = "../object-state" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-transaction = { path = "../transaction" }
+thiserror.workspace = true
+
+[lints]
+workspace = true

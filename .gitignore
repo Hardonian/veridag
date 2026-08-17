@@ -1,0 +1,12 @@
+/target
+**/*.rs.bk
+Cargo.lock.bak
+*.pyc
+__pycache__/
+node_modules/
+dist/
+.DS_Store
+*.log
+.coverage
+devnet-data/
+formal/traces/*.itf.json.tmp

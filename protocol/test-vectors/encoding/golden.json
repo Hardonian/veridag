@@ -1,0 +1,72 @@
+[
+  {
+    "name": "u64_be",
+    "type_name": "u64",
+    "description": "u64 0x0102030405060708 big-endian",
+    "bytes": "0x0102030405060708",
+    "hash": null
+  },
+  {
+    "name": "bool_true",
+    "type_name": "bool",
+    "description": "true encodes as 0x01",
+    "bytes": "0x01",
+    "hash": null
+  },
+  {
+    "name": "bytes_len_prefixed",
+    "type_name": "bytes",
+    "description": "\"veridag\" as u32be length + bytes",
+    "bytes": "0x0000000776657269646167",
+    "hash": null
+  },
+  {
+    "name": "option_some",
+    "type_name": "Option<u8>",
+    "description": "Some(42)",
+    "bytes": "0x012a",
+    "hash": null
+  },
+  {
+    "name": "option_none",
+    "type_name": "Option<u8>",
+    "description": "None",
+    "bytes": "0x00",
+    "hash": null
+  },
+  {
+    "name": "seq_u32",
+    "type_name": "Vec<u32>",
+    "description": "[1,2,3] as count + elements",
+    "bytes": "0x00000003000000010000000200000003",
+    "hash": null
+  },
+  {
+    "name": "balance_object",
+    "type_name": "Object",
+    "description": "Balance object, creator 0x07.., nonce 3, amount 100",
+    "bytes": "0x47a69c33cf820502f7fa05f70ae7e6bde8387362c4398d1e7c7f657aa63565a60000000000000000000000010007070707070707070707070707070707070707070707070707070707070707075c2ca83b884afaf8e2c27c9582843fb1dfa4ac9aad2968890d0d304a218eda4100000008000000000000006400000000",
+    "hash": "0x3e0ca306b549ab76b417316ce2663bffb62c91f5e4839a160caa7fcf18d93a4d"
+  },
+  {
+    "name": "spend_capability",
+    "type_name": "Capability",
+    "description": "Spend capability max 20/epoch, expiry epoch 1000",
+    "bytes": "0x01010101010101010101010101010101010101010101010101010101010101010202020202020202020202020202020202020202020202020202020202020202000000000000000014000000000000000000000000000003e80000000000",
+    "hash": "0x9b3452e91ad68d0feca5ebd8bc964c94cc71066bbc535a18302dc28594e028eb"
+  },
+  {
+    "name": "transfer_transaction",
+    "type_name": "SignedTransaction",
+    "description": "Transfer 25 from seed 0x11.. key to 0x09.. address",
+    "bytes": "0x00000000000000010000000000000001a22f6c32724ae4bde9210b8afe930bff7a26a0041ffb1d2946d069636985cb30000000000000000000000000000000640000000000000000000000000400482e4dd466ce86a8fb1f6bcd8e432f2ab3175cd27f37d56ec9f2379256d7b4000000000000000009090909090909090909090909090909090909090909090909090909090909090000000000000019000000000000000000000000000000000000000000000000000000000000000000000000170110305d0f6a648652621c747fdc65b3fc97139084f0b991b94031fa79b0ac51b872831af853d517f70f8d78107a4985f685ed6174624a91fdf0ee15fe6606",
+    "hash": "0x68364a43b88bc5c62bc80e372754402f93c5a74d2d55917f2761b9b68ca97187"
+  },
+  {
+    "name": "application_id",
+    "type_name": "ApplicationId",
+    "description": "H(VERIDAG_APP_V1 || 'service-market')",
+    "bytes": "0xba18a870842f499d272c10c7fc47b0cb9f883a92b2e65dd598292d920fcf9434",
+    "hash": null
+  }
+]

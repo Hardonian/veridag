@@ -1,0 +1,21 @@
+[package]
+name = "veridag-cli"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../../crates/codec" }
+veridag-crypto = { path = "../../crates/crypto" }
+veridag-execution = { path = "../../crates/execution" }
+veridag-object-state = { path = "../../crates/object-state" }
+veridag-protocol-types = { path = "../../crates/protocol-types" }
+veridag-transaction = { path = "../../crates/transaction" }
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+anyhow.workspace = true
+
+[lints]
+workspace = true

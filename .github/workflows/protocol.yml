@@ -1,0 +1,20 @@
+name: protocol
+
+on:
+  push:
+    branches: [main]
+    paths: ["protocol/**", "implementations/rust/crates/testkit/**"]
+  pull_request:
+    paths: ["protocol/**", "implementations/rust/crates/testkit/**"]
+
+jobs:
+  vectors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: regenerate and validate golden vectors
+        working-directory: implementations/rust
+        run: |
+          cargo run -p veridag-testkit --bin veridag-vector-gen
+          git diff --exit-code || (echo "vectors drifted; regenerate" && exit 1)

@@ -1,0 +1,33 @@
+name: formal
+
+on:
+  push:
+    branches: [main]
+    paths: ["formal/**"]
+  pull_request:
+    paths: ["formal/**"]
+
+jobs:
+  quint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: formal/quint
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install -g @informalsystems/quint
+      - name: typecheck
+        run: |
+          quint typecheck consensus.qnt
+          quint typecheck instance4.qnt
+      - name: deterministic commit-path test (non-vacuity)
+        run: quint test consensus_test.qnt
+      - name: Agreement
+        run: quint run instance4.qnt --invariant=Agreement --max-steps=30 --max-samples=200
+      - name: Finality
+        run: quint run instance4.qnt --invariant=Finality --max-steps=30 --max-samples=200
+      - name: Integrity
+        run: quint run instance4.qnt --invariant=Integrity --max-steps=30 --max-samples=200

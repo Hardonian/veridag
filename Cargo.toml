@@ -1,0 +1,19 @@
+# Veridag workspace (root is a virtual manifest; the Rust implementation lives
+# in implementations/rust). This file exists so repo-root tooling has a single
+# entry point. The working build manifest is implementations/rust/Cargo.toml.
+
+[workspace]
+members = ["implementations/rust/crates/*", "implementations/rust/bins/*"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Apache-2.0 OR MIT"
+repository = "https://example.invalid/veridag"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"

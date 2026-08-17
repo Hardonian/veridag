@@ -1,0 +1,1 @@
+/home/scott/veridag/implementations/rust/target/debug/libveridag_protocol_types.rlib: /home/scott/veridag/implementations/rust/crates/codec/src/lib.rs /home/scott/veridag/implementations/rust/crates/protocol-types/src/lib.rs

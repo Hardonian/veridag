@@ -1,0 +1,56 @@
+[
+  {
+    "name": "bool_noncanonical",
+    "type_name": "bool",
+    "reason": "bool tag 0x02 is not 0x00/0x01",
+    "bytes": "0x02"
+  },
+  {
+    "name": "option_bad_tag",
+    "type_name": "Option<u8>",
+    "reason": "option tag 0x07 invalid",
+    "bytes": "0x07"
+  },
+  {
+    "name": "trailing_bytes",
+    "type_name": "u8",
+    "reason": "trailing byte after top-level value",
+    "bytes": "0x0102"
+  },
+  {
+    "name": "bytes_limit_exceeded",
+    "type_name": "bytes",
+    "reason": "declared length 0xFFFFFFFF exceeds MAX_BYTES",
+    "bytes": "0xffffffff"
+  },
+  {
+    "name": "length_overflow",
+    "type_name": "bytes",
+    "reason": "declared length 5 but only 1 byte present",
+    "bytes": "0x00000005aa"
+  },
+  {
+    "name": "seq_count_exceeded",
+    "type_name": "Vec<u8>",
+    "reason": "count 65537 exceeds MAX_SEQ",
+    "bytes": "0x00010001"
+  },
+  {
+    "name": "invalid_utf8",
+    "type_name": "string",
+    "reason": "0xff is not valid UTF-8",
+    "bytes": "0x00000001ff"
+  },
+  {
+    "name": "unknown_variant",
+    "type_name": "Operation",
+    "reason": "operation variant 99 undefined",
+    "bytes": "0x0000000000000001"
+  },
+  {
+    "name": "truncated_u64",
+    "type_name": "u64",
+    "reason": "only 3 of 8 bytes present",
+    "bytes": "0x010203"
+  }
+]
