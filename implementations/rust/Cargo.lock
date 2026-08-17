@@ -1225,7 +1225,7 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "veridag-capabilities"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-codec",
@@ -1235,7 +1235,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-checkpoint"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-codec",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-cli"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "anyhow",
  "clap",
@@ -1262,14 +1262,14 @@ dependencies = [
 
 [[package]]
 name = "veridag-codec"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
 ]
 
 [[package]]
 name = "veridag-consensus"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-codec",
@@ -1283,7 +1283,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-crypto"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "blake3",
  "ed25519-dalek",
@@ -1294,7 +1294,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-dag"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-codec",
@@ -1305,7 +1305,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-execution"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-capabilities",
@@ -1319,7 +1319,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-genesis"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "clap",
  "hex",
@@ -1332,7 +1332,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-merkle"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-crypto",
@@ -1341,7 +1341,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-net"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "futures",
  "hex",
@@ -1364,7 +1364,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-node"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "anyhow",
  "clap",
@@ -1385,7 +1385,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-object-state"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-codec",
@@ -1396,14 +1396,14 @@ dependencies = [
 
 [[package]]
 name = "veridag-protocol-types"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "veridag-codec",
 ]
 
 [[package]]
 name = "veridag-storage"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "sled",
  "thiserror 1.0.69",
@@ -1419,7 +1419,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-testkit"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "hex",
  "serde",
@@ -1436,7 +1436,7 @@ dependencies = [
 
 [[package]]
 name = "veridag-transaction"
-version = "0.1.0"
+version = "0.1.0-alpha"
 dependencies = [
  "thiserror 1.0.69",
  "veridag-capabilities",

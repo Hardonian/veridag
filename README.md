@@ -15,7 +15,11 @@ consensus + verifiable state + deterministic computation
 
 ## Status
 
-Early development. The three levels are maintained explicitly:
+**`0.1.0-alpha`** — the reference implementation is built and tested end to end:
+spec (Level 1), formal model (Level 2), and Rust implementation (Level 3) are
+all present and the implementation satisfies the formal Agreement/Finality/
+Integrity invariants. See `ROADMAP.md` for phase status and `docs/quickstart.md`
+for universal onboarding.
 
 | Level | Artifact | Where |
 |-------|----------|-------|
@@ -49,8 +53,8 @@ just check      # fmt, clippy, tests, doc
 just devnet     # 4-validator local devnet (after Phase 8)
 ```
 
-See `protocol/specification/00-overview.md` for the protocol, and `ROADMAP.md`
-for the phased plan.
+See `protocol/specification/00-overview.md` for the protocol, `docs/quickstart.md`
+for universal onboarding, and `ROADMAP.md` for the phased plan.
 
 ## Principles (priority order)
 

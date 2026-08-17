@@ -28,14 +28,17 @@ pass golden + malformed vectors.
 `veridag-execution`: native transfer, create/update/delete, capabilities,
 resource accounting, state roots, receipts. Deterministic state tests.
 
-## Phase 5 — Validator networking (NEXT)
-QUIC validator links, authentication, bounded framing, peer management, reconnect,
-backpressure.
+## Phase 5 — Validator networking (DONE in this tree)
+`veridag-net`: QUIC validator links with self-signed Ed25519 certs and a
+domain-separated verifier (no MITM, no plaintext). `gossip` module broadcasts
+tagged messages (vertices + batches) over authenticated uni-streams.
+`tests/devnet.rs`: four OS-process validators reach consensus over **real
+QUIC sockets** — identical state roots and checkpoints across the network.
 
 ## Phase 6 — DAG (DONE in this tree)
 `veridag-dag`: VCE-1 vertex wire form, domain-separated ids/signatures,
 validity rules, equivocation detection, quorum round progression, causal
-traversal. 14 unit tests. (Network propagation/persistence are Phase 5/9.)
+traversal. 14 unit tests. `Dag::iter_vertex_ids()` added for recovery.
 
 ## Phase 7 — Baseline consensus (DONE in this tree)
 `veridag-consensus`: StaticCommittee leader schedule, pure-function commit rule
@@ -47,15 +50,22 @@ delivery-order independence.
 `tests/vertical_slice.rs`: client tx → batch commitment → DAG vertex →
 BaselineDagBft commit → canonical ordering → sequential execution → state root.
 Four validators derive identical committed ordering and identical final state;
-committed double-spend resolves deterministically. (RPC/mempool/checkpoint
-persistence remain Phase 5/9.)
+committed double-spend resolves deterministically.
 
-## Phase 9 — Crash recovery
-Persistent store; crash injection across commit path; restart-safe verification.
+## Phase 9 — Crash recovery (DONE in this tree)
+`veridag-storage`: trait-based `StateStore`/`DagStore`/`CheckpointStore` with
+`MemoryStore` and `SledStore` (feature `persistent`). `sled_tests`:
+crash-injection harness builds a 4-validator DAG through a committed wave,
+persists every vertex + final state to sled, **drops all in-memory state**
+(simulated crash), reopens, rebuilds the DAG from persisted bytes in round
+order, re-runs the commit rule, and re-executes — asserting identical state
+root + balances. The commit → checkpoint boundary is restart-safe.
 
-## Phase 10 — Parallel execution
-Conflict-aware scheduler; sequential executor as oracle; parallel==sequential
-property-tested.
+## Phase 10 — Parallel execution (DONE in this tree)
+`veridag-execution`: conflict-aware scheduler partitions the committed ordering
+into a non-conflicting parallel prefix + sequential suffix; the sequential
+executor is the oracle. `tests/parallel.rs` property-tests
+parallel == sequential across randomized workloads.
 
 ## Phase 11 — Public P2P
 Selective libp2p; no change to consensus semantics.
@@ -64,7 +74,9 @@ Selective libp2p; no change to consensus semantics.
 Component loading, capability-scoped host API, resource metering, determinism.
 
 ## Phase 13 — SDKs
-Rust then TypeScript; shared conformance vectors.
+Rust then TypeScript; shared conformance vectors. (Crates are SDK-ready:
+`#![forbid(unsafe_code)]`, VCE-1 wire stability, `veridag-cli`/`veridag-node`
+binaries as reference clients.)
 
 ## Phase 14 — Light client
 Checkpoint verification + object proofs.
@@ -79,4 +91,11 @@ Validator-replicated, then erasure-coded DA experiments.
 Profile first. Zig/C/CUDA only where evidence justifies, always behind a safe
 portable fallback.
 
-See `docs/adr/` for the decisions behind these phases.
+## Release status
+
+`0.1.0-alpha` — reference implementation compiles clean (`cargo clippy
+--workspace --all-targets --all-features -- -D warnings`), all workspace tests
+green, release binary builds (`panic = "abort"`, `strip = true`) and the demo
+produces identical state roots + checkpoints across 4 validators. See
+`docs/quickstart.md` for universal onboarding and `docs/architecture.md` for
+the system design.
