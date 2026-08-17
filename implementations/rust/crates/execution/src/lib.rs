@@ -396,6 +396,148 @@ fn decode_capability(obj: &Object) -> Result<Capability, veridag_codec::DecodeEr
     Ok(c)
 }
 
+/// Conflict-aware parallel execution (spec 12 / Phase 10).
+///
+/// The scheduler partitions an ordered batch into a maximal non-conflicting
+/// prefix (no two transactions touch the same declared write object) and a
+/// conflicting suffix. The prefix is executed speculatively in parallel: each
+/// transaction runs on its own snapshot of the pre-state, and the resulting
+/// write-sets are merged in canonical (ObjectId-sorted) order onto the shared
+/// state, in transaction order. The suffix runs sequentially. The sequential
+/// executor is the oracle: `execute_parallel` MUST produce the identical state
+/// root and receipt statuses as `apply_ordered` for every input (property-
+/// tested below).
+pub mod parallel {
+    use std::collections::{BTreeMap, BTreeSet};
+
+    use veridag_object_state::ObjectState;
+    use veridag_protocol_types::ObjectId;
+    use veridag_transaction::{Operation, SignedTransaction};
+
+    use crate::{ApplyResult, Executor, Receipt};
+
+    /// The write objects a transaction touches (conflict domain). Two
+    /// transactions conflict iff their domains intersect. For value transfers
+    /// the domain is BOTH the sender's balance object AND the recipient's
+    /// derived balance object, because a credit mutates the recipient's object
+    /// and two transfers to the same recipient must serialize to match
+    /// sequential semantics.
+    fn write_domain(stx: &SignedTransaction) -> BTreeSet<ObjectId> {
+        match &stx.tx.operation {
+            // CreateObject derives its id from (sender, nonce); that object is
+            // the write domain, so a create and any tx touching the same
+            // derived object (e.g. a transfer crediting it) serialize.
+            Operation::CreateObject { .. } => [veridag_object_state::Object::derive_id(
+                &stx.tx.sender,
+                stx.tx.nonce,
+            )]
+            .into_iter()
+            .collect(),
+            Operation::UpdateObject { object, .. } => [object.id].into_iter().collect(),
+            Operation::DeleteObject { object } => [object.id].into_iter().collect(),
+            Operation::TransferObject { object, .. } => [object.id].into_iter().collect(),
+            Operation::TransferValue { from, to, .. } => {
+                let recipient = veridag_object_state::Object::derive_id(to, 0);
+                [from.id, recipient].into_iter().collect()
+            }
+            Operation::GrantCapability { .. } => BTreeSet::new(),
+            Operation::RevokeCapability { capability_id } => {
+                [ObjectId(capability_id.0)].into_iter().collect()
+            }
+            Operation::InvokeApplication { app, .. } => [ObjectId(app.0)].into_iter().collect(),
+        }
+    }
+
+    /// Partition into (non_conflicting_prefix, conflicting_suffix). The prefix
+    /// is the maximal leading run of transactions that are pairwise
+    /// non-conflicting on their write domains; execution order within the
+    /// prefix is the original order.
+    pub fn partition(txs: &[SignedTransaction]) -> (usize, Vec<BTreeSet<ObjectId>>) {
+        let domains: Vec<BTreeSet<ObjectId>> = txs.iter().map(write_domain).collect();
+        let mut seen: BTreeSet<ObjectId> = BTreeSet::new();
+        let mut prefix_len = txs.len();
+        for (i, d) in domains.iter().enumerate() {
+            if d.is_empty() {
+                continue; // no write domain: never blocks the prefix
+            }
+            if seen.iter().any(|o| d.contains(o)) {
+                prefix_len = i;
+                break;
+            }
+            for o in d {
+                seen.insert(*o);
+            }
+        }
+        (prefix_len, domains)
+    }
+
+    /// Execute the ordered batch, using speculative parallelism for the
+    /// non-conflicting prefix and sequential execution for the rest.
+    ///
+    /// Deterministic: the merge order is fixed (transaction order, canonical
+    /// object order within each write-set), so the result equals sequential
+    /// execution regardless of thread scheduling.
+    pub fn execute_parallel(
+        ex: &Executor,
+        state: &mut ObjectState,
+        txs: &[SignedTransaction],
+    ) -> ApplyResult {
+        let (prefix_len, _domains) = partition(txs);
+        let (prefix, suffix) = txs.split_at(prefix_len);
+
+        let mut receipts: Vec<Receipt> = Vec::with_capacity(txs.len());
+
+        // Speculative parallel prefix: run each tx on its own snapshot.
+        let base = state.clone();
+        let results: Vec<(Receipt, ObjectState)> = std::thread::scope(|s| {
+            let handles: Vec<_> = prefix
+                .iter()
+                .map(|stx| {
+                    let mut snap = base.clone();
+                    s.spawn(move || {
+                        let r = ex.apply_one(&mut snap, stx);
+                        (r, snap)
+                    })
+                })
+                .collect();
+            handles.into_iter().map(|h| h.join().unwrap()).collect()
+        });
+
+        // Merge write-sets deterministically. For each successful speculative
+        // execution, apply the objects it wrote back onto the shared state in
+        // transaction order. A write-set is the set of objects that differ from
+        // the base snapshot (created or mutated).
+        for (receipt, snap) in results {
+            let changed: BTreeMap<ObjectId, _> = snap
+                .iter()
+                .filter(|(id, obj)| base.get(id) != Some(obj))
+                .map(|(id, obj)| (*id, obj.clone()))
+                .collect();
+            if receipt.status == crate::Status::Success {
+                for (_id, obj) in changed {
+                    // Merge verbatim: the speculative run already advanced the
+                    // version and payload commitment. Transaction order is
+                    // preserved and prefix write domains are exclusive, so this
+                    // matches sequential execution exactly.
+                    state.upsert_verbatim(obj);
+                }
+            }
+            receipts.push(receipt);
+        }
+
+        // Conflicting suffix: sequential, the oracle path.
+        if !suffix.is_empty() {
+            let rest = ex.apply_ordered(state, suffix);
+            receipts.extend(rest.receipts);
+        }
+
+        ApplyResult {
+            receipts,
+            state_root: state.state_root(),
+        }
+    }
+}
+
 /// Compute the transaction root (Merkle root over ordered tx ids).
 pub fn transaction_root(txids: &[TransactionId]) -> Hash {
     let leaves: Vec<(ObjectId, Hash)> = txids

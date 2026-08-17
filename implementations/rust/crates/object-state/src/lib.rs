@@ -106,6 +106,21 @@ impl ObjectState {
         Ok(())
     }
 
+    /// Unconditionally insert or replace an object, taking the object's own
+    /// version and payload-commit as authoritative.
+    ///
+    /// This is the deterministic merge primitive for speculative parallel
+    /// execution: a transaction that executed on a snapshot has already
+    /// advanced the object's version and recomputed its payload commitment, so
+    /// merging its write-set must store the object verbatim, not re-drive
+    /// `mutate` (which would double-hash and bump the version again). It is
+    /// only correct for objects whose write domain was exclusive during the
+    /// speculative window (the scheduler guarantees this); using it for shared
+    /// objects would break version discipline.
+    pub fn upsert_verbatim(&mut self, obj: Object) {
+        self.objects.insert(obj.id, obj);
+    }
+
     /// Check that an ObjectRef's expected version matches the current version.
     pub fn check_version(&self, r: &ObjectRef) -> Result<(), StateError> {
         let obj = self.objects.get(&r.id).ok_or(StateError::NotFound)?;
