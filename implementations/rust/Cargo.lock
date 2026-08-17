@@ -616,6 +616,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "veridag-consensus"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "veridag-crypto",
+ "veridag-dag",
+ "veridag-protocol-types",
+]
+
+[[package]]
 name = "veridag-crypto"
 version = "0.1.0"
 dependencies = [
@@ -624,6 +634,17 @@ dependencies = [
  "rand",
  "thiserror",
  "veridag-protocol-types",
+]
+
+[[package]]
+name = "veridag-dag"
+version = "0.1.0"
+dependencies = [
+ "thiserror",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-protocol-types",
+ "veridag-storage",
 ]
 
 [[package]]
