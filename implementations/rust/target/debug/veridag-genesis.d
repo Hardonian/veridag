@@ -1,1 +1,0 @@
-/home/scott/veridag/implementations/rust/target/debug/veridag-genesis: /home/scott/veridag/implementations/rust/bins/veridag-genesis/src/main.rs /home/scott/veridag/implementations/rust/crates/codec/src/lib.rs /home/scott/veridag/implementations/rust/crates/crypto/src/lib.rs /home/scott/veridag/implementations/rust/crates/protocol-types/src/lib.rs

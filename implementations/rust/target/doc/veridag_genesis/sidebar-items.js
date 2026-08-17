@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Cmd"],"fn":["genesis_commitment","main","parse_pubkey"],"struct":["Cli","Genesis","ValidatorEntry"]};

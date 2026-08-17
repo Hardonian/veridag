@@ -1344,17 +1344,22 @@ name = "veridag-net"
 version = "0.1.0"
 dependencies = [
  "futures",
+ "hex",
  "quinn",
  "rcgen",
  "rustls",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "veridag-checkpoint",
  "veridag-codec",
  "veridag-consensus",
  "veridag-crypto",
  "veridag-dag",
+ "veridag-execution",
+ "veridag-object-state",
  "veridag-protocol-types",
+ "veridag-transaction",
 ]
 
 [[package]]

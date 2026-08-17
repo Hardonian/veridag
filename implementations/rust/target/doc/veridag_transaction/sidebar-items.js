@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Operation","TxError"],"struct":["SignedTransaction","Transaction"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["MerkleError"],"fn":["empty_root","leaf_hash","prove","root","verify"],"struct":["InclusionProof"]};

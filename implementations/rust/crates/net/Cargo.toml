@@ -18,7 +18,12 @@ futures.workspace = true
 tracing.workspace = true
 
 [dev-dependencies]
+veridag-checkpoint = { path = "../checkpoint" }
 veridag-consensus = { path = "../consensus" }
+veridag-execution = { path = "../execution" }
+veridag-object-state = { path = "../object-state" }
+veridag-transaction = { path = "../transaction" }
+hex.workspace = true
 
 [lints]
 workspace = true

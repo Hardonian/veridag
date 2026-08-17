@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_BYTES","MAX_DEPTH","MAX_SEQ"],"enum":["DecodeError"],"struct":["Decoder","Encoder"],"trait":["Decode","Encode"]};

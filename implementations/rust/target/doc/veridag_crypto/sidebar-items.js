@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["CryptoError"],"fn":["address_of","hash","verify"],"struct":["Keypair"]};

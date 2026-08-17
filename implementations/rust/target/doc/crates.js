@@ -1,2 +1,0 @@
-window.ALL_CRATES = ["veridag_capabilities","veridag_cli","veridag_codec","veridag_crypto","veridag_execution","veridag_genesis","veridag_merkle","veridag_object_state","veridag_protocol_types","veridag_storage","veridag_testkit","veridag_transaction","veridag_vector_gen"];
-//{"start":21,"fragment_lengths":[22,14,16,17,20,18,17,23,25,18,18,22,21]}

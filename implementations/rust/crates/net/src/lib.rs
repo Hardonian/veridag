@@ -12,6 +12,8 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod gossip;
+
 use std::collections::BTreeSet;
 use std::net::SocketAddr;
 use std::sync::Arc;

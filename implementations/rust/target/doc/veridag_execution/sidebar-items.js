@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Status","TxExecError"],"fn":["dag_commitment","transaction_root"],"struct":["ApplyResult","Executor","Receipt"]};
