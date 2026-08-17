@@ -28,7 +28,7 @@ That is the entire dependency list. There is nothing else to install.
 ## 2. Get the code
 
 ```bash
-git clone https://github.com/veridag/veridag.git
+git clone https://github.com/Hardonian/veridag.git
 cd veridag/implementations/rust
 ```
 

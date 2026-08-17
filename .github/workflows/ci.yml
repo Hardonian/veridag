@@ -2,9 +2,10 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
+    tags: ["v*"]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -12,6 +13,7 @@ env:
 
 jobs:
   rust:
+    name: fmt + clippy + test + release build
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,10 +25,45 @@ jobs:
           components: rustfmt, clippy, rust-src
       - uses: Swatinem/rust-cache@v2
       - name: fmt
-        run: cargo fmt --check
+        run: cargo fmt --all -- --check
       - name: clippy
         run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: test
         run: cargo test --workspace --all-features
       - name: doc
         run: cargo doc --workspace --no-deps
+      # Release gate: build the optimized, stripped, panic=abort binary and
+      # prove the 4-validator demo produces identical state roots. A release
+      # that cannot agree across validators is not shippable.
+      - name: release build
+        run: cargo build --release -p veridag-node
+      - name: release smoke (4-validator agreement)
+        run: cargo run --release -p veridag-node -- demo 2>&1 | tee /tmp/demo.log
+      - name: assert agreement
+        run: |
+          roots=$(grep -c "state_root=0xf7aa1731" /tmp/demo.log)
+          if [ "$roots" -lt 4 ]; then
+            echo "FAIL: expected >=4 validators agreeing on state root"; exit 1
+          fi
+          echo "OK: 4 validators agree on identical state root"
+
+  # Cross-compile sanity: the binary must build for a low-resource edge target
+  # (aarch64 Linux) so universal deployment is real, not aspirational.
+  cross-edge:
+    name: edge target (aarch64-unknown-linux-gnu)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: implementations/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+      - uses: Swatinem/rust-cache@v2
+      - name: install cross linker
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: build edge binary
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+        run: cargo build --release -p veridag-node --target aarch64-unknown-linux-gnu
