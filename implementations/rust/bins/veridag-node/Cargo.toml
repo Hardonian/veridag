@@ -1,0 +1,29 @@
+[package]
+name = "veridag-node"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "veridag-node"
+path = "src/main.rs"
+
+[dependencies]
+veridag-checkpoint = { path = "../../crates/checkpoint" }
+veridag-codec = { path = "../../crates/codec" }
+veridag-consensus = { path = "../../crates/consensus" }
+veridag-crypto = { path = "../../crates/crypto" }
+veridag-dag = { path = "../../crates/dag" }
+veridag-execution = { path = "../../crates/execution" }
+veridag-net = { path = "../../crates/net" }
+veridag-object-state = { path = "../../crates/object-state" }
+veridag-protocol-types = { path = "../../crates/protocol-types" }
+veridag-transaction = { path = "../../crates/transaction" }
+clap.workspace = true
+anyhow.workspace = true
+hex.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[lints]
+workspace = true

@@ -1358,6 +1358,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "veridag-node"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "hex",
+ "tokio",
+ "tracing",
+ "veridag-checkpoint",
+ "veridag-codec",
+ "veridag-consensus",
+ "veridag-crypto",
+ "veridag-dag",
+ "veridag-execution",
+ "veridag-net",
+ "veridag-object-state",
+ "veridag-protocol-types",
+ "veridag-transaction",
+]
+
+[[package]]
 name = "veridag-object-state"
 version = "0.1.0"
 dependencies = [
