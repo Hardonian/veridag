@@ -47,9 +47,19 @@ pub struct StaticCommittee {
 impl StaticCommittee {
     /// Build a committee from `n >= 3f + 1` validators. `validators` is
     /// deduplicated and sorted; `f` is the Byzantine tolerance.
+    ///
+    /// Panics if `f == 0` or if fewer than `3f + 1` distinct validators are
+    /// provided — a committee that violates the BFT bound would be unsafe and
+    /// the caller should fix the configuration rather than proceed.
     pub fn new(mut validators: Vec<ValidatorId>, f: usize) -> Self {
+        assert!(f > 0, "byzantine tolerance f must be > 0");
         validators.sort();
         validators.dedup();
+        assert!(
+            validators.len() > 3 * f,
+            "need n >= 3f + 1 validators for f = {f} (have {})",
+            validators.len()
+        );
         let quorum = 2 * f + 1;
         Self { validators, quorum }
     }

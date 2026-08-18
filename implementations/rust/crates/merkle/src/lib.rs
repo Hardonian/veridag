@@ -57,12 +57,21 @@ pub struct InclusionProof {
     pub right: Vec<bool>,
 }
 
-/// Compute the leaf hash of an object given its canonical encoding.
-pub fn leaf_hash(object_bytes: &[u8]) -> Hash {
+/// Compute the leaf hash of an object given its canonical encoding and id.
+///
+/// The leaf binds `object_id || object_bytes` so that a light-client inclusion
+/// proof cannot be relocated to a different id: the proof verifies against the
+/// leaf for (id, bytes), and any id mismatch changes the leaf and breaks
+/// verification. This is the same raw leaf hash used by
+/// [`ObjectState::state_root`]; see `references/api-quirks.md`.
+pub fn leaf_hash(object_id: &ObjectId, object_bytes: &[u8]) -> Hash {
     #[cfg(feature = "metrics")]
     {
         let start = std::time::Instant::now();
-        let out = veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", object_bytes);
+        let mut buf = Vec::with_capacity(object_id.0.len() + object_bytes.len());
+        buf.extend_from_slice(&object_id.0);
+        buf.extend_from_slice(object_bytes);
+        let out = veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", &buf);
         if let Some(m) = metrics_handle::backend() {
             m.observe(Observation::Duration(
                 Label("merkle_leaf_hash"),
@@ -73,7 +82,10 @@ pub fn leaf_hash(object_bytes: &[u8]) -> Hash {
     }
     #[cfg(not(feature = "metrics"))]
     {
-        veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", object_bytes)
+        let mut buf = Vec::with_capacity(object_id.0.len() + object_bytes.len());
+        buf.extend_from_slice(&object_id.0);
+        buf.extend_from_slice(object_bytes);
+        veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", &buf)
     }
 }
 
