@@ -13,6 +13,10 @@
 #![warn(missing_docs)]
 
 pub mod gossip;
+pub mod transport;
+
+#[cfg(feature = "libp2p")]
+pub mod libp2p;
 
 use std::collections::BTreeSet;
 use std::net::SocketAddr;
