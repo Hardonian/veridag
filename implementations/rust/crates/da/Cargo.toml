@@ -10,7 +10,9 @@ description.workspace = true
 veridag-codec = { path = "../codec" }
 veridag-crypto = { path = "../crypto" }
 veridag-protocol-types = { path = "../protocol-types" }
+veridag-metrics = { path = "../metrics", optional = true }
 thiserror = { workspace = true }
 
 [features]
 default = []
+metrics = ["dep:veridag-metrics"]

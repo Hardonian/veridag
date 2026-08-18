@@ -19,6 +19,32 @@
 use veridag_crypto::hash;
 use veridag_protocol_types::Hash;
 
+#[cfg(feature = "metrics")]
+use veridag_metrics::{Label, Observation};
+
+#[cfg(feature = "metrics")]
+mod metrics_handle {
+    use std::sync::OnceLock;
+    use veridag_metrics::Metrics;
+
+    static BACKEND: OnceLock<&'static dyn Metrics> = OnceLock::new();
+
+    pub fn set_backend(m: &'static dyn Metrics) {
+        BACKEND.set(m).ok();
+    }
+
+    pub fn backend() -> Option<&'static dyn Metrics> {
+        BACKEND.get().copied()
+    }
+}
+
+/// Install the global metrics backend for the DA crate. Only available with
+/// the `metrics` feature.
+#[cfg(feature = "metrics")]
+pub fn set_metrics_backend(m: &'static dyn veridag_metrics::Metrics) {
+    metrics_handle::set_backend(m);
+}
+
 // ---------------------------------------------------------------------------
 // GF(2^8) with reduction polynomial 0x11d (the AES/Reed-Solomon standard).
 // ---------------------------------------------------------------------------
@@ -160,6 +186,9 @@ pub const MAX_BLOB: usize = 4 * 1024 * 1024;
 
 /// Erasure-code `blob` into `n = k + m` shares. Returns the commitment + shares.
 pub fn encode(config: DaConfig, blob: &[u8]) -> Result<Dispersal, DaError> {
+    #[cfg(feature = "metrics")]
+    let start = std::time::Instant::now();
+
     if blob.len() > MAX_BLOB {
         return Err(DaError::TooLarge(blob.len(), MAX_BLOB));
     }
@@ -198,6 +227,15 @@ pub fn encode(config: DaConfig, blob: &[u8]) -> Result<Dispersal, DaError> {
     }
 
     let content_hash = hash("VERIDAG_DA_BLOB_V1", blob);
+    #[cfg(feature = "metrics")]
+    {
+        if let Some(m) = metrics_handle::backend() {
+            m.observe(Observation::Duration(
+                Label("da_encode"),
+                start.elapsed().as_nanos() as u64,
+            ));
+        }
+    }
     Ok(Dispersal {
         content_hash,
         original_len: blob.len(),
@@ -215,6 +253,9 @@ pub fn reconstruct(
     original_len: usize,
     present: &[(usize, Vec<u8>)],
 ) -> Result<Vec<u8>, DaError> {
+    #[cfg(feature = "metrics")]
+    let start = std::time::Instant::now();
+
     let k = config.data_shards;
     if present.len() < k {
         return Err(DaError::NotEnoughShares(present.len(), k));
@@ -267,6 +308,15 @@ pub fn reconstruct(
         return Err(DaError::HashMismatch);
     }
     blob.truncate(original_len);
+    #[cfg(feature = "metrics")]
+    {
+        if let Some(m) = metrics_handle::backend() {
+            m.observe(Observation::Duration(
+                Label("da_reconstruct"),
+                start.elapsed().as_nanos() as u64,
+            ));
+        }
+    }
     Ok(blob)
 }
 

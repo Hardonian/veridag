@@ -10,6 +10,32 @@ use thiserror::Error;
 use veridag_crypto::hash;
 use veridag_protocol_types::{Hash, ObjectId};
 
+#[cfg(feature = "metrics")]
+use veridag_metrics::{Label, Observation};
+
+#[cfg(feature = "metrics")]
+mod metrics_handle {
+    use std::sync::OnceLock;
+    use veridag_metrics::Metrics;
+
+    static BACKEND: OnceLock<&'static dyn Metrics> = OnceLock::new();
+
+    pub fn set_backend(m: &'static dyn Metrics) {
+        BACKEND.set(m).ok();
+    }
+
+    pub fn backend() -> Option<&'static dyn Metrics> {
+        BACKEND.get().copied()
+    }
+}
+
+/// Install the global metrics backend for the merkle crate. Only available with
+/// the `metrics` feature.
+#[cfg(feature = "metrics")]
+pub fn set_metrics_backend(m: &'static dyn veridag_metrics::Metrics) {
+    metrics_handle::set_backend(m);
+}
+
 /// Errors from proof verification.
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
 pub enum MerkleError {
@@ -33,14 +59,44 @@ pub struct InclusionProof {
 
 /// Compute the leaf hash of an object given its canonical encoding.
 pub fn leaf_hash(object_bytes: &[u8]) -> Hash {
-    hash("VERIDAG_BMH_LEAF_V1", object_bytes)
+    #[cfg(feature = "metrics")]
+    {
+        let start = std::time::Instant::now();
+        let out = veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", object_bytes);
+        if let Some(m) = metrics_handle::backend() {
+            m.observe(Observation::Duration(
+                Label("merkle_leaf_hash"),
+                start.elapsed().as_nanos() as u64,
+            ));
+        }
+        out
+    }
+    #[cfg(not(feature = "metrics"))]
+    {
+        veridag_crypto::hash("VERIDAG_BMH_LEAF_V1", object_bytes)
+    }
 }
 
 fn node_hash(l: &Hash, r: &Hash) -> Hash {
     let mut buf = [0u8; 64];
     buf[..32].copy_from_slice(l);
     buf[32..].copy_from_slice(r);
-    hash("VERIDAG_BMH_NODE_V1", &buf)
+    #[cfg(feature = "metrics")]
+    {
+        let start = std::time::Instant::now();
+        let out = veridag_crypto::hash("VERIDAG_BMH_NODE_V1", &buf);
+        if let Some(m) = metrics_handle::backend() {
+            m.observe(Observation::Duration(
+                Label("merkle_node_hash"),
+                start.elapsed().as_nanos() as u64,
+            ));
+        }
+        out
+    }
+    #[cfg(not(feature = "metrics"))]
+    {
+        veridag_crypto::hash("VERIDAG_BMH_NODE_V1", &buf)
+    }
 }
 
 /// The canonical empty-tree root.

@@ -22,15 +22,67 @@ pub enum CryptoError {
     InvalidKeyLength,
 }
 
+/// Global metrics backend handle (optional, feature `metrics`).
+///
+/// When the `metrics` feature is on, deployers call
+/// [`set_metrics_backend`] once at startup to install a real backend.
+/// The default is a no-op; this is a no-op upgrade that never changes
+/// correctness or determinism.
+#[cfg(feature = "metrics")]
+mod metrics_handle {
+    use std::sync::OnceLock;
+    use veridag_metrics::Metrics;
+
+    static BACKEND: OnceLock<&'static dyn Metrics> = OnceLock::new();
+
+    /// Install the global metrics backend. Must be called once before any
+    /// consensus-visible work.
+    pub fn set_backend(m: &'static dyn Metrics) {
+        BACKEND.set(m).ok();
+    }
+
+    pub fn backend() -> Option<&'static dyn Metrics> {
+        BACKEND.get().copied()
+    }
+}
+
 /// Protocol hash: BLAKE3 over `domain || 0x00 || payload`.
 ///
-/// Domain separation is mandatory; see spec 04.
+/// Domain separation is mandatory; see spec 04. When the `metrics` feature
+/// is on, the duration of each hash is recorded to the global backend (no-op
+/// by default). This never affects the returned hash.
 pub fn hash(domain: &str, payload: &[u8]) -> Hash {
+    #[cfg(feature = "metrics")]
+    {
+        let start = std::time::Instant::now();
+        let out = hash_inner(domain, payload);
+        if let Some(m) = metrics_handle::backend() {
+            m.observe(veridag_metrics::Observation::Duration(
+                veridag_metrics::Label("hash"),
+                start.elapsed().as_nanos() as u64,
+            ));
+        }
+        out
+    }
+    #[cfg(not(feature = "metrics"))]
+    {
+        hash_inner(domain, payload)
+    }
+}
+
+fn hash_inner(domain: &str, payload: &[u8]) -> Hash {
     let mut h = blake3::Hasher::new();
     h.update(domain.as_bytes());
     h.update(&[0u8]);
     h.update(payload);
     *h.finalize().as_bytes()
+}
+
+/// Install the global metrics backend. Only available with the `metrics`
+/// feature; a no-op when the feature is off.
+#[cfg(feature = "metrics")]
+pub fn set_metrics_backend(m: &'static dyn veridag_metrics::Metrics) {
+    metrics_handle::set_backend(m);
 }
 
 /// Derive an address from an Ed25519 public key.
@@ -143,5 +195,12 @@ mod tests {
     fn address_is_deterministic() {
         let kp = Keypair::from_seed(&[7u8; 32]);
         assert_eq!(kp.address(), address_of(&kp.public()));
+    }
+
+    #[test]
+    fn hash_returns_stable_value() {
+        let h = hash("VERIDAG_TX_V1", b"hello");
+        let h2 = hash("VERIDAG_TX_V1", b"hello");
+        assert_eq!(h, h2);
     }
 }
