@@ -1,0 +1,29 @@
+[package]
+name = "veridag-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-transaction = { path = "../transaction" }
+veridag-object-state = { path = "../object-state" }
+veridag-checkpoint = { path = "../checkpoint" }
+thiserror = { workspace = true }
+
+[features]
+default = []
+# Enables an HTTP client implementation (requires a network transport).
+http = ["dep:reqwest"]
+
+[dependencies.reqwest]
+version = "0.12"
+optional = true
+default-features = false
+features = ["json", "rustls-tls"]
+
+[dev-dependencies]
