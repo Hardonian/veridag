@@ -270,14 +270,22 @@ enum Cmd {
         #[arg(long, default_value_t = 4)]
         validators: usize,
     },
+    /// Report node health / live state for ops and monitors (go-live).
+    Health {
+        /// JSON output (one object per line, machine-parseable).
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn seed(n: u8) -> Keypair {
     Keypair::from_seed(&[n; 32])
 }
 
-fn run_demo(n_validators: usize) -> Result<()> {
-    println!("veridag-node demo: {n_validators}-validator committee, in-process");
+fn run_demo(n_validators: usize, quiet: bool) -> Result<Vec<Node>> {
+    if !quiet {
+        println!("veridag-node demo: {n_validators}-validator committee, in-process");
+    }
     let keys: Vec<Keypair> = (1..=n_validators as u8).map(seed).collect();
     let validators: Vec<ValidatorId> = keys.iter().map(|k| ValidatorId(k.address())).collect();
     let keys_by_id: BTreeMap<ValidatorId, _> = keys
@@ -319,7 +327,9 @@ fn run_demo(n_validators: usize) -> Result<()> {
     for node in &mut nodes {
         assert!(node.mempool.submit(stx.clone(), &alice.public()));
     }
-    println!("submitted transfer alice->bob 40 to all mempools");
+    if !quiet {
+        println!("submitted transfer alice->bob 40 to all mempools");
+    }
 
     // Run rounds: each validator proposes, vertices broadcast to all. Run two
     // full waves plus vote rounds so wave 2 completes and a checkpoint fires.
@@ -346,7 +356,9 @@ fn run_demo(n_validators: usize) -> Result<()> {
             }
         }
         let committed = nodes[0].dag.round_vertices_max().unwrap_or(0);
-        println!("round {round}: max round reached {committed}");
+        if !quiet {
+            println!("round {round}: max round reached {committed}");
+        }
     }
 
     // Execute committed and report checkpoints.
@@ -355,30 +367,95 @@ fn run_demo(n_validators: usize) -> Result<()> {
         let ckpt = node.execute_committed();
         let root = node.state.state_root();
         roots.push(root);
-        println!(
-            "validator {i}: state_root=0x{} checkpoints={}",
-            hex::encode(root),
-            node.checkpoints.len()
-        );
-        if let Some(c) = ckpt {
+        if !quiet {
             println!(
-                "  checkpoint seq={} id=0x{}",
-                c.sequence,
-                hex::encode(c.id().0)
+                "validator {i}: state_root=0x{} checkpoints={}",
+                hex::encode(root),
+                node.checkpoints.len()
             );
+            if let Some(c) = ckpt {
+                println!(
+                    "  checkpoint seq={} id=0x{}",
+                    c.sequence,
+                    hex::encode(c.id().0)
+                );
+            }
         }
     }
-    // Agreement: all roots identical.
+    // Return the final node state for the caller (CLI demo prints verbose;
+    // health probe prints a compact machine-readable snapshot and asserts).
+    Ok(nodes)
+}
+
+fn run_health(json: bool) -> Result<()> {
+    let n_validators = 4;
+    let nodes = run_demo(n_validators, true)?;
+    // Health probe asserts the pipeline actually reached agreement; if it did
+    // not, the probe must fail so ops/alerts fire.
+    let roots: Vec<_> = nodes.iter().map(|n| n.state.state_root()).collect();
     assert!(
         roots.iter().all(|r| *r == roots[0]),
-        "all validators must derive the same state root"
+        "health probe: validators did not agree on state root"
     );
-    // Prove value moved.
-    let bob_id = ObjectId(Object::derive_id(&bob.address(), 0).0);
-    let bal = nodes[0].state.balance(&bob_id).unwrap();
-    println!("AGREEMENT OK: identical state root across {n_validators} validators");
-    println!("bob balance: {bal} (expected 40)");
-    assert_eq!(bal, 40);
+    let last = &nodes[0];
+    let mw = highest_complete_wave(&last.dag);
+    let committed = last.committed_txs();
+    let n_ckpts = last.checkpoints.len();
+    let ckpt_ids: Vec<String> = last
+        .checkpoints
+        .iter()
+        .map(|c| hex::encode(c.id().0))
+        .collect();
+
+    if json {
+        let line = serde_json::json!({
+            "binary": "veridag-node",
+            "version": env!("CARGO_PKG_VERSION"),
+            "protocol_version": CURRENT_PROTOCOL_VERSION,
+            "chain_id": CHAIN,
+            "n_validators": n_validators,
+            "committee_n": last.committee.n(),
+            "committee_quorum": last.committee.quorum(),
+            "highest_complete_wave": mw,
+            "max_round": last.dag.round_vertices_max().unwrap_or(0),
+            "state_root": hex::encode(last.state.state_root()),
+            "committed_tx_count": committed.len(),
+            "checkpoint_count": n_ckpts,
+            "checkpoint_ids": ckpt_ids,
+            "proposal_nonce": last.nonce,
+            "epoch": last.epoch,
+            "keyset_fingerprint": hex::encode(validator_set_commitment(
+                &last.validator_set().into_iter().collect::<Vec<_>>()
+            )),
+            "agreement": roots.iter().all(|r| *r == roots[0]),
+        });
+        println!("{line}");
+    } else {
+        println!("veridag-node health (demo-probed, {n_validators} validators)");
+        println!("  version:        {}", env!("CARGO_PKG_VERSION"));
+        println!("  protocol:       {CURRENT_PROTOCOL_VERSION}");
+        println!("  chain_id:       {CHAIN}");
+        println!(
+            "  committee:      n={} quorum={}",
+            last.committee.n(),
+            last.committee.quorum()
+        );
+        println!(
+            "  max round:      {}",
+            last.dag.round_vertices_max().unwrap_or(0)
+        );
+        println!("  highest wave:   {mw}");
+        println!(
+            "  state root:     0x{}",
+            hex::encode(last.state.state_root())
+        );
+        println!("  objects:        {}", last.state.iter().count());
+        println!("  committed txs:  {}", committed.len());
+        println!("  checkpoints:    {n_ckpts}");
+        println!("  checkpoint_ids: {}", ckpt_ids.join(","));
+        println!("  proposal nonce: {}", last.nonce);
+        println!("  agreement:      {}", roots.iter().all(|r| *r == roots[0]));
+    }
     Ok(())
 }
 
@@ -415,6 +492,31 @@ fn signed_transfer(from: &Keypair, version: u64, to: Address, amount: u64) -> Si
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.cmd {
-        Cmd::Demo { validators } => run_demo(validators),
+        Cmd::Demo { validators } => {
+            let nodes = run_demo(validators, false)?;
+            let roots: Vec<_> = nodes.iter().map(|n| n.state.state_root()).collect();
+            assert!(
+                roots.iter().all(|r| *r == roots[0]),
+                "demo: validators did not agree on state root"
+            );
+            let last = &nodes[0];
+            println!("AGREEMENT OK: identical state root across {validators} validators");
+            let bob = seed(101);
+            let bob_id = ObjectId(Object::derive_id(&bob.address(), 0).0);
+            let bal = last.state.balance(&bob_id).unwrap();
+            println!("state_root=0x{}", hex::encode(last.state.state_root()));
+            println!("checkpoints={}", last.checkpoints.len());
+            for c in &last.checkpoints {
+                println!(
+                    "  checkpoint seq={} id=0x{}",
+                    c.sequence,
+                    hex::encode(c.id().0)
+                );
+            }
+            println!("bob balance: {bal} (expected 40)");
+            assert_eq!(bal, 40);
+            Ok(())
+        }
+        Cmd::Health { json } => run_health(json),
     }
 }
