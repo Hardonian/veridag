@@ -95,11 +95,12 @@ pub fn verify_checkpoint(
 }
 
 /// BMH-1 leaf hash for an object. MUST match `ObjectState::state_root`, which
-/// uses `veridag_merkle::leaf_hash(object.to_bytes())`. The tree is keyed by
-/// `ObjectId` (leaves are sorted by id), so an object's position already binds
-/// it to its id; a prover cannot relocate a leaf without changing the root.
-pub fn object_leaf(_object_id: &ObjectId, object_bytes: &[u8]) -> [u8; 32] {
-    leaf_hash(object_bytes)
+/// uses `veridag_merkle::leaf_hash(id, object.to_bytes())`. The leaf binds
+/// `object_id || object_bytes`, so a prover cannot relocate a leaf to a different
+/// id without changing the hash and breaking the proof. See
+/// `references/api-quirks.md`.
+pub fn object_leaf(object_id: &ObjectId, object_bytes: &[u8]) -> [u8; 32] {
+    leaf_hash(object_id, object_bytes)
 }
 
 /// Verify that `object_bytes` (the canonical encoding of an object identified

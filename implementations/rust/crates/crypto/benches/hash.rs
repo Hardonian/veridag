@@ -1,12 +1,9 @@
-#[macro_use]
-extern crate criterion;
-
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 use veridag_crypto::hash;
 
 fn hash_domains(c: &mut Criterion) {
-    let payloads: Vec<&[u8]> = (0..64)
+    let payloads: Vec<Vec<u8>> = (0..64)
         .map(|i| {
             // Deterministic payload per index so the benchmark is reproducible.
             let mut buf = vec![0u8; 256];
@@ -27,7 +24,7 @@ fn hash_domains(c: &mut Criterion) {
         b.iter(|| {
             for dom in &domains {
                 for p in &payloads {
-                    black_box(hash(dom, black_box(p)));
+                    black_box(hash(dom, black_box(p.as_slice())));
                 }
             }
         })

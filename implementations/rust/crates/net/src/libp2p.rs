@@ -26,8 +26,8 @@ use std::net::SocketAddr;
 
 use async_trait::async_trait;
 use futures::StreamExt;
-use tokio::sync::mpsc::{channel, Receiver, Sender};
 use tokio::sync::broadcast;
+use tokio::sync::mpsc::{channel, Receiver, Sender};
 use veridag_protocol_types::ValidatorId;
 
 use libp2p::floodsub::{Floodsub, FloodsubEvent, Topic};
@@ -137,7 +137,10 @@ async fn swarm_driver(
 #[async_trait]
 impl Transport for Libp2pTransport {
     async fn broadcast(&self, frame: &Frame) {
-        let _ = self.command_tx.send(Command::Broadcast(frame.clone())).await;
+        let _ = self
+            .command_tx
+            .send(Command::Broadcast(frame.clone()))
+            .await;
     }
 
     async fn subscribe(&self) -> Receiver<Frame> {
