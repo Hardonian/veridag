@@ -174,7 +174,7 @@ impl ObjectState {
         let leaves: Vec<(ObjectId, Hash)> = self
             .objects
             .iter()
-            .map(|(id, obj)| (*id, veridag_merkle::leaf_hash(&obj.to_bytes())))
+            .map(|(id, obj)| (*id, veridag_merkle::leaf_hash(id, &obj.to_bytes())))
             .collect();
         veridag_merkle::root(&leaves)
     }

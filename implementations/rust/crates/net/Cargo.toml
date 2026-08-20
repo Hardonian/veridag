@@ -18,6 +18,12 @@ rcgen.workspace = true
 rustls.workspace = true
 futures.workspace = true
 tracing.workspace = true
+async-trait.workspace = true
+libp2p = { version = "0.54", optional = true, default-features = false, features = ["tokio", "floodsub", "tcp", "noise", "yamux", "macros"] }
+
+[features]
+default = []
+libp2p = ["dep:libp2p"]
 
 [dev-dependencies]
 veridag-checkpoint = { path = "../checkpoint" }

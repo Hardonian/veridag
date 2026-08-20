@@ -1,0 +1,10 @@
+{
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "out",
+  "build": {
+    "env": {
+      "NODE_OPTIONS": "--max-old-space-size=4096 --no-warnings",
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  }
+}

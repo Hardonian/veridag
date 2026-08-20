@@ -1,0 +1,21 @@
+[package]
+name = "veridag-wasm-runtime"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-capabilities = { path = "../capabilities" }
+veridag-codec = { path = "../codec" }
+thiserror.workspace = true
+anyhow = { version = "1", optional = true }
+wasmtime = { version = "21", optional = true, default-features = false, features = ["cranelift", "runtime", "gc"] }
+
+[features]
+default = []
+wasmtime = ["dep:wasmtime", "dep:anyhow"]
+
+[dev-dependencies]
+veridag-crypto = { path = "../crypto" }
+wat = "1"

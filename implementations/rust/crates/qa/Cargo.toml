@@ -1,0 +1,32 @@
+[package]
+name = "veridag-qa"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-transaction = { path = "../transaction" }
+veridag-merkle = { path = "../merkle" }
+veridag-object-state = { path = "../object-state" }
+veridag-dag = { path = "../dag" }
+veridag-consensus = { path = "../consensus" }
+veridag-execution = { path = "../execution" }
+veridag-storage = { path = "../storage", features = ["persistent"] }
+veridag-checkpoint = { path = "../checkpoint" }
+proptest = "1"
+hex = "0.4"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "hotpath"
+harness = false
+
+[features]
+default = []

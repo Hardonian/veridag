@@ -1,0 +1,21 @@
+[package]
+name = "veridag-light-client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description.workspace = true
+
+[dependencies]
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-merkle = { path = "../merkle" }
+veridag-checkpoint = { path = "../checkpoint" }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+veridag-object-state = { path = "../object-state" }
+
+[features]
+default = []
