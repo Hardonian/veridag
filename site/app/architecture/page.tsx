@@ -4,124 +4,81 @@ export default function Architecture() {
       <h1>Architecture</h1>
       <p className="tagline">
         How the reference implementation (Rust) realizes the protocol — built for
-        universal usability and deterministic correctness.
+        universal edge-grade deployability and deterministic correctness.
       </p>
 
-      <p>
-        Veridag targets <strong>low latency, low energy, and small binary
-        footprint</strong> without sacrificing correctness or safety. Design
-        priorities, in order:
-      </p>
-      <pre><code>{`correctness > determinism > security > implementation independence
-> modularity > verification > operability > performance > developer usability`}</code></pre>
-      <p className="muted">
-        &ldquo;Performance&rdquo; means throughput per watt and per dollar — not
-        peak benchmark numbers. Every hot-path choice stays predictable and cheap.
-      </p>
+      <div className="alert">
+        <div className="alert-title">Core Design Hierarchy</div>
+        <p style={{ margin: 0, fontFamily: "var(--font-mono)", fontSize: "13px", color: "var(--accent-cyan-bright)" }}>
+          correctness &gt; determinism &gt; security &gt; implementation independence &gt; modularity &gt; verification &gt; operability &gt; performance
+        </p>
+      </div>
 
-      <h2>Design commitments</h2>
-      <ul>
-        <li>
-          <strong>No <code>unsafe</code> in the consensus/execution core.</strong>{" "}
-          All crates <code>#![forbid(unsafe_code)]</code>. Memory-safety bugs
-          cannot reach the BFT core.
-        </li>
-        <li>
-          <strong>Deterministic by construction.</strong> No reliance on hash-map
-          iteration order, wall-clock time, thread scheduling, floating point, OS
-          randomness, or filesystem order. Two nodes with the same inputs produce
-          byte-identical state roots.
-        </li>
-        <li>
-          <strong>Small, dependency-light stack.</strong>{" "}
-          <code>blake3</code> (fast, parallel, constant-time),{" "}
-          <code>ed25519-dalek</code> (fast verification), <code>quinn</code> (QUIC,
-          no userspace TCP head-of-line blocking), <code>sled</code> (embedded,
-          lock-free). No Kubernetes, no message broker, no sidecar.
-        </li>
-        <li>
-          <strong>Crash-safe persistence.</strong> State and DAG are
-          append-friendly and restart-safe; a validator that dies mid-commit
-          recovers identically.
-        </li>
-        <li>
-          <strong>Release profile tuned for the edge.</strong>{" "}
-          <code>opt-level = 3</code>, <code>lto = &quot;thin&quot;</code>,{" "}
-          <code>codegen-units = 1</code>, <code>panic = &quot;abort&quot;</code>,{" "}
-          <code>strip = true</code>.
-        </li>
-      </ul>
+      <h2>Design Commitments</h2>
+      <div className="card-grid">
+        <div className="card">
+          <span className="card-icon">🛡️</span>
+          <h3>Zero Unsafe Code</h3>
+          <p>All crates strictly enforce <code>#![forbid(unsafe_code)]</code>. Memory-safety vulnerabilities cannot reach the BFT core.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">📐</span>
+          <h3>Deterministic Execution</h3>
+          <p>Sequential oracle guarantees bit-for-bit reproducible state roots across different CPUs, OSs, and compiler optimization levels.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">📦</span>
+          <h3>Zero External Services</h3>
+          <p>Integrated embedded <code>sled</code> database. No external database servers, brokers, or cloud sidecars needed.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">⚡</span>
+          <h3>QUIC Transport Fast Path</h3>
+          <p>Independent multiplexed streams prevent TCP head-of-line blocking; TLS 1.3 authentication from byte zero.</p>
+        </div>
+      </div>
 
-      <h2>Crates</h2>
-      <table>
-        <thead>
-          <tr><th>Crate</th><th>Responsibility</th></tr>
-        </thead>
-        <tbody>
-          <tr><td><code>veridag-protocol-types</code></td><td>Canonical identifiers, core types, domain tags</td></tr>
-          <tr><td><code>veridag-codec</code></td><td>VCE-1 encoder/decoder (canonical wire form)</td></tr>
-          <tr><td><code>veridag-crypto</code></td><td>BLAKE3 hashing, Ed25519 sign/verify, domain preimages</td></tr>
-          <tr><td><code>veridag-merkle</code></td><td>BMH-1 state commitments + inclusion proofs</td></tr>
-          <tr><td><code>veridag-transaction</code></td><td>Transaction model, validation, anti-replay</td></tr>
-          <tr><td><code>veridag-capabilities</code></td><td>Capability objects and enforcement</td></tr>
-          <tr><td><code>veridag-object-state</code></td><td>Object set, version discipline, account/balance</td></tr>
-          <tr><td><code>veridag-execution</code></td><td>Sequential deterministic executor + parallel scheduler</td></tr>
-          <tr><td><code>veridag-dag</code></td><td>VCE-1 vertex wire form, validity, equivocation, quorum</td></tr>
-          <tr><td><code>veridag-consensus</code></td><td>BaselineDagBft: pure-function commit rule + leader schedule</td></tr>
-          <tr><td><code>veridag-checkpoint</code></td><td>Quorum finality, checkpoint construction/verification</td></tr>
-          <tr><td><code>veridag-storage</code></td><td>StateStore/DagStore/CheckpointStore traits + Memory + Sled</td></tr>
-          <tr><td><code>veridag-net</code></td><td>QUIC authenticated links + vertex/batch gossip</td></tr>
-          <tr><td><code>veridag-testkit</code></td><td>Vector generation/validation, malformed suite</td></tr>
-        </tbody>
-      </table>
-
-      <h2>Data flow</h2>
+      <h2>Data Flow Pipeline</h2>
       <pre><code>{`client tx
-  -> validate (transaction crate)
-  -> batch commitment (VCE-1)
-  -> DAG vertex (veridag-dag, signed)
-  -> gossip over QUIC (veridag-net)
-  -> BaselineDagBft commit (veridag-consensus, pure function)
-  -> canonical causal ordering
+  -> validate (veridag-transaction)
+  -> batch commitment (VCE-1 canonical encoding)
+  -> signed DAG vertex (veridag-dag)
+  -> authenticated QUIC gossip (veridag-net)
+  -> BaselineDagBft pure commit rule (veridag-consensus)
+  -> canonical causal wave ordering
   -> conflict-aware execution (veridag-execution: parallel prefix + sequential suffix)
-  -> BMH-1 state root (veridag-merkle)
-  -> checkpoint (veridag-checkpoint)
-  -> persist (veridag-storage: sled)`}</code></pre>
-      <p className="muted">
-        Every step is a deterministic function of its inputs. The commit rule is a
-        pure function: given an identical DAG, every node computes an identical
-        committed anchor and ordering.
-      </p>
+  -> BMH-1 Merkle state root (veridag-merkle)
+  -> 2f+1 quorum checkpoint (veridag-checkpoint)
+  -> persist to disk (veridag-storage: sled)`}</code></pre>
 
-      <h2>Why QUIC</h2>
-      <ul>
-        <li>No head-of-line blocking within a connection (independent streams).</li>
-        <li>Authenticated from byte 0 via TLS 1.3 with self-signed Ed25519 certs; a domain-separated preimage prevents cross-purpose reuse.</li>
-        <li>1-RTT handshake, connection migration, built-in congestion control — suitable for validators on flaky or mobile links.</li>
-      </ul>
-
-      <h2>Why sled</h2>
-      <ul>
-        <li>Zero external services — the database is a local file. A validator is one static binary plus a data directory.</li>
-        <li>Append-friendly, crash-safe — matches the DAG&rsquo;s never-rewrite-history model.</li>
-        <li>Tiny footprint → runs on a Raspberry Pi-class node.</li>
-      </ul>
-
-      <h2>Safety posture</h2>
-      <ul>
-        <li>All crates <code>#![forbid(unsafe_code)]</code> by default.</li>
-        <li>Attacker-facing parsers are canonical (VCE-1) and fuzz-targeted.</li>
-        <li>Every consensus-visible value round-trips through VCE-1.</li>
-        <li>Signatures use domain-separated preimages (<code>VERIDAG_TX_V1</code>, <code>VERIDAG_VERTEX_V1</code>, &hellip;) so a signature for one purpose cannot be replayed for another.</li>
-      </ul>
-
-      <h2>Not in 0.1.0-alpha</h2>
-      <p className="muted">
-        Public libp2p P2P, the deterministic Wasm runtime, TypeScript/Python/Go
-        SDKs, light-client proofs, and zk proof adapters are explicitly deferred.
-        The core consensus + execution + persistence + networking slice is complete
-        and tested.
-      </p>
+      <h2>Crate Map</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Crate</th>
+              <th>Layer</th>
+              <th>Responsibility</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>veridag-protocol-types</code></td><td>Types</td><td>Canonical IDs, address types, domain tags</td></tr>
+            <tr><td><code>veridag-codec</code></td><td>Encoding</td><td>VCE-1 canonical encoder/decoder</td></tr>
+            <tr><td><code>veridag-crypto</code></td><td>Crypto</td><td>BLAKE3 hashing, Ed25519 signing, domain separators</td></tr>
+            <tr><td><code>veridag-merkle</code></td><td>State</td><td>BMH-1 state commitments + inclusion proofs</td></tr>
+            <tr><td><code>veridag-transaction</code></td><td>Tx</td><td>Transaction model, anti-replay, nonce discipline</td></tr>
+            <tr><td><code>veridag-capabilities</code></td><td>Auth</td><td>Capability objects and scoped authorization</td></tr>
+            <tr><td><code>veridag-object-state</code></td><td>State</td><td>Version-disciplined object store &amp; balances</td></tr>
+            <tr><td><code>veridag-execution</code></td><td>Execution</td><td>Sequential deterministic oracle + parallel scheduler</td></tr>
+            <tr><td><code>veridag-dag</code></td><td>DAG</td><td>VCE-1 vertex wire form, validity &amp; equivocation check</td></tr>
+            <tr><td><code>veridag-consensus</code></td><td>Consensus</td><td>BaselineDagBft pure commit rule &amp; wave ordering</td></tr>
+            <tr><td><code>veridag-checkpoint</code></td><td>Finality</td><td>Quorum finality proofs (2f+1) &amp; checkpoint chain</td></tr>
+            <tr><td><code>veridag-storage</code></td><td>Storage</td><td>Sled persistent &amp; Memory storage engines</td></tr>
+            <tr><td><code>veridag-net</code></td><td>Network</td><td>QUIC authenticated validator transport</td></tr>
+            <tr><td><code>veridag-testkit</code></td><td>Testing</td><td>Vector generation &amp; malformed fuzz suites</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

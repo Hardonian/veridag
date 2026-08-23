@@ -52,7 +52,11 @@ fn ledger_path() -> PathBuf {
 }
 
 fn dirs_home() -> PathBuf {
-    PathBuf::from(std::env::var("HOME").unwrap_or_else(|_| ".".into()))
+    PathBuf::from(
+        std::env::var("HOME")
+            .or_else(|_| std::env::var("USERPROFILE"))
+            .unwrap_or_else(|_| ".".into()),
+    )
 }
 
 fn load_ledger() -> DevLedger {

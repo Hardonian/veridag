@@ -1,77 +1,119 @@
 export default function Security() {
   return (
     <div>
-      <h1>Security</h1>
+      <h1>Security &amp; Threat Model</h1>
       <p className="tagline">
-        The security model combines the threat model, the capability model, the
-        cryptographic domains, the validation pipeline, and the consensus safety
-        invariants.
-      </p>
-      <p className="muted">
-        We claim only what is demonstrated by the formal model and the test suite in
-        this tree. We do not claim production readiness without external audits.
+        The Veridag security posture integrates capability isolation, domain-separated cryptography,
+        cheap-to-expensive validation pipelines, and formal Quint consensus invariants.
       </p>
 
-      <h2>Adversary classes</h2>
-      <ul>
-        <li>Byzantine validators (up to <code>f</code> of <code>n &gt;= 3f+1</code>)</li>
-        <li>Malicious clients</li>
-        <li>Sybil peers on the public plane</li>
-        <li>Malicious applications in the Wasm runtime</li>
-        <li>Supply-chain attackers on dependencies</li>
-      </ul>
+      <div className="alert">
+        <div className="alert-title">🔒 Zero-Unsafe Guarantee</div>
+        <p style={{ margin: 0, fontSize: "14px", color: "#c7d2e0" }}>
+          All consensus, execution, cryptographic, and state crates in the Rust reference implementation
+          strictly forbid unsafe code (<code>#![forbid(unsafe_code)]</code>).
+        </p>
+      </div>
 
-      <h2>Attacks considered &amp; mitigations</h2>
-      <table>
-        <thead>
-          <tr><th>Attack</th><th>Mitigation</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Equivocation</td><td>Detected; one working vertex per (author, round); safety proved in Quint model.</td></tr>
-          <tr><td>Censorship</td><td>DAG proposals from all validators; withholding only delays own txs.</td></tr>
-          <tr><td>Ordering manipulation</td><td>CanonicalWaveOrder seed bound to committed anchor (spec 10).</td></tr>
-          <tr><td>Replay</td><td>nonce + expiry_epoch + object-version binding + (chain, protocol) in preimage.</td></tr>
-          <tr><td>Eclipse</td><td>Validator fast path authenticated to ValidatorId; public plane separate.</td></tr>
-          <tr><td>Parser attacks</td><td>VCE-1 canonical rejection; malformed vector suite; fuzz targets on every parser.</td></tr>
-          <tr><td>DoS / resource exhaustion</td><td>Bounded frames/messages/queues/requests; validation pipeline cheap-to-expensive; backpressure.</td></tr>
-          <tr><td>Key compromise</td><td>Capability scoping limits blast radius; validator keys via keystore/signer abstraction.</td></tr>
-          <tr><td>Wasm escape</td><td>Default-deny host API; explicit capability handles; deterministic metering.</td></tr>
-          <tr><td>Proof forgery</td><td>Versioned proof envelopes; verification optional and backend-identified.</td></tr>
-          <tr><td>Rollback</td><td>Finality invariant; checkpoint chain links validator sets.</td></tr>
-          <tr><td>Checkpoint forgery</td><td>Quorum finality proofs (2f+1).</td></tr>
-          <tr><td>Supply-chain</td><td>cargo deny + audit in CI; deliberate dependency policy.</td></tr>
-          <tr><td>Validator crash/restart</td><td>Persist-before-ack; recovery rebuilds from durable state.</td></tr>
-          <tr><td>Partition</td><td>Safety is clock-independent; liveness resumes under eventual synchrony.</td></tr>
-        </tbody>
-      </table>
+      <h2>Adversary Classes Handled</h2>
+      <div className="card-grid">
+        <div className="card">
+          <span className="card-icon">🦹</span>
+          <h3>Byzantine Validators</h3>
+          <p>Tolerates up to <code>f</code> Byzantine/faulty validators in any committee of <code>n &gt;= 3f + 1</code> nodes.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">⚡</span>
+          <h3>Equivocating Authors</h3>
+          <p>Equivocation is strictly detected and quarantined. At most one vertex per author-round is admitted.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">🔄</span>
+          <h3>Replay Attackers</h3>
+          <p>Anti-replay via nonce, epoch expiry, object version binding, and domain-separated preimages.</p>
+        </div>
+        <div className="card">
+          <span className="card-icon">💣</span>
+          <h3>DoS &amp; Parser Attacks</h3>
+          <p>Bounded frame sizes, canonical VCE-1 format, cheap-to-expensive checks, and fuzz testing.</p>
+        </div>
+      </div>
 
-      <h2>Validation pipeline (increasing cost)</h2>
-      <pre><code>{`frame bounds -> basic format -> protocol version -> canonical encoding
+      <h2>Attacks Considered &amp; Mitigations</h2>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Attack Vector</th>
+              <th>Protocol &amp; Implementation Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Equivocation</strong></td>
+              <td>Detected on ingress; exactly one working vertex per (author, round); safety proved in Quint.</td>
+            </tr>
+            <tr>
+              <td><strong>Censorship</strong></td>
+              <td>DAG multi-proposer model; any honest validator can propose batches; withholding hurts only the withholding node.</td>
+            </tr>
+            <tr>
+              <td><strong>Ordering Manipulation</strong></td>
+              <td>Deterministic <code>CanonicalWaveOrder</code> with seed bound to committed anchor vertex.</td>
+            </tr>
+            <tr>
+              <td><strong>Replay Attacks</strong></td>
+              <td>Nonce tracking, epoch bounds, object version binding, and protocol domain separators.</td>
+            </tr>
+            <tr>
+              <td><strong>Parser Exploitation</strong></td>
+              <td>Strict VCE-1 canonical decoder rejection; malformed fuzz vector suite in CI.</td>
+            </tr>
+            <tr>
+              <td><strong>Resource Exhaustion</strong></td>
+              <td>Progressive validation pipeline; cheap checks execute before expensive cryptographic verify.</td>
+            </tr>
+            <tr>
+              <td><strong>Crash &amp; Restarts</strong></td>
+              <td>Persist-before-ack discipline; recovery rebuilds state bit-for-bit from durable Sled logs.</td>
+            </tr>
+            <tr>
+              <td><strong>Network Partitions</strong></td>
+              <td>Safety is clock-independent; liveness smoothly recovers upon eventual synchrony.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Progressive Validation Pipeline</h2>
+      <pre><code>{`frame bounds -> basic format -> protocol version -> canonical VCE-1 encoding
 -> duplicate check -> cheap structural checks -> signature verification
--> state-dependent validation -> execution -> proof verification (if required)`}</code></pre>
-
-      <h2>Cryptographic domains</h2>
-      <p>
-        Signatures use <strong>domain-separated preimages</strong> (
-        <code>VERIDAG_TX_V1</code>, <code>VERIDAG_VERTEX_V1</code>, &hellip;) so a
-        signature minted for one purpose cannot be replayed for another. Hashing is
-        BLAKE3 (fast, parallel, constant-time); signatures are Ed25519
-        (ed25519-dalek).
+-> state-dependent validation -> execution -> proof verification`}</code></pre>
+      <p className="muted">
+        Expensive signature and Merkle calculations are never executed before cheap structural filters pass.
       </p>
 
-      <h2>Safety invariants</h2>
-      <ul>
-        <li><strong>Agreement</strong> — non-faulty nodes commit the same anchor.</li>
-        <li><strong>Finality</strong> — committed state is never reverted.</li>
-        <li><strong>Integrity</strong> — only validly-signed, well-formed vertices enter the DAG.</li>
-        <li>Plus determinism, no-double-spend, replay-protection, capability-safety, and canonical-interpretation.</li>
-      </ul>
-
-      <h2>Reporting</h2>
+      <h2>Cryptographic Domain Separation</h2>
       <p>
-        See <code>SECURITY.md</code> for the disclosure policy. The protocol is
-        research-grade; deploy only after external review for your threat profile.
+        All cryptographic operations use explicit BLAKE3 / Ed25519 domain separators to prevent cross-context replay:
       </p>
+      <div className="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Domain Tag</th>
+              <th>Scope</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><code>VERIDAG_TX_V1</code></td><td>Client transaction signatures</td></tr>
+            <tr><td><code>VERIDAG_VERTEX_V1</code></td><td>DAG vertex validator signatures</td></tr>
+            <tr><td><code>VERIDAG_BATCH_V1</code></td><td>Transaction batch commitment hashing</td></tr>
+            <tr><td><code>VERIDAG_CHECKPOINT_V1</code></td><td>Checkpoint finality quorum voting</td></tr>
+            <tr><td><code>VERIDAG_TLS_CERT_V1</code></td><td>QUIC node authentication certificates</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

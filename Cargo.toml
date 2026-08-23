@@ -8,8 +8,15 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
+rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
-repository = "https://example.invalid/veridag"
+version = "0.1.0-alpha"
+authors = ["Veridag Protocol Contributors"]
+description = "Veridag: deterministic, Byzantine-resilient, capability-secured distributed execution substrate"
+repository = "https://github.com/Hardonian/veridag"
+homepage = "https://veridag.dev"
+keywords = ["blockchain", "consensus", "dag", "bft", "distributed-systems"]
+categories = ["cryptography", "concurrency", "network-programming"]
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
@@ -17,3 +24,4 @@ unsafe_code = "forbid"
 [workspace.lints.clippy]
 all = "warn"
 pedantic = "warn"
+

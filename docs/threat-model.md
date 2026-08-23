@@ -44,7 +44,7 @@ Expensive work is never done before cheap rejection when avoidable.
 
 * Public token economics / proof-of-stake security.
 * zk proof soundness (proofs are optional and experimental).
-* Protection against a comprome of > f validators.
+* Protection against a compromise of > f validators.
 * Defense against physical-side-channel attacks on validator hardware.
 * Guaranteed liveness under permanent partition.
 

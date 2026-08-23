@@ -29,11 +29,31 @@ formal:
     cd formal/quint && quint run instance4.qnt --invariant=Finality --max-steps=30 --max-samples=200
     cd formal/quint && quint run instance4.qnt --invariant=Integrity --max-steps=30 --max-samples=200
 
-# 4-validator devnet (available after Phase 8)
-devnet:
-    @echo "devnet is available after Phase 8 (vertical slice)."
-    @echo "Run the Phase 4 CLI demo instead: cargo run -p veridag-cli -- --help"
+# In-process 4-validator consensus demo
+demo:
+    cargo run -p veridag-node -- demo
 
-# Deterministic simulator smoke (available after Phase 7)
+# 4-validator multi-process QUIC network devnet
+devnet:
+    cargo test -p veridag-net --test devnet -- --nocapture
+
+# Deterministic simulation harness (agreement & causal ordering)
 sim:
-    @echo "simulator is available after Phase 7."
+    cargo test -p veridag-consensus --test simulation -- --nocapture
+
+# Validator node health probe (checks agreement & emits status)
+health:
+    cargo run -p veridag-node -- health
+
+# Developer CLI help
+cli:
+    cargo run -p veridag-cli -- --help
+
+# Run web portal documentation app locally
+site-dev:
+    cd site && npm run dev
+
+# Build static production bundle for web portal
+site-build:
+    cd site && npm run build
+
