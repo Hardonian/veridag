@@ -10,3 +10,4 @@ dist/
 .coverage
 devnet-data/
 formal/traces/*.itf.json.tmp
+implementations/rust/Cargo.lock
