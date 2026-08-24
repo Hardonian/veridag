@@ -19,7 +19,7 @@ rustls.workspace = true
 futures.workspace = true
 tracing.workspace = true
 async-trait.workspace = true
-libp2p = { version = "0.54", optional = true, default-features = false, features = ["tokio", "floodsub", "tcp", "noise", "yamux", "macros"] }
+libp2p = { version = "0.56", optional = true, default-features = false, features = ["tokio", "floodsub", "tcp", "noise", "yamux", "macros"] }
 
 [features]
 default = []
