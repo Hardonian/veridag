@@ -7,9 +7,20 @@
 #![warn(missing_docs)]
 
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use rand::rngs::OsRng;
+use getrandom::Error as GetRandomError;
 use thiserror::Error;
 use veridag_protocol_types::{Address, Ed25519PublicKey, Ed25519Signature, Hash};
+
+/// Error returned when OS entropy could not be obtained during key generation.
+#[derive(Debug, Error, Clone, PartialEq, Eq)]
+#[error("OS entropy unavailable: {0}")]
+pub struct EntropyError(String);
+
+impl From<GetRandomError> for EntropyError {
+    fn from(e: GetRandomError) -> Self {
+        EntropyError(e.to_string())
+    }
+}
 
 /// Signature/verification errors.
 #[derive(Debug, Error, Clone, PartialEq, Eq)]
@@ -98,10 +109,12 @@ pub struct Keypair {
 impl Keypair {
     /// Generate a fresh random keypair (OS entropy; never used on
     /// consensus-visible derivation paths that must be deterministic).
-    pub fn generate() -> Self {
-        Self {
-            sk: SigningKey::generate(&mut OsRng),
-        }
+    pub fn generate() -> Result<Self, EntropyError> {
+        let mut seed = [0u8; 32];
+        getrandom::getrandom(&mut seed)?;
+        Ok(Self {
+            sk: SigningKey::from_bytes(&seed),
+        })
     }
 
     /// Construct from a 32-byte secret seed.
@@ -166,14 +179,14 @@ mod tests {
 
     #[test]
     fn sign_and_verify() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let sig = kp.sign("VERIDAG_TX_V1", b"payload");
         assert!(verify(&kp.public(), "VERIDAG_TX_V1", b"payload", &sig).is_ok());
     }
 
     #[test]
     fn verify_rejects_wrong_domain() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let sig = kp.sign("VERIDAG_TX_V1", b"payload");
         assert_eq!(
             verify(&kp.public(), "VERIDAG_VERTEX_V1", b"payload", &sig),
@@ -183,7 +196,7 @@ mod tests {
 
     #[test]
     fn verify_rejects_wrong_payload() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let sig = kp.sign("VERIDAG_TX_V1", b"payload");
         assert_eq!(
             verify(&kp.public(), "VERIDAG_TX_V1", b"other", &sig),

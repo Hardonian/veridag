@@ -14,7 +14,9 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::sync::Arc;
 use veridag_checkpoint::{dag_commitment, validator_set_commitment, Checkpoint};
+use veridag_codec::Decode;
 use veridag_consensus::{commit, highest_complete_wave, StaticCommittee, WAVE};
 use veridag_crypto::Keypair;
 use veridag_dag::{Dag, Vertex};
@@ -26,8 +28,6 @@ use veridag_protocol_types::{
     ObjectRef, Ownership, ResourceBudget, Round, ValidatorId, VertexId, CURRENT_PROTOCOL_VERSION,
 };
 use veridag_transaction::{Operation, SignedTransaction, Transaction};
-use std::sync::Arc;
-use veridag_codec::Decode;
 
 const CHAIN: ChainId = 1;
 
@@ -519,29 +519,53 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String) -> Result<()> {
     let alice = Keypair::from_seed(&[100; 32]);
     let bob = Keypair::from_seed(&[101; 32]);
     let mut state = ObjectState::new();
-    state.create(Object::new(Object::derive_id(&alice.address(), 0), object_type::BALANCE, Ownership::Address(alice.address()), 100u64.to_be_bytes().to_vec(), vec![])).unwrap();
-    state.create(Object::new(Object::derive_id(&bob.address(), 0), object_type::BALANCE, Ownership::Address(bob.address()), 0u64.to_be_bytes().to_vec(), vec![])).unwrap();
+    state
+        .create(Object::new(
+            Object::derive_id(&alice.address(), 0),
+            object_type::BALANCE,
+            Ownership::Address(alice.address()),
+            100u64.to_be_bytes().to_vec(),
+            vec![],
+        ))
+        .unwrap();
+    state
+        .create(Object::new(
+            Object::derive_id(&bob.address(), 0),
+            object_type::BALANCE,
+            Ownership::Address(bob.address()),
+            0u64.to_be_bytes().to_vec(),
+            vec![],
+        ))
+        .unwrap();
     let executor = Executor::new(0);
 
     let identity = veridag_net::Identity::from_keypair(&key).unwrap();
-    
+
     // Resolve peers from hostnames (required for docker-compose)
     let mut peer_addrs = Vec::new();
-    for p in peers {
+    for p in &peers {
         if let Ok(addrs) = tokio::net::lookup_host(&p).await {
             if let Some(addr) = addrs.into_iter().next() {
                 peer_addrs.push(addr);
             }
         }
     }
-    
+
     let bind_addr = bind.parse().unwrap();
-    let gossip = Arc::new(veridag_net::gossip::Gossip::bind(bind_addr, identity, validators.clone(), peer_addrs).unwrap());
+    let gossip = Arc::new(
+        veridag_net::gossip::Gossip::bind(bind_addr, identity, validators.clone(), peer_addrs)
+            .unwrap(),
+    );
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<(u8, Vec<u8>)>(1024);
     let _recv = gossip.spawn_tagged_receiver(tx);
 
-    println!("veridag-node daemon (seed={}) bound to {} with {} peers", seed, bind, peers.len());
+    println!(
+        "veridag-node daemon (seed={}) bound to {} with {} peers",
+        seed,
+        bind,
+        peers.len()
+    );
 
     if seed == 1 {
         let stx = signed_transfer(&alice, 0, bob.address(), 40);
@@ -559,7 +583,15 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String) -> Result<()> {
                     let mut d = veridag_codec::Decoder::new(&payload);
                     if let Ok(v) = Vertex::decode(&mut d) {
                         if d.finish().is_ok() {
-                            let _ = dag.add(v, CURRENT_PROTOCOL_VERSION, CHAIN, 0, is_val, committee.quorum(), &[]);
+                            let _ = dag.add(
+                                v,
+                                CURRENT_PROTOCOL_VERSION,
+                                CHAIN,
+                                0,
+                                is_val,
+                                committee.quorum(),
+                                &[],
+                            );
                         }
                     }
                 }
@@ -567,7 +599,10 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String) -> Result<()> {
                     let mut d = veridag_codec::Decoder::new(&payload);
                     if let Ok(mstx) = SignedTransaction::decode(&mut d) {
                         if d.finish().is_ok() {
-                            let mb = BatchId(veridag_crypto::hash("VERIDAG_BATCH_V1", &veridag_codec::Encode::to_bytes(&mstx)));
+                            let mb = BatchId(veridag_crypto::hash(
+                                "VERIDAG_BATCH_V1",
+                                &veridag_codec::Encode::to_bytes(&mstx),
+                            ));
                             batches.entry(mb).or_insert_with(|| vec![mstx]);
                         }
                     }
@@ -578,19 +613,50 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String) -> Result<()> {
 
         let frontier = dag.round_vertices_max().unwrap_or(0);
         for r in 1..=frontier + 1 {
-            if proposed.contains(&r) { continue; }
+            if proposed.contains(&r) {
+                continue;
+            }
             let can = r == 1 || dag.quorum_reached(r - 1, committee.quorum());
-            if !can { break; }
-            let parents: Vec<VertexId> = if r == 1 { Vec::new() } else { dag.round_vertices(r - 1).copied().collect() };
-            
+            if !can {
+                break;
+            }
+            let parents: Vec<VertexId> = if r == 1 {
+                Vec::new()
+            } else {
+                dag.round_vertices(r - 1).copied().collect()
+            };
+
             let vbatches = if r == 2 && seed == 1 {
                 let stx = signed_transfer(&alice, 0, bob.address(), 40);
                 let tx_bytes = veridag_codec::Encode::to_bytes(&stx);
                 vec![BatchId(veridag_crypto::hash("VERIDAG_BATCH_V1", &tx_bytes))]
-            } else { vec![] };
+            } else {
+                vec![]
+            };
 
-            if let Ok(v) = Vertex::new_signed(CURRENT_PROTOCOL_VERSION, CHAIN, 0, r, id, parents, vbatches, Vec::new(), &key) {
-                if dag.add(v.clone(), CURRENT_PROTOCOL_VERSION, CHAIN, 0, is_val, committee.quorum(), &[]).is_ok() {
+            if let Ok(v) = Vertex::new_signed(
+                CURRENT_PROTOCOL_VERSION,
+                CHAIN,
+                0,
+                r,
+                id,
+                parents,
+                vbatches,
+                Vec::new(),
+                &key,
+            ) {
+                if dag
+                    .add(
+                        v.clone(),
+                        CURRENT_PROTOCOL_VERSION,
+                        CHAIN,
+                        0,
+                        is_val,
+                        committee.quorum(),
+                        &[],
+                    )
+                    .is_ok()
+                {
                     proposed.insert(r);
                     gossip.broadcast(&v).await;
                 }
@@ -615,7 +681,11 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String) -> Result<()> {
                 }
                 if !txs.is_empty() {
                     let result = execute_parallel(&executor, &mut state, &txs);
-                    println!("Executed wave {}, state root 0x{}", mw, hex::encode(result.state_root));
+                    println!(
+                        "Executed wave {}, state root 0x{}",
+                        mw,
+                        hex::encode(result.state_root)
+                    );
                 }
             }
             prev_mw = mw;
