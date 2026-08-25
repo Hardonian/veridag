@@ -10,7 +10,7 @@ description.workspace = true
 veridag-protocol-types = { path = "../protocol-types" }
 blake3.workspace = true
 ed25519-dalek.workspace = true
-rand.workspace = true
+getrandom = "0.2"
 thiserror.workspace = true
 veridag-metrics = { path = "../metrics", optional = true }
 criterion = { version = "0.5", optional = true, default-features = false }

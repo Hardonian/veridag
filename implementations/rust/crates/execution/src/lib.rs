@@ -596,8 +596,8 @@ mod tests {
 
     #[test]
     fn transfer_flow() {
-        let alice = Keypair::generate();
-        let bob = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let bob = Keypair::generate().unwrap();
         let mut state = ObjectState::new();
         let ex = Executor::new(0);
 
@@ -630,8 +630,8 @@ mod tests {
 
     #[test]
     fn insufficient_funds_fails() {
-        let alice = Keypair::generate();
-        let bob = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let bob = Keypair::generate().unwrap();
         let mut state = ObjectState::new();
         let ex = Executor::new(0);
         ex.apply_one(&mut state, &create_balance(&alice, 0, 10));
@@ -655,8 +655,8 @@ mod tests {
 
     #[test]
     fn double_spend_via_version_conflict_fails() {
-        let alice = Keypair::generate();
-        let bob = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let bob = Keypair::generate().unwrap();
         let mut state = ObjectState::new();
         let ex = Executor::new(0);
         ex.apply_one(&mut state, &create_balance(&alice, 0, 50));
@@ -698,8 +698,8 @@ mod tests {
 
     #[test]
     fn unauthorized_update_rejected() {
-        let alice = Keypair::generate();
-        let mallory = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let mallory = Keypair::generate().unwrap();
         let mut state = ObjectState::new();
         let ex = Executor::new(0);
         ex.apply_one(&mut state, &create_balance(&alice, 0, 50));
@@ -724,9 +724,9 @@ mod tests {
     #[test]
     fn agent_capability_enforced_by_protocol() {
         // Alice grants an Agent capability (max spend 10); agent uses it.
-        let alice = Keypair::generate();
-        let agent = Keypair::generate();
-        let vendor = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let agent = Keypair::generate().unwrap();
+        let vendor = Keypair::generate().unwrap();
         let mut state = ObjectState::new();
         let ex = Executor::new(0);
 
@@ -809,8 +809,8 @@ mod tests {
 
     #[test]
     fn determinism_same_batch_same_root() {
-        let alice = Keypair::generate();
-        let bob = Keypair::generate();
+        let alice = Keypair::generate().unwrap();
+        let bob = Keypair::generate().unwrap();
         let txs = vec![
             create_balance(&alice, 0, 100),
             sign(

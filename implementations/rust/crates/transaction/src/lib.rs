@@ -416,7 +416,7 @@ mod tests {
 
     #[test]
     fn signed_tx_roundtrip_and_id_stable() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let tx = mk_tx(
             kp.address(),
             0,
@@ -438,7 +438,7 @@ mod tests {
 
     #[test]
     fn signature_verifies_and_wrong_key_fails() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let tx = mk_tx(
             kp.address(),
             0,
@@ -452,7 +452,7 @@ mod tests {
         let sig = kp.sign("VERIDAG_TX_V1", &tx.to_bytes());
         let stx = SignedTransaction { tx, signature: sig };
         assert!(stx.verify_signature(&kp.public()).is_ok());
-        let other = Keypair::generate();
+        let other = Keypair::generate().unwrap();
         assert_eq!(
             stx.verify_signature(&other.public()),
             Err(TxError::InvalidSignature)
@@ -461,7 +461,7 @@ mod tests {
 
     #[test]
     fn structural_checks() {
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let mut tx = mk_tx(
             kp.address(),
             0,
@@ -518,7 +518,7 @@ mod tests {
     #[test]
     fn unknown_variant_rejected() {
         // operation variant 99 must be rejected
-        let kp = Keypair::generate();
+        let kp = Keypair::generate().unwrap();
         let tx = mk_tx(
             kp.address(),
             0,

@@ -138,7 +138,7 @@ enum DevCmd {
 }
 
 fn cmd_key_generate(name: &str) -> Result<()> {
-    let kp = Keypair::generate();
+    let kp = Keypair::generate().unwrap();
     let entry = KeyEntry {
         name: name.to_string(),
         secret_seed: format!("0x{}", hex::encode(kp.secret_seed())),
