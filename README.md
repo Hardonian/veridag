@@ -2,6 +2,10 @@
 
 # ⚡ Veridag
 
+<!-- BEGIN: REPO HERO -->
+![veridag — hero generated locally on the GPU stack](assets/repo-hero.png)
+<!-- END: REPO HERO -->
+
 ### **The Deterministic Distributed Trust Fabric for AI Agents, Edge Swarms, and Enterprise State**
 
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-emerald?style=for-the-badge&logo=rust)](https://github.com/Hardonian/veridag/releases)
