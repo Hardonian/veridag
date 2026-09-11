@@ -4085,11 +4085,15 @@ dependencies = [
  "hex",
  "serde",
  "serde_json",
+ "veridag-capabilities",
+ "veridag-checkpoint",
  "veridag-codec",
  "veridag-crypto",
+ "veridag-ethereum",
  "veridag-execution",
  "veridag-object-state",
  "veridag-protocol-types",
+ "veridag-stablecoin",
  "veridag-transaction",
 ]
 
@@ -4147,6 +4151,24 @@ dependencies = [
  "veridag-crypto",
  "veridag-protocol-types",
  "veridag-storage",
+]
+
+[[package]]
+name = "veridag-ethereum"
+version = "0.1.0-alpha"
+dependencies = [
+ "hex",
+ "rand 0.10.2",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.20",
+ "veridag-checkpoint",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-merkle",
+ "veridag-object-state",
+ "veridag-protocol-types",
+ "veridag-stablecoin",
 ]
 
 [[package]]
@@ -4295,14 +4317,31 @@ dependencies = [
 name = "veridag-sdk"
 version = "0.1.0-alpha"
 dependencies = [
+ "hex",
  "reqwest",
+ "serde_json",
  "thiserror 2.0.20",
  "veridag-checkpoint",
  "veridag-codec",
  "veridag-crypto",
  "veridag-object-state",
  "veridag-protocol-types",
+ "veridag-stablecoin",
  "veridag-transaction",
+]
+
+[[package]]
+name = "veridag-stablecoin"
+version = "0.1.0-alpha"
+dependencies = [
+ "rand 0.10.2",
+ "thiserror 2.0.20",
+ "veridag-capabilities",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-merkle",
+ "veridag-object-state",
+ "veridag-protocol-types",
 ]
 
 [[package]]
@@ -4361,6 +4400,19 @@ dependencies = [
  "veridag-protocol-types",
  "wasmtime",
  "wat",
+]
+
+[[package]]
+name = "veridag-zkvm"
+version = "0.1.0-alpha"
+dependencies = [
+ "hex",
+ "serde",
+ "thiserror 2.0.20",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-protocol-types",
+ "veridag-transaction",
 ]
 
 [[package]]

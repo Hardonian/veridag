@@ -111,7 +111,7 @@ impl Keypair {
     /// consensus-visible derivation paths that must be deterministic).
     pub fn generate() -> Result<Self, EntropyError> {
         let mut seed = [0u8; 32];
-        getrandom::getrandom(&mut seed)?;
+        getrandom::fill(&mut seed)?;
         Ok(Self {
             sk: SigningKey::from_bytes(&seed),
         })

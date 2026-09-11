@@ -175,7 +175,7 @@ fn bench_hotpath(c: &mut Criterion) {
     c.bench_function("consensus_commit_4v_3w", |b| {
         b.iter(|| {
             let s = commit(&dag, &committee, mw);
-            criterion::black_box(s);
+            std::hint::black_box(s);
         });
     });
 
@@ -184,7 +184,7 @@ fn bench_hotpath(c: &mut Criterion) {
         b.iter(|| {
             let mut st = state.clone();
             let r = execute_parallel(&ex, &mut st, &txs);
-            criterion::black_box(r);
+            std::hint::black_box(r);
         });
     });
 }

@@ -13,6 +13,7 @@ veridag-protocol-types = { path = "../protocol-types" }
 veridag-transaction = { path = "../transaction" }
 veridag-object-state = { path = "../object-state" }
 veridag-checkpoint = { path = "../checkpoint" }
+veridag-stablecoin = { path = "../stablecoin" }
 thiserror = { workspace = true }
 
 [features]
@@ -27,3 +28,5 @@ default-features = false
 features = ["json", "rustls-tls"]
 
 [dev-dependencies]
+hex.workspace = true
+serde_json.workspace = true

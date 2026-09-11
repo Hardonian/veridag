@@ -1,0 +1,26 @@
+[package]
+name = "veridag-ethereum"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Veridag Ethereum infrastructure: EVM JSON-RPC, L1 Light Client proofs, and cross-chain bridge substrate"
+
+[dependencies]
+veridag-checkpoint = { path = "../checkpoint" }
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-merkle = { path = "../merkle" }
+veridag-object-state = { path = "../object-state" }
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-stablecoin = { path = "../stablecoin" }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+hex.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+rand.workspace = true
+
+[lints]
+workspace = true

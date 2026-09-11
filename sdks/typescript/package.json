@@ -1,0 +1,21 @@
+{
+  "name": "@veridag/sdk",
+  "version": "0.1.0-alpha",
+  "description": "Veridag Official TypeScript SDK: deterministic, capability-scoped transaction builder and client",
+  "main": "dist/index.js",
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "node tests/conformance.test.mjs"
+  },
+  "keywords": [
+    "veridag",
+    "blockchain",
+    "stablecoin",
+    "usdv",
+    "ethereum",
+    "sdk"
+  ],
+  "author": "Veridag Protocol Contributors",
+  "license": "Apache-2.0 OR MIT"
+}

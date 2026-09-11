@@ -1,0 +1,27 @@
+[package]
+name = "veridag-zkvm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Pluggable zkVM state validity proof adapters for Veridag"
+
+[dependencies]
+veridag-crypto = { path = "../crypto" }
+veridag-codec = { path = "../codec" }
+veridag-protocol-types = { path = "../protocol-types" }
+thiserror.workspace = true
+serde.workspace = true
+hex.workspace = true
+
+[features]
+default = ["mock"]
+mock = []
+sp1 = []
+risc0 = []
+
+[dev-dependencies]
+veridag-transaction = { path = "../transaction" }
+
+[lints]
+workspace = true

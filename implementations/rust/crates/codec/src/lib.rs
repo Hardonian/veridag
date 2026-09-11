@@ -93,6 +93,11 @@ impl Encoder {
         self.buf.extend_from_slice(&v.to_be_bytes());
     }
 
+    /// Encode a u128 big-endian.
+    pub fn u128(&mut self, v: u128) {
+        self.buf.extend_from_slice(&v.to_be_bytes());
+    }
+
     /// Encode a bool as 0x00/0x01.
     pub fn bool(&mut self, v: bool) {
         self.buf.push(u8::from(v));
@@ -196,6 +201,14 @@ impl<'a> Decoder<'a> {
         let mut a = [0u8; 8];
         a.copy_from_slice(b);
         Ok(u64::from_be_bytes(a))
+    }
+
+    /// Decode a u128 big-endian.
+    pub fn u128(&mut self) -> Result<u128, DecodeError> {
+        let b = self.take(16)?;
+        let mut a = [0u8; 16];
+        a.copy_from_slice(b);
+        Ok(u128::from_be_bytes(a))
     }
 
     /// Decode a bool, rejecting non-{0,1} tags.

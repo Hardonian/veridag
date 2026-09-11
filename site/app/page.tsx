@@ -8,17 +8,18 @@ export default function Home() {
         <div className="hero-eyebrow">
           <span>⚡ Protocol v0.1.0-alpha Released</span>
           <span style={{ opacity: 0.5 }}>•</span>
-          <span>Formal Quint Model Verified</span>
+          <span>🪙 Next US Stablecoin (USDV)</span>
+          <span style={{ opacity: 0.5 }}>•</span>
+          <span>⛓️ Ethereum Infrastructure</span>
         </div>
         <h1>
-          <span className="hero-headline">The Deterministic </span>
+          <span className="hero-headline">The Next US Stablecoin &amp; </span>
           <br />
-          <span className="hero-gradient">Distributed Trust Fabric</span>
+          <span className="hero-gradient">The Iron-Clad Infrastructure of Ethereum</span>
         </h1>
         <p className="hero-tagline">
-          An implementation-independent protocol and zero-unsafe Rust engine for
-          deterministic, Byzantine-resilient, capability-secured distributed computation.
-          Built for autonomous AI agents, enterprise multi-party state, and edge device meshes.
+          Veridag powers <strong>USDV</strong>—the 100% reserve-backed, capability-governed US sovereign digital dollar—and
+          serves as the ultra-fast, zero-reorg DAG execution, sequencing, and settlement substrate for Ethereum.
         </p>
         <div className="hero-actions">
           <Link href="/quickstart" className="btn-primary">
@@ -38,6 +39,63 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Flagship Pillars: USDV Stablecoin & Ethereum Infra */}
+      <section style={{ marginBottom: "48px" }}>
+        <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))" }}>
+          <div className="card" style={{ border: "1px solid rgba(52, 211, 153, 0.4)", background: "linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(10, 16, 26, 0.8) 100%)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "28px" }}>🪙</span>
+              <div>
+                <h3 style={{ margin: 0, color: "var(--accent-emerald-bright)" }}>USDV Sovereign Stablecoin</h3>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>100% US Treasury &amp; FDIC Backed</span>
+              </div>
+            </div>
+            <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", marginBottom: "16px" }}>
+              The next-generation institutional dollar. Collateralized 1:1 by short-term US Treasury bills,
+              overnight reverse repo, and FDIC cash deposits. Features mathematical Proof of Reserves (PoR) committed directly
+              into consensus state roots and capability-enforced OFAC compliance.
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Mathematical Invariant: TotalSupply &le; AttestedReserves
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Sub-100ms wave settlement with zero MEV front-running
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Real-time OFAC sanctions freeze and compliance escrow
+              </li>
+            </ul>
+          </div>
+
+          <div className="card" style={{ border: "1px solid rgba(56, 189, 248, 0.4)", background: "linear-gradient(180deg, rgba(56, 189, 248, 0.08) 0%, rgba(10, 16, 26, 0.8) 100%)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "28px" }}>⛓️</span>
+              <div>
+                <h3 style={{ margin: 0, color: "var(--accent-cyan-bright)" }}>Ethereum Infrastructure Substrate</h3>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>L2 Sequencer &amp; Trustless L1 Bridge</span>
+              </div>
+            </div>
+            <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", marginBottom: "16px" }}>
+              High-throughput DAG-BFT sequencing and settlement for Ethereum. Delivers zero-reorg finality,
+              native EVM JSON-RPC provider (<code>eth_*</code>), trustless on-chain checkpoint verification in Solidity
+              (<code>VeridagLightClient.sol</code>), and two-way cross-chain portals.
+            </p>
+            <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "8px" }}>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> L1 Light Client: 2f+1 quorum verification in Solidity
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> BMH-1 Merkle inclusion proofs for trustless bridge withdrawals
+              </li>
+              <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> Native EVM JSON-RPC provider (Chain ID 0x5645)
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       {/* Terminal Simulator Showcase */}
       <section>
         <div className="terminal-box">
@@ -47,26 +105,27 @@ export default function Home() {
               <span className="terminal-dot dot-yellow"></span>
               <span className="terminal-dot dot-green"></span>
             </div>
-            <span className="terminal-title">veridag-node — consensus demo (4 validators, in-process)</span>
-            <span style={{ fontSize: "11px", color: "var(--accent-emerald-bright)" }}>● LIVE BFT COMMIT</span>
+            <span className="terminal-title">veridag-cli — institutional stablecoin &amp; ethereum bridge</span>
+            <span style={{ fontSize: "11px", color: "var(--accent-emerald-bright)" }}>● 100% VERIFIED</span>
           </div>
           <div className="terminal-body">
-            <div><span className="terminal-prompt">$ </span>cargo run -p veridag-node -- demo</div>
-            <div className="muted">veridag-node demo: 4-validator committee, in-process</div>
-            <div className="muted">submitted transfer alice-&gt;bob 40 to all mempools</div>
-            <div className="terminal-highlight">round 1..9: max round reached 9 (wave 2 committed)</div>
-            <div>validator 0: state_root=<span className="terminal-success">0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149</span> checkpoints=1</div>
-            <div>&nbsp;&nbsp;checkpoint seq=1 id=0x2c0f6f0ba82cb46a9e223dcb44f9c6d480da39b56fce2685799a779140fa7812</div>
-            <div>validator 1: state_root=<span className="terminal-success">0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149</span> checkpoints=1</div>
-            <div>validator 2: state_root=<span className="terminal-success">0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149</span> checkpoints=1</div>
-            <div>validator 3: state_root=<span className="terminal-success">0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149</span> checkpoints=1</div>
-            <div className="terminal-success" style={{ marginTop: "6px" }}>✓ AGREEMENT OK: identical state root across 4 validators</div>
-            <div className="terminal-highlight">bob balance: 40 (expected 40)</div>
+            <div><span className="terminal-prompt">$ </span>veridag-cli usdv attest-reserves --tbills 80000000 --cash 15000000 --repo 5000000</div>
+            <div className="muted">Oracle Custodian: 0xd7001a91ef8f29136f957e3b3d6fd36108c172f6c1e67f1cbe4505e2a061c01f</div>
+            <div className="terminal-highlight">Total Attested: $100.00M USD (US T-Bills: $80.00M, FDIC Cash: $15.00M, RRP: $5.00M)</div>
+            <div>BMH-1 State Root: <span className="terminal-success">0x988322bd84bb687273f3432e0e4b21d56cad0ba5d9c3c0e1a234161e92a165c1</span></div>
+            <br />
+            <div><span className="terminal-prompt">$ </span>veridag-cli usdv mint --to alice --amount 5000000</div>
+            <div className="terminal-success">✓ Minted $5,000,000.000000 USDV (Supply: $5,000,000 USDV &le; Reserves $100,000,000)</div>
+            <br />
+            <div><span className="terminal-prompt">$ </span>veridag-cli eth bridge-proof --account alice</div>
+            <div className="muted">Generating BMH-1 inclusion proof for Ethereum L1 VeridagLightClient.sol...</div>
+            <div>Proof Siblings: <span className="terminal-highlight">[0x9799..., 0xd423...]</span> (Leaf Index: 2)</div>
+            <div className="terminal-success">✓ Local Verification: PASSED | Verified against L1 Checkpoint StateRoot</div>
           </div>
         </div>
       </section>
 
-      {/* Core Capabilities */}
+      {/* Core Architectural Pillars */}
       <section>
         <h2>🛡️ Core Architectural Pillars</h2>
         <div className="card-grid">
@@ -83,7 +142,7 @@ export default function Home() {
             <h3>Zero-Unsafe Core</h3>
             <p>
               Every consensus, execution, and state crate strictly enforces <code>#![forbid(unsafe_code)]</code>.
-              Memory safety bugs cannot penetrate the BFT core.
+              Memory safety bugs cannot penetrate the core substrate.
             </p>
           </div>
           <div className="card">
@@ -126,6 +185,22 @@ export default function Home() {
         <h2>🎯 High-Value Production Use Cases</h2>
         <div className="card-grid">
           <div className="card">
+            <span className="card-icon">🪙</span>
+            <h3>US Sovereign Stablecoin (USDV)</h3>
+            <p>
+              Bank-grade reserve-backed digital dollar with cryptographic proof of reserves,
+              instantaneous DAG wave settlement, and fine-grained capability-based compliance.
+            </p>
+          </div>
+          <div className="card">
+            <span className="card-icon">⛓️</span>
+            <h3>Ethereum L2 Sequencing &amp; Settlement</h3>
+            <p>
+              Zero-reorg DAG-BFT sequencer eliminating MEV and front-running for Ethereum rollups,
+              settling back to L1 via formal quorum checkpoint proofs.
+            </p>
+          </div>
+          <div className="card">
             <span className="card-icon">🤖</span>
             <h3>Autonomous AI Agent Swarms</h3>
             <p>
@@ -139,22 +214,6 @@ export default function Home() {
             <p>
               Shared multi-party state machine between distinct organizations without centralized cloud coordinators
               or vendor lock-in.
-            </p>
-          </div>
-          <div className="card">
-            <span className="card-icon">📡</span>
-            <h3>Edge &amp; IoT Device Meshes</h3>
-            <p>
-              Lightweight Byzantine consensus running on low-power devices and connected vehicles with resilient
-              offline DAG merging upon reconnection.
-            </p>
-          </div>
-          <div className="card">
-            <span className="card-icon">🌲</span>
-            <h3>Verifiable State Roots</h3>
-            <p>
-              BMH-1 Merkle state commitments and inclusion proofs enabling microsecond state verification for
-              light clients and external auditors.
             </p>
           </div>
         </div>
@@ -190,11 +249,18 @@ export default function Home() {
                 <td><span className="badge-no">✗ No</span></td>
               </tr>
               <tr>
-                <td><strong>No Crypto Tokens / Gas Speculation</strong></td>
-                <td><span className="badge-yes">✓ 100% Free &amp; Neutral</span></td>
-                <td><span className="badge-no">✗ Gas Volatility</span></td>
-                <td><span className="badge-yes">✓ Free</span></td>
-                <td><span className="badge-yes">✓ Free</span></td>
+                <td><strong>Stablecoin Proof of Reserves</strong></td>
+                <td><span className="badge-yes">✓ Cryptographic Invariant</span></td>
+                <td><span className="badge-no">✗ Off-chain Trust</span></td>
+                <td><span className="badge-no">✗ No</span></td>
+                <td><span className="badge-no">✗ No</span></td>
+              </tr>
+              <tr>
+                <td><strong>Ethereum L1 Light Client</strong></td>
+                <td><span className="badge-yes">✓ VeridagLightClient.sol</span></td>
+                <td><span className="badge-partial">~ Heavy ZK / Optimistic</span></td>
+                <td><span className="badge-no">✗ No</span></td>
+                <td><span className="badge-no">✗ No</span></td>
               </tr>
               <tr>
                 <td><strong>Embedded Zero-Config Storage</strong></td>
@@ -231,9 +297,9 @@ export default function Home() {
 
       {/* Quickstart Call to Action */}
       <section style={{ textAlign: "center", marginTop: "60px", padding: "40px 20px", background: "var(--bg-card)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-active)" }}>
-        <h2 style={{ margin: "0 0 12px", justifyContent: "center" }}>Ready to run your first consensus run?</h2>
+        <h2 style={{ margin: "0 0 12px", justifyContent: "center" }}>Deploy USDV and Ethereum Infrastructure</h2>
         <p style={{ maxWidth: "600px", margin: "0 auto 24px", color: "var(--text-muted)" }}>
-          Get from zero to 4-validator consensus agreement in under 3 minutes.
+          Run the full consensus engine, manage the USDV stablecoin, and bridge state to Ethereum in under 3 minutes.
         </p>
         <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/quickstart" className="btn-primary">

@@ -59,9 +59,13 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 ```
 
 ### What Veridag Is NOT
-* ❌ **Not a speculative cryptocurrency or token casino** — No gas volatility, no tokens required to run consensus.
+* ❌ **Not a speculative cryptocurrency or token casino** — No gas volatility, no speculative hype tokens required to run consensus.
 * ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
 * ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
+
+### 🏛️ Flagship Institutional Capabilities
+* 🪙 **USDV (Veridag Dollar): The Next US Sovereign Stablecoin** — 100% reserve-backed (US Treasuries, FDIC cash deposits, Reverse Repo), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
+* ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
 
 ---
 
@@ -232,6 +236,8 @@ implementations/rust/crates/
 ├── consensus/          # BaselineDagBft pure commit rule & wave ordering
 ├── execution/          # Sequential oracle & parallel conflict scheduler
 ├── checkpoint/         # Quorum finality proofs (2f+1)
+├── stablecoin/         # USDV sovereign stablecoin ledger, Proof-of-Reserves & compliance
+├── ethereum/           # Ethereum L1 light client proofs, bridge substrate & EVM JSON-RPC
 ├── storage/            # Sled persistent & in-memory storage backends
 ├── net/                # QUIC authenticated validator transport
 ├── metrics/            # Zero-overhead telemetry probes

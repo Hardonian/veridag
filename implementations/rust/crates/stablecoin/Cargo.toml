@@ -1,0 +1,22 @@
+[package]
+name = "veridag-stablecoin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Veridag institutional US Stablecoin (USDV) ledger, Proof of Reserves, and compliance engine"
+
+[dependencies]
+veridag-capabilities = { path = "../capabilities" }
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-merkle = { path = "../merkle" }
+veridag-object-state = { path = "../object-state" }
+veridag-protocol-types = { path = "../protocol-types" }
+thiserror.workspace = true
+
+[dev-dependencies]
+rand.workspace = true
+
+[lints]
+workspace = true

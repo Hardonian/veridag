@@ -9,10 +9,14 @@ description.workspace = true
 [dependencies]
 veridag-codec = { path = "../../crates/codec" }
 veridag-crypto = { path = "../../crates/crypto" }
+veridag-capabilities = { path = "../../crates/capabilities" }
+veridag-checkpoint = { path = "../../crates/checkpoint" }
 veridag-execution = { path = "../../crates/execution" }
 veridag-object-state = { path = "../../crates/object-state" }
 veridag-protocol-types = { path = "../../crates/protocol-types" }
 veridag-transaction = { path = "../../crates/transaction" }
+veridag-stablecoin = { path = "../../crates/stablecoin" }
+veridag-ethereum = { path = "../../crates/ethereum" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true

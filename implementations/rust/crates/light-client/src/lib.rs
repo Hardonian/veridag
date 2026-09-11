@@ -31,11 +31,15 @@ pub enum LightClientError {
     BadCheckpoint,
     #[error("the supplied validator set does not match the checkpoint's commitment")]
     ValidatorSetMismatch,
+    #[error("non-monotonic checkpoint sequence: received {0}, tracker is at {1}")]
+    NonMonotonicSequence(u64, u64),
+    #[error("no checkpoint has been verified yet")]
+    NoVerifiedCheckpoint,
 }
 
 /// A known validator set the light client trusts (e.g. from a trusted
 /// genesis document or a previously-verified checkpoint).
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TrustedValidators {
     /// (validator id, ed25519 public key) pairs, sorted by id.
     pub validators: Vec<(ValidatorId, Ed25519PublicKey)>,
@@ -127,6 +131,81 @@ pub fn build_object_proof(
 ) -> Option<InclusionProof> {
     let idx = leaves.iter().position(|(id, _)| id == object_id)?;
     veridag_merkle::prove(leaves, idx)
+}
+
+/// A continuous state tracker for light clients across epochs and checkpoints.
+#[derive(Clone, Debug)]
+pub struct LightClientTracker {
+    trusted: TrustedValidators,
+    latest_checkpoint: Option<Checkpoint>,
+    highest_epoch: u64,
+    highest_sequence: u64,
+}
+
+impl LightClientTracker {
+    /// Initialize tracker with trusted validator set.
+    pub fn new(trusted: TrustedValidators) -> Self {
+        Self {
+            trusted,
+            latest_checkpoint: None,
+            highest_epoch: 0,
+            highest_sequence: 0,
+        }
+    }
+
+    /// Access currently trusted validator set.
+    pub fn trusted_validators(&self) -> &TrustedValidators {
+        &self.trusted
+    }
+
+    /// Latest verified checkpoint.
+    pub fn latest_checkpoint(&self) -> Option<&Checkpoint> {
+        self.latest_checkpoint.as_ref()
+    }
+
+    /// Highest tracked checkpoint sequence.
+    pub fn highest_sequence(&self) -> u64 {
+        self.highest_sequence
+    }
+
+    /// Highest tracked epoch.
+    pub fn highest_epoch(&self) -> u64 {
+        self.highest_epoch
+    }
+
+    /// Ingest and cryptographically verify a new checkpoint wire payload.
+    ///
+    /// Enforces:
+    /// 1. Quorum threshold (2f+1 signatures from trusted committee).
+    /// 2. Cryptographic signature correctness.
+    /// 3. Monotonic sequence progression.
+    pub fn ingest_checkpoint(&mut self, checkpoint_bytes: &[u8]) -> Result<&Checkpoint, LightClientError> {
+        let cp = verify_checkpoint(checkpoint_bytes, &self.trusted)?;
+        if self.latest_checkpoint.is_some() && cp.sequence <= self.highest_sequence && cp.epoch <= self.highest_epoch {
+            return Err(LightClientError::NonMonotonicSequence(cp.sequence, self.highest_sequence));
+        }
+
+        self.highest_sequence = cp.sequence;
+        self.highest_epoch = cp.epoch;
+        self.latest_checkpoint = Some(cp);
+        Ok(self.latest_checkpoint.as_ref().unwrap())
+    }
+
+    /// Update trusted validator committee at epoch boundary.
+    pub fn rotate_validators(&mut self, new_trusted: TrustedValidators) {
+        self.trusted = new_trusted;
+    }
+
+    /// Verify an object's Merkle inclusion proof against the latest verified state root.
+    pub fn verify_object(
+        &self,
+        object_id: &ObjectId,
+        object_bytes: &[u8],
+        proof: &InclusionProof,
+    ) -> Result<(), LightClientError> {
+        let cp = self.latest_checkpoint.as_ref().ok_or(LightClientError::NoVerifiedCheckpoint)?;
+        verify_object_inclusion(object_id, object_bytes, proof, &cp.state_root)
+    }
 }
 
 #[cfg(test)]
@@ -232,5 +311,60 @@ mod tests {
 
         let id3 = ObjectId([3u8; 32]);
         assert!(build_object_proof(&leaves, &id3).is_none());
+    }
+
+    #[test]
+    fn light_client_tracker_progression_and_object_proof() {
+        let (keys, quorum) = make_committee(4);
+        let trusted = TrustedValidators::from_keypairs(&keys, quorum);
+        let mut tracker = LightClientTracker::new(trusted.clone());
+
+        let mut state = ObjectState::new();
+        let id1 = ObjectId([1u8; 32]);
+        state
+            .create(Object::new(
+                id1,
+                object_type::BALANCE,
+                Ownership::Address([10u8; 32]),
+                500u64.to_be_bytes().to_vec(),
+                vec![],
+            ))
+            .unwrap();
+        let root = state.state_root();
+
+        let mut cp1 = Checkpoint::new(
+            CURRENT_PROTOCOL_VERSION,
+            1, // epoch
+            1, // height
+            1,
+            CheckpointId([0u8; 32]),
+            root,
+            [8u8; 32],
+            [9u8; 32],
+            trusted.commitment(),
+        );
+        for k in &keys[..quorum] {
+            cp1.add_vote(cp1.sign_vote(k));
+        }
+
+        // Ingest cp1
+        let ing1 = tracker.ingest_checkpoint(&cp1.to_bytes());
+        assert!(ing1.is_ok());
+        assert_eq!(tracker.highest_sequence(), 1);
+
+        // Verify object inclusion via tracker
+        let leaves: Vec<(ObjectId, [u8; 32])> = state
+            .iter()
+            .map(|(id, o)| (*id, object_leaf(id, &o.to_bytes())))
+            .collect();
+        let proof = build_object_proof(&leaves, &id1).unwrap();
+        let obj_bytes = state.get(&id1).unwrap().to_bytes();
+        assert!(tracker.verify_object(&id1, &obj_bytes, &proof).is_ok());
+
+        // Non-monotonic sequence rejection (replaying cp1)
+        assert!(matches!(
+            tracker.ingest_checkpoint(&cp1.to_bytes()),
+            Err(LightClientError::NonMonotonicSequence(1, 1))
+        ));
     }
 }

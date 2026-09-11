@@ -24,6 +24,8 @@ pub use veridag_protocol_types::{
     Ownership, ResourceBudget, TransactionId, ValidatorId, CURRENT_PROTOCOL_VERSION,
 };
 pub use veridag_transaction::{Operation, SignedTransaction, Transaction};
+pub use veridag_stablecoin as stablecoin;
+pub use veridag_stablecoin::{ReserveAttestation, StablecoinAccountPayload, StablecoinLedger};
 
 /// Re-exported signature type (alias for clarity at the SDK boundary).
 pub use veridag_protocol_types::Ed25519Signature as Signature;
@@ -294,5 +296,52 @@ mod tests {
         let id3 = batch_commitment(&[b, a]);
         // Order-sensitive by design (canonical serialization order).
         assert_ne!(id1, id3);
+    }
+
+    #[test]
+    fn sdk_cross_language_conformance_golden_vector() {
+        let json_str = include_str!("../../../../../protocol/test-vectors/sdk_conformance.json");
+        let v: serde_json::Value = serde_json::from_str(json_str).expect("parse json");
+
+        let seed_hex = v["secret_seed"].as_str().unwrap().strip_prefix("0x").unwrap();
+        let seed_bytes = hex::decode(seed_hex).unwrap();
+        let seed: [u8; 32] = seed_bytes.try_into().unwrap();
+        let keypair = Keypair::from_seed(&seed);
+
+        // Verify public key and address
+        let expected_pk = v["public_key"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(keypair.public()), expected_pk);
+
+        let expected_sender = v["sender_address"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(keypair.address()), expected_sender);
+
+        // Build transaction using TxBuilder
+        let recipient_hex = v["recipient_address"].as_str().unwrap().strip_prefix("0x").unwrap();
+        let mut recipient = [0u8; 32];
+        recipient.copy_from_slice(&hex::decode(recipient_hex).unwrap());
+
+        let signed_tx = TxBuilder::new(clone_keypair(&keypair))
+            .chain(v["chain_id"].as_u64().unwrap())
+            .nonce(v["nonce"].as_u64().unwrap())
+            .expiry(v["expiry_epoch"].as_u64().unwrap())
+            .transfer(recipient, v["amount"].as_u64().unwrap());
+
+        // Verify unsigned payload
+        let unsigned_bytes = veridag_codec::Encode::to_bytes(&signed_tx.tx);
+        let expected_unsigned = v["unsigned_tx_payload"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(&unsigned_bytes), expected_unsigned);
+
+        // Verify signature
+        let expected_sig = v["signature"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(signed_tx.signature), expected_sig);
+
+        // Verify signed wire bytes
+        let signed_bytes = veridag_codec::Encode::to_bytes(&signed_tx);
+        let expected_signed = v["signed_tx_wire"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(&signed_bytes), expected_signed);
+
+        // Verify tx hash
+        let expected_hash = v["tx_hash"].as_str().unwrap().strip_prefix("0x").unwrap();
+        assert_eq!(hex::encode(signed_tx.id().0), expected_hash);
     }
 }

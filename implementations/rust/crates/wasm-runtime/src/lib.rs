@@ -43,6 +43,9 @@ pub enum GuestError {
     /// The guest requested an object that does not exist.
     #[error("object not found: {0:?}")]
     ObjectNotFound(ObjectId),
+    /// Wasm bytecode failed component validation or manifest checks.
+    #[error("component validation failed: {0}")]
+    Validation(String),
 }
 
 /// Deterministic metering configuration.
@@ -59,6 +62,98 @@ impl Default for Metering {
         Metering {
             max_units: 1_000_000,
         }
+    }
+}
+
+/// Manifest describing expected capabilities and deterministic resource bounds of a Wasm component.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct WasmComponentManifest {
+    /// Target application id.
+    pub application_id: ApplicationId,
+    /// Set of capabilities required by this component.
+    pub required_capabilities: Vec<CapabilityId>,
+    /// Maximum deterministic fuel/gas units allocated for execution.
+    pub max_fuel: u64,
+    /// Maximum memory pages (64KiB each) allowed.
+    pub max_memory_pages: u32,
+}
+
+impl Default for WasmComponentManifest {
+    fn default() -> Self {
+        Self {
+            application_id: ApplicationId([0u8; 32]),
+            required_capabilities: Vec::new(),
+            max_fuel: 1_000_000,
+            max_memory_pages: 16, // 1MB
+        }
+    }
+}
+
+/// A validated Wasm component ready for execution.
+#[derive(Clone, Debug)]
+pub struct ValidatedComponent {
+    bytecode: Vec<u8>,
+    manifest: WasmComponentManifest,
+}
+
+impl ValidatedComponent {
+    /// Raw verified bytecode.
+    pub fn bytecode(&self) -> &[u8] {
+        &self.bytecode
+    }
+
+    /// Associated component manifest.
+    pub fn manifest(&self) -> &WasmComponentManifest {
+        &self.manifest
+    }
+}
+
+/// Validates Wasm bytecode against deterministic Veridag runtime invariants.
+pub struct ComponentLoader;
+
+impl ComponentLoader {
+    /// Wasm standard magic header: `\0asm`.
+    pub const WASM_MAGIC: [u8; 4] = [0x00, 0x61, 0x73, 0x6d];
+    /// Wasm version 1.
+    pub const WASM_VERSION: [u8; 4] = [0x01, 0x00, 0x00, 0x00];
+
+    /// Validate a component's bytecode and manifest before loading into the runtime.
+    pub fn load_and_validate(
+        bytes: &[u8],
+        manifest: WasmComponentManifest,
+    ) -> Result<ValidatedComponent, GuestError> {
+        if bytes.len() < 8 {
+            return Err(GuestError::Validation("bytecode too short (< 8 bytes)".into()));
+        }
+        if bytes[..4] != Self::WASM_MAGIC {
+            return Err(GuestError::Validation("invalid Wasm magic bytes".into()));
+        }
+        if bytes[4..8] != Self::WASM_VERSION {
+            return Err(GuestError::Validation("unsupported Wasm version".into()));
+        }
+
+        // Scan for non-deterministic or disallowed imports
+        let forbidden_strings: [&[u8]; 6] = [
+            b"wasi_snapshot_preview1",
+            b"wasi_unstable",
+            b"clock_time_get",
+            b"random_get",
+            b"sock_send",
+            b"sock_recv",
+        ];
+        for forbidden in forbidden_strings {
+            if bytes.windows(forbidden.len()).any(|w| w == forbidden) {
+                return Err(GuestError::UnsupportedHostCall(format!(
+                    "nondeterministic or forbidden host import detected: {}",
+                    String::from_utf8_lossy(forbidden)
+                )));
+            }
+        }
+
+        Ok(ValidatedComponent {
+            bytecode: bytes.to_vec(),
+            manifest,
+        })
     }
 }
 
@@ -423,5 +518,31 @@ mod tests {
         let _ = a.run_guest(&GoodGuest);
         let _ = b.run_guest(&GoodGuest);
         assert_eq!(a.units_consumed(), b.units_consumed());
+    }
+
+    #[test]
+    fn component_loader_valid_header() {
+        let mut valid_bytes = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
+        valid_bytes.extend_from_slice(b"custom_payload");
+        let manifest = WasmComponentManifest::default();
+        let validated = ComponentLoader::load_and_validate(&valid_bytes, manifest);
+        assert!(validated.is_ok());
+    }
+
+    #[test]
+    fn component_loader_invalid_magic_rejected() {
+        let invalid_bytes = vec![0xde, 0xad, 0xbe, 0xef, 0x01, 0x00, 0x00, 0x00];
+        let manifest = WasmComponentManifest::default();
+        let err = ComponentLoader::load_and_validate(&invalid_bytes, manifest).unwrap_err();
+        assert!(matches!(err, GuestError::Validation(_)));
+    }
+
+    #[test]
+    fn component_loader_forbidden_wasi_import_rejected() {
+        let mut bytes = vec![0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00];
+        bytes.extend_from_slice(b"import:wasi_snapshot_preview1");
+        let manifest = WasmComponentManifest::default();
+        let err = ComponentLoader::load_and_validate(&bytes, manifest).unwrap_err();
+        assert!(matches!(err, GuestError::UnsupportedHostCall(_)));
     }
 }

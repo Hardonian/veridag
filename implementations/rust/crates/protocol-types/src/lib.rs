@@ -121,7 +121,7 @@ pub struct ResourceBudget {
     pub bandwidth: u64,
 }
 
-/// Built-in object types (spec 06).
+/// Built-in object types (spec 06, 19).
 pub mod object_type {
     /// Account object (nonce, capability refs).
     pub const ACCOUNT: u32 = 0;
@@ -129,6 +129,10 @@ pub mod object_type {
     pub const BALANCE: u32 = 1;
     /// Capability object.
     pub const CAPABILITY: u32 = 2;
+    /// Stablecoin account object (payload = VCE-1 StablecoinAccountPayload). Spec 19.
+    pub const STABLECOIN: u32 = 3;
+    /// Proof-of-Reserves attestation object. Spec 19.
+    pub const RESERVE_ATTESTATION: u32 = 4;
 }
 
 // --- VCE-1 canonical encodings for protocol types ---------------------------
@@ -207,5 +211,69 @@ impl Decode for ResourceBudget {
             storage: d.u64()?,
             bandwidth: d.u64()?,
         })
+    }
+}
+
+/// Ethereum 20-byte address representation (spec 20).
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct EthAddress(pub [u8; 20]);
+
+impl EthAddress {
+    /// All-zero address.
+    pub const ZERO: Self = Self([0u8; 20]);
+
+    /// Borrow the 20 raw bytes.
+    pub fn as_bytes(&self) -> &[u8; 20] {
+        &self.0
+    }
+}
+
+impl From<[u8; 20]> for EthAddress {
+    fn from(bytes: [u8; 20]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl Encode for EthAddress {
+    fn encode(&self, e: &mut Encoder) {
+        e.fixed(&self.0);
+    }
+}
+
+impl Decode for EthAddress {
+    fn decode(d: &mut Decoder<'_>) -> Result<Self, DecodeError> {
+        Ok(Self(d.fixed::<20>()?))
+    }
+}
+
+/// Ethereum 32-byte transaction / block / log hash (spec 20).
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug, Default)]
+pub struct EthTxHash(pub [u8; 32]);
+
+impl EthTxHash {
+    /// All-zero hash.
+    pub const ZERO: Self = Self([0u8; 32]);
+
+    /// Borrow the 32 raw bytes.
+    pub fn as_bytes(&self) -> &[u8; 32] {
+        &self.0
+    }
+}
+
+impl From<[u8; 32]> for EthTxHash {
+    fn from(bytes: [u8; 32]) -> Self {
+        Self(bytes)
+    }
+}
+
+impl Encode for EthTxHash {
+    fn encode(&self, e: &mut Encoder) {
+        e.fixed(&self.0);
+    }
+}
+
+impl Decode for EthTxHash {
+    fn decode(d: &mut Decoder<'_>) -> Result<Self, DecodeError> {
+        Ok(Self(d.fixed::<32>()?))
     }
 }

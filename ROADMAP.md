@@ -67,29 +67,52 @@ into a non-conflicting parallel prefix + sequential suffix; the sequential
 executor is the oracle. `tests/parallel.rs` property-tests
 parallel == sequential across randomized workloads.
 
-## Phase 11 — Public P2P
-Selective libp2p; no change to consensus semantics.
+## Phase 11 — Public P2P Plane (DONE in this tree)
+`veridag-net`: selective libp2p discovery (`DiscoveryPolicy::Open`, `DiscoveryPolicy::Allowlist`)
+over Floodsub/TCP/Noise/Yamux without altering consensus security semantics. Consensus DAG
+strictly isolated on authenticated QUIC mesh; public gossip plane handles ingress and relay.
 
-## Phase 12 — Deterministic Wasm runtime
-Component loading, capability-scoped host API, resource metering, determinism.
+## Phase 12 — Deterministic Wasm Runtime (DONE in this tree)
+`veridag-wasm-runtime`: `ComponentLoader` validates Wasm bytecode and `WasmComponentManifest`,
+rejecting non-deterministic imports (WASI/time/random/sockets) and enforcing capability-scoped
+host ABI (`host_read`, `host_write`, `host_spend`, `host_epoch`, `host_log`) and deterministic
+fuel metering. Native and Wasmtime backends.
 
-## Phase 13 — SDKs
-Rust then TypeScript; shared conformance vectors. (Crates are SDK-ready:
-`#![forbid(unsafe_code)]`, VCE-1 wire stability, `veridag-cli`/`veridag-node`
-binaries as reference clients.)
+## Phase 13 — Developer SDKs (DONE in this tree)
+Idiomatic developer SDKs in Rust (`veridag-sdk`), TypeScript (`sdks/typescript`), and Python
+(`sdks/python`). All three languages validated for bit-for-bit wire serialization, Ed25519 signing,
+and transaction hashing against `protocol/test-vectors/sdk_conformance.json`.
 
-## Phase 14 — Light client
-Checkpoint verification + object proofs.
+## Phase 14 — Light Client Protocol (DONE in this tree)
+`veridag-light-client`: 2f+1 quorum checkpoint verification, continuous epoch state tracking
+(`LightClientTracker`), and BMH-1 Merkle object inclusion proofs. Matched on EVM L1 by
+`contracts/VeridagLightClient.sol`.
 
-## Phase 15 — Proof adapters
-One zkVM behind feature flags; proving never required for ordinary consensus.
+## Phase 15 — Zero-Knowledge Proof Adapters (DONE in this tree)
+`veridag-zkvm`: pluggable `ZkvmAdapter` trait with `MockZkvmAdapter`, `Sp1Adapter`, and
+`RiscZeroAdapter` behind feature flags. Proving is decoupled from the critical consensus path
+and utilized for L1 settlement compression and fast light client sync.
 
-## Phase 16 — Advanced DA
-Validator-replicated, then erasure-coded DA experiments.
+## Phase 16 — Advanced Data Availability (DONE in this tree)
+`veridag-da`: 2D Reed-Solomon tensor erasure coding (`Da2DConfig`, `encode_2d`, `reconstruct_2d`)
+with alternating row/column iterative recovery under scattered erasures, independent row/col
+Merkle commitments, and deterministic validator replication assignment (`ValidatorReplicationScheme`).
 
-## Phase 17 — Optimization
-Profile first. Zig/C/CUDA only where evidence justifies, always behind a safe
-portable fallback.
+## Phase 17 — Hardware Acceleration (DONE in this tree)
+`veridag-da::hw_accel`: `HwAccelEngine` with chunk-unrolled SIMD vector XOR, batch GF(2^8)
+multiplication, and C/Zig foreign acceleration hooks under strict `#![forbid(unsafe_code)]`.
+
+## Phase 18 — Institutional US Sovereign Stablecoin (USDV) (DONE in this tree)
+`veridag-stablecoin`: 100% reserve-backed (US Treasuries, FDIC cash deposits, Reverse
+Repo), cryptographically verified Proof-of-Reserves (PoR) in state roots, capability-gated
+mint/burn/pause, and real-time OFAC compliance sanctions screening. Normative spec 19.
+Mathematical conservation-of-value invariant checked across all transitions.
+
+## Phase 19 — Iron-Clad Ethereum Infrastructure Substrate (DONE in this tree)
+`veridag-ethereum`: EVM JSON-RPC provider (`eth_chainId`, `eth_blockNumber`, `eth_getBalance`),
+BMH-1 Merkle inclusion proof generator for L1 contracts, and two-way cross-chain bridge
+primitives. Production Solidity contracts: `USDV.sol`, `VeridagLightClient.sol`, and
+`VeridagBridge.sol`. Normative spec 20.
 
 ## Release status
 
