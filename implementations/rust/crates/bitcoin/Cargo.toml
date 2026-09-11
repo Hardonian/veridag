@@ -1,0 +1,24 @@
+[package]
+name = "veridag-bitcoin"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+description = "Veridag Bitcoin Infrastructure Substrate: SPV verification, UTXO bridging, Taproot/SegWit commitments, and cross-chain settlement"
+
+[dependencies]
+veridag-protocol-types = { path = "../protocol-types" }
+veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
+veridag-checkpoint = { path = "../checkpoint" }
+veridag-merkle = { path = "../merkle" }
+veridag-object-state = { path = "../object-state" }
+veridag-stablecoin = { path = "../stablecoin" }
+sha2.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+
+[lints]
+workspace = true
