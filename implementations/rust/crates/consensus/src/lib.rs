@@ -91,6 +91,173 @@ impl StaticCommittee {
     }
 }
 
+/// A validator with an explicit voting weight in a consortium committee (spec 16).
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct WeightedValidator {
+    /// The validator identifier.
+    pub id: ValidatorId,
+    /// Voting weight (e.g. consortium stake or institutional voting share).
+    pub weight: u64,
+}
+
+/// A dynamic validator committee supporting arbitrary weight distributions,
+/// BFT quorum calculation ($W \ge 3f + 1$, $Q = 2f + 1$), and epoch commitments (spec 16).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DynamicCommittee {
+    /// The epoch number this committee is active for.
+    epoch: u64,
+    /// Canonical list of weighted validators, sorted by `ValidatorId`.
+    validators: Vec<WeightedValidator>,
+    /// Cumulative weight across all committee members.
+    total_weight: u64,
+    /// Byzantine weight tolerance $f = (W - 1) / 3$.
+    byzantine_weight: u64,
+    /// Quorum weight threshold $Q = 2f + 1$.
+    quorum_weight: u64,
+}
+
+impl DynamicCommittee {
+    /// Build a dynamic committee from `validators` for `epoch`.
+    ///
+    /// Validators are sorted canonically by `ValidatorId` and deduplicated.
+    /// Panics if `validators` is empty or if any validator has zero weight.
+    pub fn new(epoch: u64, mut validators: Vec<WeightedValidator>) -> Self {
+        assert!(!validators.is_empty(), "committee cannot be empty");
+        validators.sort_by_key(|v| v.id);
+        validators.dedup_by_key(|v| v.id);
+
+        let mut total_weight: u64 = 0;
+        for v in &validators {
+            assert!(v.weight > 0, "validator weight must be positive");
+            total_weight = total_weight.checked_add(v.weight).expect("weight overflow");
+        }
+
+        let byzantine_weight = if total_weight > 0 {
+            (total_weight - 1) / 3
+        } else {
+            0
+        };
+        let quorum_weight = 2 * byzantine_weight + 1;
+
+        Self {
+            epoch,
+            validators,
+            total_weight,
+            byzantine_weight,
+            quorum_weight,
+        }
+    }
+
+    /// The committee's epoch number.
+    pub fn epoch(&self) -> u64 {
+        self.epoch
+    }
+
+    /// Total voting weight across all validators.
+    pub fn total_weight(&self) -> u64 {
+        self.total_weight
+    }
+
+    /// Byzantine fault tolerance weight limit ($f = (W - 1) / 3$).
+    pub fn byzantine_weight(&self) -> u64 {
+        self.byzantine_weight
+    }
+
+    /// BFT quorum threshold ($2f + 1$).
+    pub fn quorum_weight(&self) -> u64 {
+        self.quorum_weight
+    }
+
+    /// Number of distinct validators.
+    pub fn n(&self) -> usize {
+        self.validators.len()
+    }
+
+    /// Canonical list of weighted validators.
+    pub fn validators(&self) -> &[WeightedValidator] {
+        &self.validators
+    }
+
+    /// Look up the weight of a specific validator. Returns 0 if not a member.
+    pub fn weight(&self, id: &ValidatorId) -> u64 {
+        match self.validators.binary_search_by_key(id, |v| v.id) {
+            Ok(idx) => self.validators[idx].weight,
+            Err(_) => 0,
+        }
+    }
+
+    /// Check whether a validator is in the committee.
+    pub fn contains(&self, id: &ValidatorId) -> bool {
+        self.validators.binary_search_by_key(id, |v| v.id).is_ok()
+    }
+
+    /// Deterministic leader of wave `w`: round-robin over canonical validator ordering.
+    pub fn leader(&self, w: u64) -> ValidatorId {
+        let idx = ((w * WAVE) % self.validators.len() as u64) as usize;
+        self.validators[idx].id
+    }
+
+    /// Compute cryptographic commitment hash over the validator set (Spec 16):
+    /// `BLAKE3("VERIDAG_VALSET_V1" || epoch (be u64) || sorted_entries)`
+    pub fn commitment(&self) -> veridag_protocol_types::Hash {
+        let mut hasher = blake3::Hasher::new();
+        hasher.update(b"VERIDAG_VALSET_V1");
+        hasher.update(&self.epoch.to_be_bytes());
+        for v in &self.validators {
+            hasher.update(&v.id.0);
+            hasher.update(&v.weight.to_be_bytes());
+        }
+        *hasher.finalize().as_bytes()
+    }
+}
+
+/// Tracks epoch boundaries and validator committee rotation across checkpoints (spec 16).
+#[derive(Clone, Debug)]
+pub struct EpochHandoverTracker {
+    current_committee: DynamicCommittee,
+    next_committee: Option<DynamicCommittee>,
+}
+
+impl EpochHandoverTracker {
+    /// Initialize the tracker with the active committee.
+    pub fn new(initial_committee: DynamicCommittee) -> Self {
+        Self {
+            current_committee: initial_committee,
+            next_committee: None,
+        }
+    }
+
+    /// The active committee for the current epoch.
+    pub fn current_committee(&self) -> &DynamicCommittee {
+        &self.current_committee
+    }
+
+    /// The pending committee for the upcoming epoch, if scheduled.
+    pub fn next_committee(&self) -> Option<&DynamicCommittee> {
+        self.next_committee.as_ref()
+    }
+
+    /// Schedule the validator set for the next epoch.
+    pub fn queue_epoch_transition(&mut self, next: DynamicCommittee) -> Result<(), &'static str> {
+        if next.epoch != self.current_committee.epoch + 1 {
+            return Err("Next committee epoch must be current epoch + 1");
+        }
+        self.next_committee = Some(next);
+        Ok(())
+    }
+
+    /// Activate pending epoch transition at a checkpoint epoch boundary.
+    pub fn activate_next_epoch(&mut self) -> Result<DynamicCommittee, &'static str> {
+        match self.next_committee.take() {
+            Some(next) => {
+                let old = std::mem::replace(&mut self.current_committee, next);
+                Ok(old)
+            }
+            None => Err("No pending committee transition queued"),
+        }
+    }
+}
+
 /// The result of evaluating the commit rule over the current DAG: the ordered
 /// sequence of committed anchors and, for each, the newly ordered vertices of
 /// its causal history.
@@ -172,6 +339,86 @@ pub fn commit(dag: &Dag, committee: &StaticCommittee, max_wave: u64) -> CommitSe
                     let prev_anchor = pv.id();
                     // Commit A(w-1) iff it is in the causal history of A(w)'s
                     // voters (i.e. some voter of A(w) reaches A(w-1)).
+                    let referenced = dag.round_vertices(vote_round).any(|id| {
+                        let v = dag.get(id).unwrap();
+                        v.parents.contains(&anchor) && dag.has_causal_path(id, &prev_anchor)
+                    });
+                    fates[(w - 1) as usize] = if referenced {
+                        AnchorFate::Commit
+                    } else {
+                        AnchorFate::Skip
+                    };
+                } else {
+                    fates[(w - 1) as usize] = AnchorFate::Skip;
+                }
+            }
+        }
+    }
+
+    // Second pass: emit committed anchors in wave order with causal histories.
+    for w in 1..=max_wave {
+        if fates[w as usize] != AnchorFate::Commit {
+            continue;
+        }
+        let anchor_round = w * WAVE;
+        let leader = committee.leader(w);
+        let anchor = match dag.working(&leader, anchor_round) {
+            Some(v) => v.id(),
+            None => continue,
+        };
+        let ordered = dag.causal_history(&anchor, &ordered_set);
+        for id in &ordered {
+            ordered_set.insert(*id);
+        }
+        seq.committed.push(CommittedAnchor {
+            wave: w,
+            anchor,
+            ordered,
+        });
+    }
+
+    seq
+}
+
+/// Evaluate the BaselineDagBft commit rule over `dag` using dynamic consortium weights (spec 09, 16).
+pub fn commit_dynamic(dag: &Dag, committee: &DynamicCommittee, max_wave: u64) -> CommitSequence {
+    let mut seq = CommitSequence::default();
+    let mut ordered_set: BTreeSet<VertexId> = BTreeSet::new();
+
+    let mut fates: Vec<AnchorFate> = vec![AnchorFate::Undecided; (max_wave + 1) as usize];
+
+    for w in 1..=max_wave {
+        let anchor_round = w * WAVE;
+        let vote_round = anchor_round + 1;
+        let leader = committee.leader(w);
+        let anchor = match dag.working(&leader, anchor_round) {
+            Some(v) => v.id(),
+            None => {
+                fates[w as usize] = AnchorFate::Undecided;
+                continue;
+            }
+        };
+
+        // Accumulate weights of distinct voting authors in vote_round referencing anchor
+        let mut voting_authors = BTreeSet::new();
+        for id in dag.round_vertices(vote_round) {
+            if let Some(v) = dag.get(id) {
+                if v.parents.contains(&anchor) {
+                    voting_authors.insert(v.author);
+                }
+            }
+        }
+
+        let accumulated_weight: u64 = voting_authors.iter().map(|a| committee.weight(a)).sum();
+
+        if accumulated_weight >= committee.quorum_weight() {
+            fates[w as usize] = AnchorFate::Commit;
+            // Pipelining: revisit previous wave's anchor
+            if w > 1 && fates[(w - 1) as usize] == AnchorFate::Undecided {
+                let prev_round = (w - 1) * WAVE;
+                let prev_leader = committee.leader(w - 1);
+                if let Some(pv) = dag.working(&prev_leader, prev_round) {
+                    let prev_anchor = pv.id();
                     let referenced = dag.round_vertices(vote_round).any(|id| {
                         let v = dag.get(id).unwrap();
                         v.parents.contains(&anchor) && dag.has_causal_path(id, &prev_anchor)
@@ -430,5 +677,109 @@ mod tests {
         let vtx = vertex(&net, &net.validators[0], WAVE + 1, r4, 99);
         add(&mut dag, &net, vtx);
         assert_eq!(highest_complete_wave(&dag), 1);
+    }
+
+    #[test]
+    fn test_dynamic_committee_bft_weights_and_commitment() {
+        let keys: Vec<Keypair> = (1..=4).map(kp).collect();
+        let validators: Vec<WeightedValidator> = vec![
+            WeightedValidator { id: vid(&keys[0]), weight: 40 },
+            WeightedValidator { id: vid(&keys[1]), weight: 30 },
+            WeightedValidator { id: vid(&keys[2]), weight: 20 },
+            WeightedValidator { id: vid(&keys[3]), weight: 10 },
+        ];
+
+        let committee = DynamicCommittee::new(1, validators);
+        assert_eq!(committee.epoch(), 1);
+        assert_eq!(committee.total_weight(), 100);
+        // f = (100 - 1) / 3 = 33
+        assert_eq!(committee.byzantine_weight(), 33);
+        // Q = 2*33 + 1 = 67
+        assert_eq!(committee.quorum_weight(), 67);
+
+        // Check commitment is deterministic and 32 bytes
+        let comm1 = committee.commitment();
+        let comm2 = committee.commitment();
+        assert_eq!(comm1, comm2);
+        assert_ne!(comm1, [0u8; 32]);
+    }
+
+    #[test]
+    fn test_commit_dynamic_weighted_quorum() {
+        let net = Net::four();
+        let mut dag = Dag::new();
+        build_wave(&mut dag, &net);
+
+        // Assign weights: Val0 has 40, Val1 has 30, Val2 has 20, Val3 has 10 (Total: 100, Q: 67)
+        let weighted = vec![
+            WeightedValidator { id: net.validators[0], weight: 40 },
+            WeightedValidator { id: net.validators[1], weight: 30 },
+            WeightedValidator { id: net.validators[2], weight: 20 },
+            WeightedValidator { id: net.validators[3], weight: 10 },
+        ];
+        let dynamic_comm = DynamicCommittee::new(0, weighted);
+
+        let anchor = dag.working(&dynamic_comm.leader(1), WAVE).unwrap().id();
+        let r4: Vec<VertexId> = dag.round_vertices(WAVE).copied().collect();
+
+        // Scenario 1: Val2 (20) + Val3 (10) vote for anchor -> 30 weight < 67 (Undecided)
+        for (i, v) in net.validators[2..4].iter().enumerate() {
+            let mut parents = r4.clone();
+            if !parents.contains(&anchor) {
+                parents.push(anchor);
+            }
+            let vtx = vertex(&net, v, WAVE + 1, parents, (60 + i) as u8);
+            add(&mut dag, &net, vtx);
+        }
+
+        let seq_insufficient = commit_dynamic(&dag, &dynamic_comm, 1);
+        assert!(seq_insufficient.committed.is_empty(), "30 weight < 67 must not commit");
+
+        // Scenario 2: Val0 (40) votes for anchor -> 30 + 40 = 70 weight >= 67 (Commit!)
+        let mut parents = r4.clone();
+        if !parents.contains(&anchor) {
+            parents.push(anchor);
+        }
+        let vtx0 = vertex(&net, &net.validators[0], WAVE + 1, parents, 65);
+        add(&mut dag, &net, vtx0);
+
+        let seq_sufficient = commit_dynamic(&dag, &dynamic_comm, 1);
+        assert_eq!(seq_sufficient.committed.len(), 1);
+        assert_eq!(seq_sufficient.committed[0].anchor, anchor);
+    }
+
+    #[test]
+    fn test_epoch_handover_transition() {
+        let keys: Vec<Keypair> = (1..=4).map(kp).collect();
+        let val_epoch0: Vec<WeightedValidator> = vec![
+            WeightedValidator { id: vid(&keys[0]), weight: 50 },
+            WeightedValidator { id: vid(&keys[1]), weight: 50 },
+        ];
+        let val_epoch1: Vec<WeightedValidator> = vec![
+            WeightedValidator { id: vid(&keys[0]), weight: 40 },
+            WeightedValidator { id: vid(&keys[2]), weight: 60 },
+        ];
+
+        let comm0 = DynamicCommittee::new(0, val_epoch0);
+        let comm1 = DynamicCommittee::new(1, val_epoch1);
+
+        let mut tracker = EpochHandoverTracker::new(comm0.clone());
+        assert_eq!(tracker.current_committee().epoch(), 0);
+        assert!(tracker.next_committee().is_none());
+
+        // Queueing non-consecutive epoch must fail
+        let comm_invalid = DynamicCommittee::new(3, vec![WeightedValidator { id: vid(&keys[0]), weight: 10 }]);
+        assert!(tracker.queue_epoch_transition(comm_invalid).is_err());
+
+        // Queue valid next epoch
+        assert!(tracker.queue_epoch_transition(comm1.clone()).is_ok());
+        assert_eq!(tracker.next_committee().unwrap().epoch(), 1);
+
+        // Activate next epoch
+        let prev = tracker.activate_next_epoch().unwrap();
+        assert_eq!(prev.epoch(), 0);
+        assert_eq!(tracker.current_committee().epoch(), 1);
+        assert_eq!(tracker.current_committee().total_weight(), 100);
+        assert!(tracker.next_committee().is_none());
     }
 }

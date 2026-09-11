@@ -4057,6 +4057,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "veridag-bitcoin"
+version = "0.1.0-alpha"
+dependencies = [
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "thiserror 2.0.20",
+ "veridag-checkpoint",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-merkle",
+ "veridag-object-state",
+ "veridag-protocol-types",
+ "veridag-stablecoin",
+]
+
+[[package]]
 name = "veridag-capabilities"
 version = "0.1.0-alpha"
 dependencies = [
@@ -4108,6 +4126,7 @@ dependencies = [
 name = "veridag-consensus"
 version = "0.1.0-alpha"
 dependencies = [
+ "blake3",
  "thiserror 2.0.20",
  "veridag-codec",
  "veridag-crypto",

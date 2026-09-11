@@ -10,6 +10,7 @@ description.workspace = true
 veridag-crypto = { path = "../crypto" }
 veridag-dag = { path = "../dag" }
 veridag-protocol-types = { path = "../protocol-types" }
+blake3.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
