@@ -11,6 +11,7 @@
 Veridag functions as an **iron-clad, high-performance execution, sequencing, and settlement substrate for the Ethereum ecosystem**.
 
 By combining Veridag's pure-function DAG-BFT consensus with Ethereum's global liquidity and settlement guarantees, this architecture delivers:
+
 1. **Zero-Reorg Finality:** Veridag wave commits eliminate transaction reorganizations, MEV re-ordering, and front-running on Ethereum L2 applications.
 2. **Trustless L1 Light Client:** Ethereum mainnet smart contracts verify Veridag Quorum Checkpoints ($2f+1$ Ed25519 signatures over `VERIDAG_CHECKPOINT_V1`) and BMH-1 Merkle inclusion proofs directly in Solidity.
 3. **Native EVM JSON-RPC Layer:** Standard Ethereum wallets (MetaMask), development frameworks (Foundry, Hardhat), and libraries (ethers.js, alloy, viem) interact seamlessly with Veridag through standard `eth_*` RPC endpoints.
@@ -20,7 +21,7 @@ By combining Veridag's pure-function DAG-BFT consensus with Ethereum's global li
 
 ## 2. L1 Verification Architecture
 
-```
+```text
 ┌────────────────────────────────────────────────────────┐
 │               Ethereum Mainnet (L1)                    │
 │                                                        │
@@ -57,21 +58,27 @@ By combining Veridag's pure-function DAG-BFT consensus with Ethereum's global li
 ## 3. L1 Smart Contract Specification
 
 ### 3.1 `VeridagLightClient.sol`
+
 Maintains the canonical state of Veridag on Ethereum L1:
+
 - Stores latest verified sequence number `latestSequence` and checkpoint hash `latestCheckpointId`.
 - Verifies $2f+1$ Ed25519 validator signatures over `H("VERIDAG_CHECKPOINT_V1" || checkpoint_body)`.
 - Validates sequence monotony ($S_{n+1} > S_n$) and validator set commitment consistency.
 - Function `verifyInclusion(bytes32 stateRoot, bytes32 key, bytes value, bytes32[] proof, uint256 index)` evaluates BMH-1 Merkle inclusion on EVM.
 
 ### 3.2 `USDV.sol`
+
 Canonical Ethereum-side representation of the Veridag Dollar:
+
 - **Standards:** ERC-20, ERC-2612 (`permit`), EIP-3009 (`receiveWithAuthorization`, `transferWithAuthorization`).
 - **Decimals:** 6 (identical to USDC/USDT and Veridag native USDV).
 - **Access Control:** Role-based capabilities (`MINTER_ROLE`, `BURNER_ROLE`, `PAUSER_ROLE`, `COMPLIANCE_ROLE`).
 - **Bridge Integration:** Only `VeridagBridge.sol` holds `MINTER_ROLE` and `BURNER_ROLE` on L1.
 
 ### 3.3 `VeridagBridge.sol`
+
 Two-way cross-chain gateway:
+
 - **L1 -> Veridag (Deposit):**
   - Caller transfers USDV to `VeridagBridge`.
   - Bridge burns (or locks) tokens and emits `DepositInitiated(address sender, bytes32 veridagRecipient, uint256 amount, uint64 sequence)`.

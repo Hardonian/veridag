@@ -4,6 +4,7 @@
  */
 
 import crypto from "node:crypto";
+import { Buffer } from "node:buffer";
 
 const IV = new Uint32Array([
   0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
@@ -94,7 +95,7 @@ export function blake3(input: Uint8Array): Uint8Array {
     let flags = 0;
     if (b === 0) flags |= CHUNK_START;
     if (b === numBlocks - 1) flags |= CHUNK_END | ROOT;
-    cv = compress(cv, block, block.length, 0, flags);
+    cv = new Uint32Array(compress(cv, block, block.length, 0, flags));
   }
 
   const res = new Uint8Array(32);

@@ -11,6 +11,7 @@
 **USDV (Veridag Dollar)** is an institutional-grade, reserve-backed, capability-governed US sovereign digital dollar built natively on the Veridag DAG-BFT consensus substrate.
 
 Unlike algorithmic or weakly-governed tokens, USDV guarantees:
+
 1. **1:1 Collateral Invariant:** Total circulating supply is mathematically bounded by cryptographically attested institutional reserves (US Treasury bills with maturities $\le 90$ days, overnight reverse repurchase agreements, and FDIC-insured cash deposits).
 2. **Deterministic Micro-Unit Accounting:** Fixed 6-decimal precision ($10^{-6}$ USD) stored in 128-bit integers (`u128`), ensuring zero loss of precision across multi-billion-dollar transaction batches.
 3. **Capability-Enforced Governance:** Minting, burning, sanctions enforcement, and reserve updates require distinct, unforgeable cryptographic capabilities. No single key or backdoor can inflate supply or bypass compliance.
@@ -33,6 +34,7 @@ USDV Account Object:
 ```
 
 #### Schema: `StablecoinAccountPayload`
+
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `balance` | `u128` | Balance in micro-dollars ($1 \text{ USD} = 1{,}000{,}000$). |
@@ -54,6 +56,7 @@ Reserve Attestation Object:
 ```
 
 #### Schema: `ReserveAttestationPayload`
+
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `oracle_id` | `Address` | Public key of the verified institutional custodian oracle. |
@@ -72,15 +75,21 @@ Reserve Attestation Object:
 Every state transition involving USDV must satisfy these non-negotiable invariants:
 
 ### Invariant 1: Proof of Reserves Upper Bound
+
 $$\text{TotalCirculatingSupply} \le \text{TotalAttestedReserves}$$
+
 No transaction or mint operation may cause total circulating supply to exceed the latest verified reserve attestation.
 
 ### Invariant 2: Conservation of Value
+
 $$\text{TotalSupply} = \sum_{a \in \text{Accounts}} a.\text{balance}$$
+
 Stablecoin value cannot be created or destroyed except through authorized `Mint` or `Burn` operations carrying verified capabilities.
 
 ### Invariant 3: Sanctions & Freeze Invariance
+
 $$\forall a \in \text{Accounts}, a.\text{frozen} = \text{true} \implies \Delta a.\text{balance} = 0$$
+
 Frozen accounts cannot send, receive, or transfer funds. Any transaction referencing a frozen account must fail deterministically with `TxExecError::Unauthorized`.
 
 ---
@@ -100,6 +109,7 @@ Frozen accounts cannot send, receive, or transfer funds. Any transaction referen
 ## 5. Transaction Operations
 
 ### 5.1 `Mint`
+
 1. Verify caller presents valid `MintCapability`.
 2. Verify `latest_reserves >= total_supply + amount`.
 3. Increment recipient balance by `amount`.
@@ -107,6 +117,7 @@ Frozen accounts cannot send, receive, or transfer funds. Any transaction referen
 5. Emit `Receipt` with updated state root.
 
 ### 5.2 `Burn`
+
 1. Verify caller owns source balance and presents `BurnCapability` (or caller is owner).
 2. Verify source `balance >= amount`.
 3. Decrement source balance by `amount`.
@@ -114,6 +125,7 @@ Frozen accounts cannot send, receive, or transfer funds. Any transaction referen
 5. Emit `Receipt` containing redemption voucher hash.
 
 ### 5.3 `Transfer`
+
 1. Verify neither sender nor recipient is frozen.
 2. Verify system is not paused.
 3. Verify sender `balance >= amount`.

@@ -8,17 +8,17 @@ export default function Home() {
         <div className="hero-eyebrow">
           <span>⚡ Protocol v0.1.0-alpha Released</span>
           <span style={{ opacity: 0.5 }}>•</span>
-          <span>🪙 Next US Stablecoin (USDV)</span>
+          <span>🏛️ USMCA &amp; G8 Sovereign Settlement (USDV)</span>
           <span style={{ opacity: 0.5 }}>•</span>
-          <span>⛓️ Ethereum Infrastructure</span>
+          <span>⛓️ Ethereum Settlement Substrate</span>
         </div>
         <h1>
-          <span className="hero-headline">The Next US Stablecoin &amp; </span>
+          <span className="hero-headline">Sovereign Dollar Liquidity &amp; </span>
           <br />
           <span className="hero-gradient">The Iron-Clad Infrastructure of Ethereum</span>
         </h1>
         <p className="hero-tagline">
-          Veridag powers <strong>USDV</strong>—the 100% reserve-backed, capability-governed US sovereign digital dollar—and
+          Veridag powers <strong>USDV</strong>—the US-aligned sovereign digital dollar engineered for USMCA cross-border trade corridors and G8 multilateral treasury settlement—and
           serves as the ultra-fast, zero-reorg DAG execution, sequencing, and settlement substrate for Ethereum.
         </p>
         <div className="hero-actions">
@@ -39,31 +39,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Flagship Pillars: USDV Stablecoin & Ethereum Infra */}
+      {/* Flagship Pillars: USDV Sovereign Dollar & Ethereum Infra */}
       <section style={{ marginBottom: "48px" }}>
         <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))" }}>
           <div className="card" style={{ border: "1px solid rgba(52, 211, 153, 0.4)", background: "linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, rgba(10, 16, 26, 0.8) 100%)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
-              <span style={{ fontSize: "28px" }}>🪙</span>
+              <span style={{ fontSize: "28px" }}>🏛️</span>
               <div>
-                <h3 style={{ margin: 0, color: "var(--accent-emerald-bright)" }}>USDV Sovereign Stablecoin</h3>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>100% US Treasury &amp; FDIC Backed</span>
+                <h3 style={{ margin: 0, color: "var(--accent-emerald-bright)" }}>USMCA &amp; G8 Multilateral Dollar (USDV)</h3>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>100% US Treasury Backed • Trade Corridor Settlement</span>
               </div>
             </div>
             <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", marginBottom: "16px" }}>
-              The next-generation institutional dollar. Collateralized 1:1 by short-term US Treasury bills,
-              overnight reverse repo, and FDIC cash deposits. Features mathematical Proof of Reserves (PoR) committed directly
-              into consensus state roots and capability-enforced OFAC compliance.
+              Engineered for USMCA cross-border trade clearing and G8 economic forum financial market standards.
+              Collateralized 1:1 by short-term US Treasury bills, overnight reverse repo, and FDIC cash deposits with direct US strategic alignment.
+              Features mathematical Proof of Reserves (PoR) committed directly into consensus state roots and treaty-compliant capability-enforced sanctions screening.
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "8px" }}>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Mathematical Invariant: TotalSupply &le; AttestedReserves
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> US Strategic Alignment: 100% backed by short-term US Treasuries &amp; Fed RRP
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Sub-100ms wave settlement with zero MEV front-running
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> USMCA Trade Corridors: Sub-100ms wave settlement eliminating Herstatt FX risk
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Real-time OFAC sanctions freeze and compliance escrow
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> G8 Economic Governance: Real-time OFAC &amp; FATF capability-enforced compliance
               </li>
             </ul>
           </div>
