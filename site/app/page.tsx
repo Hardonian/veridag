@@ -105,7 +105,7 @@ export default function Home() {
               <span className="terminal-dot dot-yellow"></span>
               <span className="terminal-dot dot-green"></span>
             </div>
-            <span className="terminal-title">veridag-cli — institutional stablecoin &amp; ethereum bridge</span>
+            <span className="terminal-title">veridag-cli — USMCA &amp; G8 sovereign settlement &amp; ethereum bridge</span>
             <span style={{ fontSize: "11px", color: "var(--accent-emerald-bright)" }}>● 100% VERIFIED</span>
           </div>
           <div className="terminal-body">
@@ -185,11 +185,11 @@ export default function Home() {
         <h2>🎯 High-Value Production Use Cases</h2>
         <div className="card-grid">
           <div className="card">
-            <span className="card-icon">🪙</span>
-            <h3>US Sovereign Stablecoin (USDV)</h3>
+            <span className="card-icon">🏛️</span>
+            <h3>USMCA &amp; G8 Sovereign Settlement (USDV)</h3>
             <p>
-              Bank-grade reserve-backed digital dollar with cryptographic proof of reserves,
-              instantaneous DAG wave settlement, and fine-grained capability-based compliance.
+              Institutional digital dollar collateralized by short-term US Treasuries,
+              eliminating foreign exchange settlement risk across USMCA and G8 multilateral trade corridors.
             </p>
           </div>
           <div className="card">
@@ -249,8 +249,8 @@ export default function Home() {
                 <td><span className="badge-no">✗ No</span></td>
               </tr>
               <tr>
-                <td><strong>Stablecoin Proof of Reserves</strong></td>
-                <td><span className="badge-yes">✓ Cryptographic Invariant</span></td>
+                <td><strong>Sovereign Proof of Reserves (PoR)</strong></td>
+                <td><span className="badge-yes">✓ Cryptographic Invariant (US Treasuries / RRP)</span></td>
                 <td><span className="badge-no">✗ Off-chain Trust</span></td>
                 <td><span className="badge-no">✗ No</span></td>
                 <td><span className="badge-no">✗ No</span></td>
@@ -263,30 +263,23 @@ export default function Home() {
                 <td><span className="badge-no">✗ No</span></td>
               </tr>
               <tr>
-                <td><strong>Embedded Zero-Config Storage</strong></td>
-                <td><span className="badge-yes">✓ Embedded Sled</span></td>
-                <td><span className="badge-no">✗ Multi-GB DB</span></td>
-                <td><span className="badge-partial">~ Varies</span></td>
-                <td><span className="badge-no">✗ Heavy Cluster</span></td>
+                <td><strong>Conflict Scheduling</strong></td>
+                <td><span className="badge-yes">✓ Parallel Prefix + Seq Suffix</span></td>
+                <td><span className="badge-partial">~ Complex STM / Rollbacks</span></td>
+                <td><span className="badge-no">✗ Single Thread</span></td>
+                <td><span className="badge-no">✗ Partition-only</span></td>
               </tr>
               <tr>
-                <td><strong>Transport Protocol</strong></td>
-                <td><span className="badge-yes">✓ QUIC + TLS 1.3</span></td>
-                <td><span className="badge-partial">~ Custom TCP</span></td>
-                <td><span className="badge-partial">~ TCP / gRPC</span></td>
-                <td><span className="badge-partial">~ TCP</span></td>
-              </tr>
-              <tr>
-                <td><strong>Formal Model Checked</strong></td>
-                <td><span className="badge-yes">✓ Quint Verified</span></td>
-                <td><span className="badge-partial">~ Partial</span></td>
-                <td><span className="badge-partial">~ Partial</span></td>
-                <td><span className="badge-no">✗ No</span></td>
+                <td><strong>Memory Safety</strong></td>
+                <td><span className="badge-yes">✓ #![forbid(unsafe_code)]</span></td>
+                <td><span className="badge-partial">~ C++ / Go / Rust Unsafe</span></td>
+                <td><span className="badge-partial">~ Mixed</span></td>
+                <td><span className="badge-partial">~ Java / C++</span></td>
               </tr>
               <tr>
                 <td><strong>Binary Footprint</strong></td>
                 <td><span className="badge-yes">✓ &lt; 10MB Static</span></td>
-                <td><span className="badge-no">✗ Gigabytes</span></td>
+                <td><span className="badge-no">✗ 500GB+ Node Bloat</span></td>
                 <td><span className="badge-partial">~ 50–200MB</span></td>
                 <td><span className="badge-no">✗ JVM / Cluster</span></td>
               </tr>
@@ -297,9 +290,9 @@ export default function Home() {
 
       {/* Quickstart Call to Action */}
       <section style={{ textAlign: "center", marginTop: "60px", padding: "40px 20px", background: "var(--bg-card)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border-active)" }}>
-        <h2 style={{ margin: "0 0 12px", justifyContent: "center" }}>Deploy USDV and Ethereum Infrastructure</h2>
+        <h2 style={{ margin: "0 0 12px", justifyContent: "center" }}>Deploy Sovereign USDV &amp; Ethereum Infrastructure</h2>
         <p style={{ maxWidth: "600px", margin: "0 auto 24px", color: "var(--text-muted)" }}>
-          Run the full consensus engine, manage the USDV stablecoin, and bridge state to Ethereum in under 3 minutes.
+          Run the full consensus engine, manage USMCA-grade sovereign USDV settlement, and bridge state to Ethereum in under 3 minutes.
         </p>
         <div style={{ display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" }}>
           <Link href="/quickstart" className="btn-primary">
