@@ -1,21 +1,21 @@
-# 19 — Normative Specification: US Sovereign Stablecoin (USDV)
+# 19 — Normative Specification: USMCA & G8 Multilateral Sovereign Settlement (USDV)
 
 **Status:** Normative  
 **Version:** 1.0  
-**Scope:** Veridag Native Stablecoin Architecture, Proof of Reserves (PoR), Compliance Engine, and Invariants  
+**Scope:** Veridag Native Sovereign Digital Dollar, US Treasury Alignment, USMCA Trade Corridor Clearing, Proof of Reserves (PoR), and Compliance Engine  
 
 ---
 
 ## 1. Overview
 
-**USDV (Veridag Dollar)** is an institutional-grade, reserve-backed, capability-governed US sovereign digital dollar built natively on the Veridag DAG-BFT consensus substrate.
+**USDV (Veridag Dollar)** is an institutional sovereign digital dollar engineered for **USMCA** (United States-Mexico-Canada Agreement) cross-border trade corridors and **G8 economic forum** multilateral treasury settlement, with direct US Treasury collateral alignment and built natively on the Veridag DAG-BFT consensus substrate.
 
 Unlike algorithmic or weakly-governed tokens, USDV guarantees:
 
-1. **1:1 Collateral Invariant:** Total circulating supply is mathematically bounded by cryptographically attested institutional reserves (US Treasury bills with maturities $\le 90$ days, overnight reverse repurchase agreements, and FDIC-insured cash deposits).
-2. **Deterministic Micro-Unit Accounting:** Fixed 6-decimal precision ($10^{-6}$ USD) stored in 128-bit integers (`u128`), ensuring zero loss of precision across multi-billion-dollar transaction batches.
-3. **Capability-Enforced Governance:** Minting, burning, sanctions enforcement, and reserve updates require distinct, unforgeable cryptographic capabilities. No single key or backdoor can inflate supply or bypass compliance.
-4. **Sub-100ms Wave Settlement:** Transfers achieve irreversible finality upon DAG wave commitment, eliminating MEV, sandwich attacks, and settlement counterparty risk.
+1. **Direct US Treasury Collateral Invariant:** Total circulating supply is mathematically bounded by cryptographically attested institutional reserves (US Treasury bills with maturities $\le 90$ days, overnight reverse repurchase agreements, and FDIC-insured cash deposits).
+2. **USMCA Trade Corridor Clearing:** Sub-100ms wave finality eliminates foreign exchange settlement (Herstatt) risk and counterparty exposure across North American cross-border commercial transactions.
+3. **Deterministic Micro-Unit Accounting:** Fixed 6-decimal precision ($10^{-6}$ USD) stored in 128-bit integers (`u128`), ensuring zero loss of precision across multi-billion-dollar transaction batches.
+4. **Capability-Enforced Treaty & Statutory Compliance:** Minting, burning, sanctions enforcement, and reserve updates require distinct, unforgeable cryptographic capabilities. Real-time OFAC and FATF screening without unilateral backdoor vulnerabilities.
 
 ---
 

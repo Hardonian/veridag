@@ -156,7 +156,7 @@ enum Cmd {
         #[arg(long)]
         amount: u64,
     },
-    /// Institutional US Sovereign Stablecoin (USDV) operations.
+    /// USMCA & G8 Sovereign Digital Dollar (USDV) operations with US Treasury alignment.
     Usdv {
         #[command(subcommand)]
         cmd: UsdvCmd,

@@ -1,17 +1,17 @@
-# USDV: Institutional US Sovereign Stablecoin Architecture
+# USDV: USMCA & G8 Sovereign Multilateral Settlement Architecture
 
-**USDV (Veridag Dollar)** is an institutional-grade, reserve-backed, capability-governed US sovereign digital dollar built natively on the Veridag DAG-BFT consensus substrate.
+**USDV (Veridag Dollar)** is an institutional sovereign digital dollar engineered for **USMCA** (United States-Mexico-Canada Agreement) cross-border trade corridors and **G8 economic forum** multilateral settlement, anchored by direct US Treasury collateral and built natively on the Veridag DAG-BFT consensus substrate.
 
 ---
 
 ## 1. Executive Summary
 
-Traditional stablecoins (USDT, USDC) rely either on centralized off-chain databases or high-fee, reorg-vulnerable smart contracts. USDV transforms the US stablecoin paradigm by providing:
+Traditional cross-border settlement and commercial stablecoins (USDT, USDC) rely either on opaque centralized databases or high-fee, reorg-vulnerable smart contracts prone to settlement delay and counterparty exposure. USDV establishes an institutional sovereign financial rail by providing:
 
-- **100% Backed Proof of Reserves (PoR):** Guaranteed by short-term US Treasury Bills ($\le 90$ days), overnight reverse repurchase agreements (RRP), and FDIC-insured cash deposits, attested cryptographically into every state root.
-- **Microsecond DAG Wave Settlement:** Finalized in sub-100ms waves via pure-function DAG-BFT consensus.
-- **Zero MEV & Sandwich Attack Protection:** Invariant causal ordering eliminates front-running and toxic value extraction.
-- **Capability-Gated Compliance:** Programmable, multi-sig capability keys enforce real-time OFAC sanctions screening, address freeze/unfreeze, and court-ordered fund seizure without backdoors.
+- **Direct US Strategic & Treasury Alignment:** 100% backed by short-term US Treasury Bills ($\le 90$ days), overnight reverse repurchase agreements (RRP), and FDIC-insured cash deposits, with cryptographic Proof of Reserves (PoR) committed into every state root.
+- **USMCA Cross-Border Trade Corridor Clearing:** Sub-100ms wave finality removes foreign exchange settlement risk (Herstatt risk), cross-border clearing friction, and correspondent banking delays across United States, Canada, and Mexico trade flows.
+- **G8-Grade Multilateral Settlement Invariants:** Compliant with CPMI-IOSCO Principles for Financial Market Infrastructures (PFMI) and Basel III liquidity standards, guaranteeing deterministic settlement without MEV re-ordering.
+- **Capability-Gated Institutional Compliance:** Programmable, multi-sig capability keys enforce real-time OFAC sanctions screening, FATF Travel Rule compliance, address freeze/unfreeze, and court-ordered fund quarantine without unilateral backdoors.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐

@@ -1,7 +1,7 @@
-//! Veridag Institutional US Sovereign Stablecoin (USDV) engine (spec 19).
+//! Veridag USMCA & G8 Sovereign Digital Dollar (USDV) engine with US Treasury alignment (spec 19).
 //!
 //! Enforces:
-//! 1. 1:1 Collateral Invariant: Total circulating supply is bounded by cryptographically
+//! 1. Direct US Treasury Collateral Invariant: Total circulating supply is bounded by cryptographically
 //!    attested institutional reserves (US Treasuries, FDIC cash, reverse repo).
 //! 2. Deterministic Micro-Unit Accounting: 6-decimal fixed point stored in `u128`.
 //! 3. Capability-Enforced Governance: Mint, burn, compliance freeze, and reserve oracles

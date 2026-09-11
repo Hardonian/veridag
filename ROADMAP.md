@@ -120,12 +120,14 @@ Merkle commitments, and deterministic validator replication assignment (`Validat
 `veridag-da::hw_accel`: `HwAccelEngine` with chunk-unrolled SIMD vector XOR, batch GF(2^8)
 multiplication, and C/Zig foreign acceleration hooks under strict `#![forbid(unsafe_code)]`.
 
-## Phase 18 — Institutional US Sovereign Stablecoin (USDV) (DONE in this tree)
+## Phase 18 — USMCA & G8 Sovereign Multilateral Settlement (USDV) (DONE in this tree)
 
-`veridag-stablecoin`: 100% reserve-backed (US Treasuries, FDIC cash deposits, Reverse
-Repo), cryptographically verified Proof-of-Reserves (PoR) in state roots, capability-gated
-mint/burn/pause, and real-time OFAC compliance sanctions screening. Normative spec 19.
-Mathematical conservation-of-value invariant checked across all transitions.
+`veridag-stablecoin`: US-aligned sovereign digital dollar for USMCA trade corridor clearing
+and G8 economic forum multilateral treasury settlement. 100% reserve-backed (US Treasuries,
+FDIC cash deposits, Reverse Repo), cryptographically verified Proof-of-Reserves (PoR) in
+state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions
+screening. Normative spec 19. Mathematical conservation-of-value invariant checked across
+all transitions.
 
 ## Phase 19 — Iron-Clad Ethereum Infrastructure Substrate (DONE in this tree)
 

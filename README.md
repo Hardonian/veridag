@@ -38,7 +38,7 @@
 
 It gives mutually distrustful parties—autonomous AI agents, organizations, microservices, cloud nodes, and edge devices—a shared, tamper-proof state machine that guarantees exact mathematical agreement without centralized coordinators.
 
-```
+```text
 ┌────────────────┐     ┌────────────────┐     ┌────────────────┐
 │   Consensus    │  +  │   Verifiable   │  +  │ Deterministic  │
 │  (DAG-BFT)     │     │     State      │     │  Computation   │
@@ -59,12 +59,14 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 ```
 
 ### What Veridag Is NOT
+
 * ❌ **Not a speculative cryptocurrency or token casino** — No gas volatility, no speculative hype tokens required to run consensus.
 * ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
 * ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
 
 ### 🏛️ Flagship Institutional Capabilities
-* 🪙 **USDV (Veridag Dollar): The Next US Sovereign Stablecoin** — 100% reserve-backed (US Treasuries, FDIC cash deposits, Reverse Repo), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
+
+* 🏛️ **USDV (Veridag Dollar): USMCA & G8 Multilateral Settlement Substrate** — Engineered for USMCA cross-border trade corridors and G8 economic forum multilateral treasury settlement with strict US Treasury alignment. 100% reserve-backed (US Treasuries $\le 90$d, overnight reverse repo, FDIC cash deposits), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
 * ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
 
 ---
@@ -138,7 +140,7 @@ cargo test -p veridag-storage --features persistent
 
 ## 🎯 Target Use Cases
 
-```
+```text
   ┌────────────────────────────────────────────────────────────────────────┐
   │                           VERIDAG USE CASES                            │
   ├───────────────────┬────────────────────┬───────────────────────────────┤
@@ -153,12 +155,15 @@ cargo test -p veridag-storage --features persistent
 ```
 
 ### 1. 🤖 Autonomous AI Agent Trust Fabrics
+
 When multiple autonomous LLM agents collaborate on critical tasks (financial transactions, code deployment, automated purchasing), Veridag provides a verifiable execution log, preventing prompt injection equivocation, replaying attacks, or malicious state tampering.
 
 ### 2. 🏭 Cross-Enterprise Audit & Settlement
+
 Companies collaborating on supply chain, logistics, or data sharing can run Veridag validator nodes across disparate cloud providers (AWS, GCP, Azure, On-Prem). No single entity owns the database; all transactions are cryptographically proven.
 
 ### 3. 📡 Edge & IoT Resilient Meshes
+
 Connected vehicles, smart grid devices, and remote telemetry stations can form local peer-to-peer DAG committees over QUIC. Even during WAN disconnections, local clusters achieve verifiable consensus and merge back safely upon reconnection.
 
 ---
@@ -209,6 +214,7 @@ flowchart LR
 ```
 
 ### 3-Level Verification Hierarchy
+
 Every piece of Veridag is governed by a strict hierarchy of authority:
 
 | Level | Artifact | Path | Purpose |
@@ -223,7 +229,7 @@ Every piece of Veridag is governed by a strict hierarchy of authority:
 
 The Rust reference implementation is split into decoupled, reusable, modular crates:
 
-```
+```text
 implementations/rust/crates/
 ├── protocol-types/     # Canonical IDs, hash types, version tags
 ├── codec/              # VCE-1 canonical encoder/decoder
@@ -236,7 +242,7 @@ implementations/rust/crates/
 ├── consensus/          # BaselineDagBft pure commit rule & wave ordering
 ├── execution/          # Sequential oracle & parallel conflict scheduler
 ├── checkpoint/         # Quorum finality proofs (2f+1)
-├── stablecoin/         # USDV sovereign stablecoin ledger, Proof-of-Reserves & compliance
+├── stablecoin/         # USDV USMCA & G8 sovereign dollar ledger, Proof-of-Reserves & compliance
 ├── ethereum/           # Ethereum L1 light client proofs, bridge substrate & EVM JSON-RPC
 ├── storage/            # Sled persistent & in-memory storage backends
 ├── net/                # QUIC authenticated validator transport
