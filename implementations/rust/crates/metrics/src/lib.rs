@@ -151,6 +151,63 @@ impl Metrics for CounterMap {
     }
 }
 
+/// Prometheus and OpenMetrics compliant exposition formatter.
+#[derive(Debug, Default)]
+pub struct PrometheusExporter {
+    map: CounterMap,
+}
+
+impl PrometheusExporter {
+    /// Create a new Prometheus exporter instance.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Get a reference to the internal CounterMap.
+    pub fn map(&self) -> &CounterMap {
+        &self.map
+    }
+
+    /// Render all recorded metrics in canonical Prometheus text format.
+    pub fn render(&self) -> String {
+        let inner = self.map.inner.lock().unwrap();
+        let mut out = String::new();
+
+        // Sort keys for deterministic output
+        let mut sorted_counters: Vec<_> = inner.counters.iter().collect();
+        sorted_counters.sort_by_key(|(k, _)| *k);
+
+        for (name, val) in sorted_counters {
+            let clean_name = name.replace('-', "_");
+            out.push_str(&format!("# HELP veridag_{clean_name} Veridag metric {clean_name}\n"));
+            out.push_str(&format!("# TYPE veridag_{clean_name} counter\n"));
+            out.push_str(&format!("veridag_{clean_name} {val}\n\n"));
+        }
+
+        let mut sorted_gauges: Vec<_> = inner.gauges.iter().collect();
+        sorted_gauges.sort_by_key(|(k, _)| *k);
+
+        for (name, val) in sorted_gauges {
+            let clean_name = name.replace('-', "_");
+            out.push_str(&format!("# HELP veridag_{clean_name} Veridag metric {clean_name}\n"));
+            out.push_str(&format!("# TYPE veridag_{clean_name} gauge\n"));
+            out.push_str(&format!("veridag_{clean_name} {val}\n\n"));
+        }
+
+        out
+    }
+}
+
+impl Metrics for PrometheusExporter {
+    fn clock(&self) -> &dyn Clock {
+        self.map.clock()
+    }
+
+    fn observe(&self, obs: Observation) {
+        self.map.observe(obs);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -181,5 +238,21 @@ mod tests {
     fn counter_map_is_send_sync() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<CounterMap>();
+    }
+
+    #[test]
+    fn test_prometheus_exporter_renders_openmetrics_format() {
+        let exporter = PrometheusExporter::new();
+        exporter.observe(Observation::Counter(Label("consensus_commits"), 42));
+        exporter.observe(Observation::Gauge(Label("current_epoch"), 3));
+
+        let rendered = exporter.render();
+        assert!(rendered.contains("# HELP veridag_consensus_commits"));
+        assert!(rendered.contains("# TYPE veridag_consensus_commits counter"));
+        assert!(rendered.contains("veridag_consensus_commits 42"));
+
+        assert!(rendered.contains("# HELP veridag_current_epoch"));
+        assert!(rendered.contains("# TYPE veridag_current_epoch gauge"));
+        assert!(rendered.contains("veridag_current_epoch 3"));
     }
 }

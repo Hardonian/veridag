@@ -133,6 +133,10 @@ pub mod object_type {
     pub const STABLECOIN: u32 = 3;
     /// Proof-of-Reserves attestation object. Spec 19.
     pub const RESERVE_ATTESTATION: u32 = 4;
+    /// Settler reconciliation proofpack anchor object.
+    pub const SETTLER_ANCHOR: u32 = 5;
+    /// Consortium tenant registry object.
+    pub const CONSORTIUM_TENANT: u32 = 6;
 }
 
 // --- VCE-1 canonical encodings for protocol types ---------------------------

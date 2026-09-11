@@ -67,6 +67,12 @@ pub enum StablecoinError {
     /// Target account not found.
     #[error("account not found")]
     NotFound,
+    /// Settler reconciliation batch payout total does not match anchor declared total.
+    #[error("settler batch total {0} does not match anchor declared total {1}")]
+    SettlerMismatch(u128, u128),
+    /// Consortium tenant not found or inactive.
+    #[error("consortium tenant {0:?} not found or inactive")]
+    TenantNotFound([u8; 32]),
 }
 
 /// Invariant violation errors from auditing the state.
@@ -238,6 +244,157 @@ pub struct StablecoinReceipt {
     pub balance_updates: Vec<(Address, u128)>,
     /// State objects written.
     pub objects_written: Vec<ObjectId>,
+}
+
+/// Supported sovereign multi-chain assets.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum AssetType {
+    /// USMCA & G8 Sovereign Digital Dollar (6 decimals).
+    Usdv,
+    /// Wrapped Bitcoin UTXO collateral (8 decimals).
+    Btc,
+    /// Native Ethereum cross-chain asset (18 decimals).
+    Eth,
+    /// High-throughput Solana SPL asset (9 decimals).
+    Sol,
+}
+
+/// A consortium tenant or financial institution integrated with Veridag.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct ConsortiumTenant {
+    /// 32-byte unique tenant identifier.
+    pub tenant_id: [u8; 32],
+    /// Human-readable institution name (e.g. "Settler Payments Ltd").
+    pub name: String,
+    /// 2-letter ISO country code (e.g. "CA", "US", "GB").
+    pub country_code: [u8; 2],
+    /// Allocated institutional credit or settlement limit in micro-units.
+    pub allocated_credit_limit: u128,
+    /// Cumulative settled volume in micro-units.
+    pub settled_volume: u128,
+    /// True if tenant is active and authorized.
+    pub active: bool,
+}
+
+impl Encode for ConsortiumTenant {
+    fn encode(&self, e: &mut Encoder) {
+        e.fixed(&self.tenant_id);
+        e.string(&self.name);
+        e.fixed(&self.country_code);
+        e.u128(self.allocated_credit_limit);
+        e.u128(self.settled_volume);
+        e.bool(self.active);
+    }
+}
+
+impl Decode for ConsortiumTenant {
+    fn decode(d: &mut Decoder<'_>) -> Result<Self, DecodeError> {
+        Ok(Self {
+            tenant_id: d.fixed::<32>()?,
+            name: d.string(128)?.to_string(),
+            country_code: d.fixed::<2>()?,
+            allocated_credit_limit: d.u128()?,
+            settled_volume: d.u128()?,
+            active: d.bool()?,
+        })
+    }
+}
+
+/// Cryptographic anchor binding a Settler reconciliation proofpack into Veridag state.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct SettlerReconciliationAnchor {
+    /// Tenant identifier from Settler.
+    pub tenant_id: [u8; 32],
+    /// Reconciled job or run identifier.
+    pub run_id: [u8; 32],
+    /// Merkle root or SHA-256 manifest hash of the Settler EvidenceManifest.
+    pub manifest_hash: [u8; 32],
+    /// Summary hash of all variances and match adjudications.
+    pub variance_summary_hash: [u8; 32],
+    /// Total settlement volume in micro-units.
+    pub total_settled_micro_units: u128,
+    /// Number of transactions reconciled in this run.
+    pub transaction_count: u64,
+    /// Unix timestamp of reconciliation completion.
+    pub timestamp: u64,
+}
+
+impl SettlerReconciliationAnchor {
+    /// Derive canonical ObjectId for this Settler reconciliation anchor:
+    /// `hash("VERIDAG_SETTLER_ANCHOR_V1" || tenant_id || run_id || manifest_hash)`
+    pub fn id(&self) -> ObjectId {
+        let mut buf = Vec::with_capacity(96);
+        buf.extend_from_slice(&self.tenant_id);
+        buf.extend_from_slice(&self.run_id);
+        buf.extend_from_slice(&self.manifest_hash);
+        ObjectId(hash("VERIDAG_SETTLER_ANCHOR_V1", &buf))
+    }
+}
+
+impl Encode for SettlerReconciliationAnchor {
+    fn encode(&self, e: &mut Encoder) {
+        e.fixed(&self.tenant_id);
+        e.fixed(&self.run_id);
+        e.fixed(&self.manifest_hash);
+        e.fixed(&self.variance_summary_hash);
+        e.u128(self.total_settled_micro_units);
+        e.u64(self.transaction_count);
+        e.u64(self.timestamp);
+    }
+}
+
+impl Decode for SettlerReconciliationAnchor {
+    fn decode(d: &mut Decoder<'_>) -> Result<Self, DecodeError> {
+        Ok(Self {
+            tenant_id: d.fixed::<32>()?,
+            run_id: d.fixed::<32>()?,
+            manifest_hash: d.fixed::<32>()?,
+            variance_summary_hash: d.fixed::<32>()?,
+            total_settled_micro_units: d.u128()?,
+            transaction_count: d.u64()?,
+            timestamp: d.u64()?,
+        })
+    }
+}
+
+/// An individual credit disbursement from a Settler reconciliation run.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct SettlerPayoutItem {
+    /// Recipient address on Veridag.
+    pub recipient: Address,
+    /// Amount in micro-units (e.g. 6 decimals for USDV).
+    pub amount: u128,
+    /// Memo or external invoice/payout id (32 bytes).
+    pub memo: [u8; 32],
+}
+
+impl Encode for SettlerPayoutItem {
+    fn encode(&self, e: &mut Encoder) {
+        e.fixed(&self.recipient);
+        e.u128(self.amount);
+        e.fixed(&self.memo);
+    }
+}
+
+impl Decode for SettlerPayoutItem {
+    fn decode(d: &mut Decoder<'_>) -> Result<Self, DecodeError> {
+        Ok(Self {
+            recipient: d.fixed::<32>()?,
+            amount: d.u128()?,
+            memo: d.fixed::<32>()?,
+        })
+    }
+}
+
+/// An atomic settlement batch executing a Settler reconciliation on Veridag.
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct SettlerBatchSettlement {
+    /// The anchor documenting the reconciliation run.
+    pub anchor: SettlerReconciliationAnchor,
+    /// Funding account (e.g. marketplace or fintech clearing account).
+    pub source_account: Address,
+    /// List of itemized payouts.
+    pub payouts: Vec<SettlerPayoutItem>,
 }
 
 /// The USDV Stablecoin Ledger and Compliance Engine.
@@ -799,6 +956,203 @@ impl StablecoinLedger {
 
         Ok(())
     }
+
+    /// Register or update an enterprise consortium tenant in state.
+    pub fn register_tenant(
+        &mut self,
+        state: &mut ObjectState,
+        tenant: ConsortiumTenant,
+    ) -> Result<ObjectId, StablecoinError> {
+        let id = ObjectId(hash("VERIDAG_TENANT_V1", &tenant.tenant_id));
+        let mut enc = Encoder::new();
+        tenant.encode(&mut enc);
+
+        if let Some(existing) = state.get(&id) {
+            let r = ObjectRef {
+                id,
+                expected: existing.version,
+            };
+            state.mutate(&r, |o| o.payload = enc.into_bytes())?;
+        } else {
+            let obj = Object::new(
+                id,
+                object_type::CONSORTIUM_TENANT,
+                Ownership::System,
+                enc.into_bytes(),
+                vec![],
+            );
+            state.create(obj)?;
+        }
+        Ok(id)
+    }
+
+    /// Retrieve an enterprise consortium tenant from state.
+    pub fn get_tenant(
+        &self,
+        state: &ObjectState,
+        tenant_id: &[u8; 32],
+    ) -> Result<ConsortiumTenant, StablecoinError> {
+        let id = ObjectId(hash("VERIDAG_TENANT_V1", tenant_id));
+        let obj = state.get(&id).ok_or(StablecoinError::TenantNotFound(*tenant_id))?;
+        let mut d = Decoder::new(&obj.payload);
+        ConsortiumTenant::decode(&mut d).map_err(StablecoinError::Codec)
+    }
+
+    /// Execute an atomic batch settlement originating from a Settler reconciliation proofpack.
+    pub fn execute_settler_batch(
+        &mut self,
+        state: &mut ObjectState,
+        batch: &SettlerBatchSettlement,
+    ) -> Result<StablecoinReceipt, StablecoinError> {
+        if self.paused {
+            return Err(StablecoinError::Paused);
+        }
+
+        // Validate total settlement amount
+        let mut total_payout: u128 = 0;
+        for p in &batch.payouts {
+            total_payout = total_payout
+                .checked_add(p.amount)
+                .ok_or(StablecoinError::Overflow)?;
+        }
+
+        if total_payout != batch.anchor.total_settled_micro_units {
+            return Err(StablecoinError::SettlerMismatch(
+                total_payout,
+                batch.anchor.total_settled_micro_units,
+            ));
+        }
+
+        // Validate funding account
+        let from_id = Self::derive_account_id(&batch.source_account);
+        let (from_version, mut from_payload) = {
+            let from_obj = state.get(&from_id).ok_or(StablecoinError::NotFound)?;
+            let mut d_from = Decoder::new(&from_obj.payload);
+            let payload = StablecoinAccountPayload::decode(&mut d_from)?;
+            (from_obj.version, payload)
+        };
+
+        if from_payload.frozen {
+            return Err(StablecoinError::AccountFrozen(batch.source_account));
+        }
+        if from_payload.balance < total_payout {
+            return Err(StablecoinError::InsufficientBalance(
+                from_payload.balance,
+                total_payout,
+            ));
+        }
+
+        // Pre-validate all recipients
+        for p in &batch.payouts {
+            let to_id = Self::derive_account_id(&p.recipient);
+            if let Some(to_obj) = state.get(&to_id) {
+                let mut d_to = Decoder::new(&to_obj.payload);
+                let to_payload = StablecoinAccountPayload::decode(&mut d_to)?;
+                if to_payload.frozen {
+                    return Err(StablecoinError::AccountFrozen(p.recipient));
+                }
+            }
+        }
+
+        // Debit source account
+        let new_from_bal = from_payload.balance - total_payout;
+        from_payload.balance = new_from_bal;
+        from_payload.nonce = from_payload.nonce.saturating_add(1);
+
+        let mut enc_from = Encoder::new();
+        from_payload.encode(&mut enc_from);
+        let r_from = ObjectRef {
+            id: from_id,
+            expected: from_version,
+        };
+        state.mutate(&r_from, |o| o.payload = enc_from.into_bytes())?;
+
+        let mut written = vec![from_id];
+        let mut balance_updates = vec![(batch.source_account, new_from_bal)];
+
+        // Credit recipients
+        for p in &batch.payouts {
+            if p.amount == 0 {
+                continue;
+            }
+            let to_id = Self::derive_account_id(&p.recipient);
+            let new_to_bal;
+
+            if let Some(existing) = state.get(&to_id) {
+                let mut d = Decoder::new(&existing.payload);
+                let mut to_payload = StablecoinAccountPayload::decode(&mut d)?;
+                new_to_bal = to_payload
+                    .balance
+                    .checked_add(p.amount)
+                    .ok_or(StablecoinError::Overflow)?;
+                to_payload.balance = new_to_bal;
+                to_payload.nonce = to_payload.nonce.saturating_add(1);
+
+                let mut enc_to = Encoder::new();
+                to_payload.encode(&mut enc_to);
+                let r_to = ObjectRef {
+                    id: to_id,
+                    expected: existing.version,
+                };
+                state.mutate(&r_to, |o| o.payload = enc_to.into_bytes())?;
+                written.push(to_id);
+            } else {
+                new_to_bal = p.amount;
+                let to_payload = StablecoinAccountPayload {
+                    balance: p.amount,
+                    frozen: false,
+                    nonce: 1,
+                };
+                let mut enc_to = Encoder::new();
+                to_payload.encode(&mut enc_to);
+
+                let obj = Object::new(
+                    to_id,
+                    object_type::STABLECOIN,
+                    Ownership::Address(p.recipient),
+                    enc_to.into_bytes(),
+                    vec![],
+                );
+                state.create(obj)?;
+                written.push(to_id);
+                self.tracked_accounts.push(p.recipient);
+            }
+
+            balance_updates.push((p.recipient, new_to_bal));
+        }
+
+        // Anchor the Settler reconciliation proofpack into state
+        let anchor_id = batch.anchor.id();
+        let mut enc_anchor = Encoder::new();
+        batch.anchor.encode(&mut enc_anchor);
+        let anchor_obj = Object::new(
+            anchor_id,
+            object_type::SETTLER_ANCHOR,
+            Ownership::Address(batch.source_account),
+            enc_anchor.into_bytes(),
+            vec![],
+        );
+        state.create(anchor_obj)?;
+        written.push(anchor_id);
+
+        Ok(StablecoinReceipt {
+            tx_id: TransactionId::ZERO,
+            total_supply: self.total_supply,
+            balance_updates,
+            objects_written: written,
+        })
+    }
+
+    /// Retrieve an anchored Settler reconciliation proofpack from state.
+    pub fn get_settler_anchor(
+        &self,
+        state: &ObjectState,
+        anchor_id: &ObjectId,
+    ) -> Result<SettlerReconciliationAnchor, StablecoinError> {
+        let obj = state.get(anchor_id).ok_or(StablecoinError::NotFound)?;
+        let mut d = Decoder::new(&obj.payload);
+        SettlerReconciliationAnchor::decode(&mut d).map_err(StablecoinError::Codec)
+    }
 }
 
 #[cfg(test)]
@@ -989,5 +1343,151 @@ mod tests {
         ledger
             .verify_invariants(&state)
             .expect("conservation of value must hold");
+    }
+
+    #[test]
+    fn test_consortium_tenant_registration_and_retrieval() {
+        let mut ledger = StablecoinLedger::default();
+        let mut state = ObjectState::new();
+
+        let tenant = ConsortiumTenant {
+            tenant_id: [0x55; 32],
+            name: "Settler Technologies Corp".to_string(),
+            country_code: [b'C', b'A'],
+            allocated_credit_limit: 10_000_000 * USDV_SCALE,
+            settled_volume: 2_500_000 * USDV_SCALE,
+            active: true,
+        };
+
+        let obj_id = ledger.register_tenant(&mut state, tenant.clone()).expect("tenant register ok");
+        assert_ne!(obj_id, ObjectId::ZERO);
+
+        let retrieved = ledger.get_tenant(&state, &tenant.tenant_id).expect("tenant get ok");
+        assert_eq!(retrieved, tenant);
+    }
+
+    #[test]
+    fn test_settler_reconciliation_batch_execution_and_anchor() {
+        let mut ledger = StablecoinLedger::new();
+        let mut state = ObjectState::new();
+
+        let custodian = mock_keypair();
+        let clearing_house = mock_keypair();
+        let merchant_a = mock_keypair();
+        let merchant_b = mock_keypair();
+
+        let attestation = ReserveAttestation {
+            oracle_id: custodian.address(),
+            epoch: 1,
+            timestamp: 1710000000,
+            treasury_bills: 1_000_000 * USDV_SCALE,
+            cash_deposits: 0,
+            reverse_repo: 0,
+            total_reserves: 1_000_000 * USDV_SCALE,
+            signature: [0u8; 64],
+        }
+        .sign(&custodian);
+        ledger
+            .submit_attestation(&mut state, attestation, &custodian.public())
+            .unwrap();
+
+        let minter_cap = mock_capability(custodian.address(), clearing_house.address());
+        ledger
+            .mint(
+                &mut state,
+                &clearing_house.address(),
+                &clearing_house.address(),
+                100_000 * USDV_SCALE,
+                &minter_cap,
+                1,
+            )
+            .unwrap();
+
+        // Settler Reconciliation Proofpack Anchor
+        let anchor = SettlerReconciliationAnchor {
+            tenant_id: [0x88; 32],
+            run_id: [0x99; 32],
+            manifest_hash: [0xaa; 32],
+            variance_summary_hash: [0xbb; 32],
+            total_settled_micro_units: 30_000 * USDV_SCALE,
+            transaction_count: 142,
+            timestamp: 1710001000,
+        };
+
+        let batch = SettlerBatchSettlement {
+            anchor: anchor.clone(),
+            source_account: clearing_house.address(),
+            payouts: vec![
+                SettlerPayoutItem {
+                    recipient: merchant_a.address(),
+                    amount: 20_000 * USDV_SCALE,
+                    memo: [0x11; 32],
+                },
+                SettlerPayoutItem {
+                    recipient: merchant_b.address(),
+                    amount: 10_000 * USDV_SCALE,
+                    memo: [0x22; 32],
+                },
+            ],
+        };
+
+        let receipt = ledger
+            .execute_settler_batch(&mut state, &batch)
+            .expect("settler batch must execute");
+
+        assert_eq!(receipt.total_supply, 100_000 * USDV_SCALE);
+        assert_eq!(
+            ledger.get_account(&state, &clearing_house.address()).unwrap().unwrap().balance,
+            70_000 * USDV_SCALE
+        );
+        assert_eq!(
+            ledger.get_account(&state, &merchant_a.address()).unwrap().unwrap().balance,
+            20_000 * USDV_SCALE
+        );
+        assert_eq!(
+            ledger.get_account(&state, &merchant_b.address()).unwrap().unwrap().balance,
+            10_000 * USDV_SCALE
+        );
+
+        // Verify anchored proofpack in state
+        let fetched_anchor = ledger.get_settler_anchor(&state, &anchor.id()).expect("anchor lookup ok");
+        assert_eq!(fetched_anchor, anchor);
+
+        // Core conservation invariants still hold
+        ledger.verify_invariants(&state).expect("invariants must hold");
+    }
+
+    #[test]
+    fn test_settler_batch_mismatch_error() {
+        let mut ledger = StablecoinLedger::default();
+        let mut state = ObjectState::new();
+        let clearing_house = mock_keypair();
+        let merchant = mock_keypair();
+
+        let anchor = SettlerReconciliationAnchor {
+            tenant_id: [0x88; 32],
+            run_id: [0x99; 32],
+            manifest_hash: [0xaa; 32],
+            variance_summary_hash: [0xbb; 32],
+            total_settled_micro_units: 50_000 * USDV_SCALE,
+            transaction_count: 5,
+            timestamp: 1710001000,
+        };
+
+        let batch = SettlerBatchSettlement {
+            anchor,
+            source_account: clearing_house.address(),
+            payouts: vec![SettlerPayoutItem {
+                recipient: merchant.address(),
+                amount: 40_000 * USDV_SCALE, // Mismatch: 40k != 50k
+                memo: [0x11; 32],
+            }],
+        };
+
+        let err = ledger.execute_settler_batch(&mut state, &batch).unwrap_err();
+        assert_eq!(
+            err,
+            StablecoinError::SettlerMismatch(40_000 * USDV_SCALE, 50_000 * USDV_SCALE)
+        );
     }
 }

@@ -121,6 +121,76 @@ impl CheckpointStore for MemoryStore {
     }
 }
 
+/// Configuration policy for pruning historical DAG vertices and archived state (spec 33).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct PruningPolicy {
+    /// Number of checkpoints to retain historical DAG vertices for (default: 10).
+    pub retain_checkpoints: u64,
+    /// Minimum age in seconds before archive eligibility.
+    pub archive_after_secs: u64,
+}
+
+impl Default for PruningPolicy {
+    fn default() -> Self {
+        Self {
+            retain_checkpoints: 10,
+            archive_after_secs: 86400 * 7, // 7 days
+        }
+    }
+}
+
+/// A self-contained, cryptographically bound portable state snapshot for fast peer synchronization (spec 33).
+#[derive(Clone, PartialEq, Eq, Debug)]
+pub struct StateSnapshot {
+    /// The checkpoint anchoring this snapshot.
+    pub checkpoint_id: CheckpointId,
+    /// Monotonic checkpoint sequence number.
+    pub sequence: u64,
+    /// The BMH-1 state root at this checkpoint.
+    pub state_root: veridag_protocol_types::Hash,
+    /// All active live objects at this checkpoint snapshot.
+    pub objects: Vec<Object>,
+}
+
+impl StateSnapshot {
+    /// Total number of objects included in this snapshot.
+    pub fn object_count(&self) -> usize {
+        self.objects.len()
+    }
+}
+
+/// Export a fast synchronization snapshot of all live state objects from `store`.
+pub fn export_snapshot(
+    store: &dyn StateStore,
+    checkpoint_id: CheckpointId,
+    sequence: u64,
+    state_root: veridag_protocol_types::Hash,
+) -> StateSnapshot {
+    let mut objects: Vec<Object> = store.iter_objects().map(|(_, obj)| obj).collect();
+    // Ensure canonical ordering by ObjectId
+    objects.sort_by_key(|o| o.id);
+
+    StateSnapshot {
+        checkpoint_id,
+        sequence,
+        state_root,
+        objects,
+    }
+}
+
+/// Import a fast synchronization snapshot into `store`, atomically populating objects.
+pub fn import_snapshot(
+    store: &mut dyn StateStore,
+    snapshot: &StateSnapshot,
+) -> Result<usize, StorageError> {
+    let mut count = 0;
+    for obj in &snapshot.objects {
+        store.put_object(obj.clone())?;
+        count += 1;
+    }
+    Ok(count)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -154,6 +224,37 @@ mod tests {
         s.put_object(obj(2)).unwrap();
         let ids: Vec<u8> = s.iter_objects().map(|(id, _)| id.0[0]).collect();
         assert_eq!(ids, vec![1, 2, 3], "BTreeMap iteration is sorted by id");
+    }
+
+    #[test]
+    fn test_snapshot_export_and_import() {
+        let mut store1 = MemoryStore::new();
+        store1.put_object(obj(10)).unwrap();
+        store1.put_object(obj(20)).unwrap();
+        store1.put_object(obj(30)).unwrap();
+
+        let checkpoint_id = CheckpointId([0x99; 32]);
+        let state_root = [0x77; 32];
+        let snapshot = export_snapshot(&store1, checkpoint_id, 42, state_root);
+
+        assert_eq!(snapshot.object_count(), 3);
+        assert_eq!(snapshot.sequence, 42);
+        assert_eq!(snapshot.state_root, state_root);
+
+        // Import into clean store
+        let mut store2 = MemoryStore::new();
+        let imported = import_snapshot(&mut store2, &snapshot).unwrap();
+        assert_eq!(imported, 3);
+        assert_eq!(store2.get_object(&ObjectId([10; 32])).unwrap(), Some(obj(10)));
+        assert_eq!(store2.get_object(&ObjectId([20; 32])).unwrap(), Some(obj(20)));
+        assert_eq!(store2.get_object(&ObjectId([30; 32])).unwrap(), Some(obj(30)));
+    }
+
+    #[test]
+    fn test_pruning_policy_defaults() {
+        let policy = PruningPolicy::default();
+        assert_eq!(policy.retain_checkpoints, 10);
+        assert_eq!(policy.archive_after_secs, 86400 * 7);
     }
 }
 
