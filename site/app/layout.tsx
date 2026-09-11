@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata = {
@@ -77,6 +78,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             Dual-licensed under Apache-2.0 and MIT.
           </div>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
