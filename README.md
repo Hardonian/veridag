@@ -11,9 +11,9 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0_|_MIT-blue?style=for-the-badge)](LICENSE-APACHE)
 [![Transport](https://img.shields.io/badge/Transport-QUIC_%2B_TLS_1.3-informational?style=for-the-badge)](implementations/rust/crates/net)
 [![Storage](https://img.shields.io/badge/Storage-Embedded_Sled-success?style=for-the-badge)](implementations/rust/crates/storage)
-[![Footprint](https://img.shields.io/badge/Binary_Footprint-%3C_10MB_Static-lightgrey?style=for-the-badge)](#-why-veridag)
+[![Footprint](https://img.shields.io/badge/Binary_Footprint-%3C_10MB_Static-lightgrey?style=for-the-badge)](#why-veridag)
 
-[Quickstart](#-quickstart-in-under-3-minutes) • [Why Veridag](#-why-veridag) • [Enterprise APIs](#-enterprise-infrastructure--apis) • [SDKs](#-multi-language-sdks) • [ISO 20022](#-iso-20022-banking-bridge) • [SOC-2 & Security](#-soc-2-type-ii--security) • [Crate Map](#-crate-ecosystem) • [Docs](https://github.com/Hardonian/veridag/tree/main/docs)
+[Quickstart](#quickstart-in-under-3-minutes) • [Why Veridag](#why-veridag) • [Enterprise APIs](#enterprise-infrastructure--apis) • [SDKs](#multi-language-sdks) • [ISO 20022](#iso-20022-banking-bridge) • [SOC-2 & Security](#soc-2-type-ii--security) • [Crate Map](#crate-ecosystem) • [Docs](https://github.com/Hardonian/veridag/tree/main/docs)
 
 ---
 
