@@ -57,3 +57,11 @@ site-dev:
 site-build:
     cd site && npm run build
 
+# Run TypeScript SDK conformance tests
+ts-test:
+    cd sdks/typescript && npm test
+
+# Run Python SDK conformance tests
+py-test:
+    cd sdks/python && uv run tests/test_conformance.py
+
