@@ -31,10 +31,14 @@ const nav = [
   { href: "/", label: "Home" },
   { href: "/protocol", label: "Protocol" },
   { href: "/architecture", label: "Architecture" },
+  { href: "/explorer", label: "Explorer" },
+  { href: "/faucet", label: "Faucet" },
+  { href: "/enterprise", label: "Enterprise" },
   { href: "/roadmap", label: "Roadmap" },
   { href: "/security", label: "Security" },
   { href: "/quickstart", label: "Quickstart" },
 ];
+
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (

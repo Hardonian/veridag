@@ -1,6 +1,6 @@
 # Veridag Protocol Specification — Overview
 
-Status: NORMATIVE DRAFT v0.1.0
+Status: NORMATIVE v1.0
 Protocol version: `1`
 Chain of custody: any change to consensus-visible behavior requires a change to this
 specification first (see `17-upgrades.md`).
@@ -97,26 +97,31 @@ all implementations.
 
 ## Specification map
 
-| File | Scope | v0.1 status |
-|------|-------|-------------|
-| 00-overview.md | This document | Normative |
-| 01-terminology.md | Terms, notations | Normative |
-| 02-identifiers.md | Fixed-width canonical identifiers | Normative |
-| 03-canonical-encoding.md | VCE-1 codec | Normative |
-| 04-cryptography.md | Hash, signatures, domains | Normative |
-| 05-transactions.md | Transaction model, anti-replay | Normative |
-| 06-object-model.md | Object-centric state | Normative |
-| 07-capabilities.md | Capability authorization | Normative |
-| 08-dag.md | Vertex model, DAG rules | Normative |
-| 09-consensus.md | BaselineDagBft | Normative |
-| 10-ordering.md | Deterministic ordering policy | Normative |
-| 11-execution.md | Sequential deterministic executor | Normative |
-| 12-state.md | State commitments (BMH-1) | Normative |
-| 13-checkpoints.md | Checkpoint structure & finality | Normative |
-| 14-networking.md | Validator QUIC / public P2P | Scoped draft (impl detail for v0.1 wire) |
-| 15-data-availability.md | DA backends | Scoped draft |
-| 16-validator-membership.md | StaticCommittee | Normative (static) |
-| 17-upgrades.md | Versioning & upgrades | Normative |
-| 18-light-clients.md | Light-client verification | Scoped draft |
+| File | Scope | Status |
+|------|-------|--------|
+| 00-overview.md | Protocol architectural overview & invariants | Normative |
+| 01-terminology.md | Terms, mathematical notation, RFC 2119 semantics | Normative |
+| 02-identifiers.md | Fixed-width canonical identifiers (Blake3/Ed25519) | Normative |
+| 03-canonical-encoding.md | VCE-1 canonical codec & malformed rejection rules | Normative |
+| 04-cryptography.md | Hash domains, Ed25519 signatures, zero non-determinism | Normative |
+| 05-transactions.md | Transaction model, payload boundaries, anti-replay nonces | Normative |
+| 06-object-model.md | Object-centric state, class isolation, versioning | Normative |
+| 07-capabilities.md | Object capability authorization & delegation rules | Normative |
+| 08-dag.md | Vertex DAG structure, causal parents, equivocation defense | Normative |
+| 09-consensus.md | BaselineDagBft consensus, wave commits, leader rules | Normative |
+| 10-ordering.md | Deterministic batch & transaction causal ordering | Normative |
+| 11-execution.md | Sequential & parallel deterministic state execution | Normative |
+| 12-state.md | State commitments (BMH-1 Blake3 Merkle-Hash tree) | Normative |
+| 13-checkpoints.md | Monotonic checkpoint structure & 2f+1 finality proofs | Normative |
+| 14-networking.md | Validator QUIC fast-path & selective libp2p discovery | Normative |
+| 15-data-availability.md | 2D Reed-Solomon DA, tensor commitments & reconstruction | Normative |
+| 16-validator-membership.md | Dynamic consortium committee & epoch handover | Normative |
+| 17-upgrades.md | Checkpoint-activated upgrades & version boundaries | Normative |
+| 18-light-clients.md | 2f+1 quorum checkpoint tracking & BMH-1 inclusion proofs | Normative |
+| 19-us-stablecoin.md | USMCA sovereign settlement & USDV stablecoin engine | Normative |
+| 20-ethereum-infrastructure.md | Ethereum L2 & EVM settlement substrate | Normative |
+| 21-bitcoin-infrastructure.md | Bitcoin UTXO & SPV verification substrate | Normative |
+| 22-settler-integration.md | Settler cross-border reconciliation & dual-leg atomic swap | Normative |
 
 Sections marked NORMATIVE use RFC 2119 language (MUST/SHOULD/MAY).
+
