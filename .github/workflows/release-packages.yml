@@ -1,0 +1,86 @@
+name: release-packages
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  crates-io:
+    name: Publish Rust SDK to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: verify conformance
+        run: |
+          cargo test -p veridag-sdk
+      - name: publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
+            cargo publish -p veridag-protocol-types --no-verify || true
+            cargo publish -p veridag-codec --no-verify || true
+            cargo publish -p veridag-crypto --no-verify || true
+            cargo publish -p veridag-sdk
+          else
+            echo "CARGO_REGISTRY_TOKEN not configured; dry-run mode"
+            cargo publish -p veridag-sdk --dry-run
+          fi
+
+  npm:
+    name: Publish TypeScript SDK to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+      - name: run conformance test
+        working-directory: sdks/typescript
+        run: |
+          npm ci || npm install
+          npm test
+      - name: publish to npm
+        working-directory: sdks/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NODE_AUTH_TOKEN" ]; then
+            npm publish --access public
+          else
+            echo "NPM_TOKEN not configured; dry-run mode"
+            npm publish --dry-run
+          fi
+
+  pypi:
+    name: Publish Python SDK to PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: install uv & run conformance
+        working-directory: sdks/python
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv run tests/test_conformance.py
+          uv build
+      - name: publish to PyPI
+        working-directory: sdks/python
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          if [ -n "$UV_PUBLISH_TOKEN" ]; then
+            uv publish
+          else
+            echo "PYPI_TOKEN not configured; dry-run mode"
+            echo "dist package built successfully:"
+            ls -la dist/
+          fi
