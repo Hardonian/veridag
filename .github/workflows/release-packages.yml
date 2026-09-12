@@ -69,7 +69,7 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          uv run tests/test_conformance.py
+          uv run python -m unittest discover -s tests
           uv build
       - name: publish to PyPI
         working-directory: sdks/python

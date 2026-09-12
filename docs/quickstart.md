@@ -11,6 +11,7 @@ This guide takes you from zero to a running 4-validator consensus demo, launchin
 ## 1. Prerequisites & Toolchain Setup
 
 ### Linux & macOS
+
 ```bash
 # 1. Install Rust via official installer (requires Rust >= 1.85, edition 2021)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -22,6 +23,7 @@ cargo install just
 ```
 
 ### Windows (PowerShell or WSL2)
+
 ```powershell
 # In PowerShell:
 winget install Rustlang.Rustup
@@ -48,15 +50,19 @@ cd veridag
 The fastest way to see the protocol work: a single process that initializes a 4-validator committee, executes a capability-checked transfer (`alice -> bob 40`), builds a DAG across rounds, computes the pure-function commit rule, and emits a cryptographic checkpoint.
 
 Using `cargo`:
+
 ```bash
 cargo run -p veridag-node -- demo
 ```
+
 Or using `just`:
+
 ```bash
 just demo
 ```
 
-### Expected Output:
+### Expected Output
+
 ```text
 veridag-node demo: 4-validator committee, in-process
 submitted transfer alice->bob 40 to all mempools
@@ -108,6 +114,7 @@ curl http://localhost:8081/v1/health
 ## 6. Cross-Language SDKs (TypeScript & Python)
 
 ### TypeScript SDK (`@veridag/sdk`)
+
 ```typescript
 import { VeridagClient, Keypair, TxBuilder } from "@veridag/sdk";
 
@@ -123,6 +130,7 @@ console.log("Tx admitted:", res.tx_id);
 ```
 
 ### Python SDK (`veridag`)
+
 ```python
 from veridag import VeridagClient, Keypair, TxBuilder
 
@@ -142,6 +150,7 @@ print("Tx ID:", res["tx_id"])
 ## 7. Multi-Process Network Devnet (QUIC)
 
 Spin up 4 distinct OS processes communicating over live authenticated QUIC sockets:
+
 ```bash
 cargo test -p veridag-net --test devnet -- --nocapture
 ```
@@ -151,6 +160,7 @@ cargo test -p veridag-net --test devnet -- --nocapture
 ## 8. Crash Recovery & Persistence
 
 Verify restart consistency: drop all in-memory state, rebuild from disk, and assert bit-for-bit identical state roots:
+
 ```bash
 cargo test -p veridag-storage --features persistent
 ```

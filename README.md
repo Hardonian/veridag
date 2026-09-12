@@ -1,12 +1,8 @@
-<div align="center">
-
 # ⚡ Veridag
 
-<!-- BEGIN: REPO HERO -->
 ![veridag — hero generated locally on the GPU stack](assets/repo-hero.png)
-<!-- END: REPO HERO -->
 
-### **The Deterministic Distributed Trust Fabric for AI Agents, Edge Swarms, and Enterprise State**
+## The Deterministic Distributed Trust Fabric for AI Agents, Edge Swarms, and Enterprise State
 
 [![Version](https://img.shields.io/badge/version-0.1.0--alpha-emerald?style=for-the-badge&logo=rust)](https://github.com/Hardonian/veridag/releases)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
@@ -15,22 +11,11 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0_|_MIT-blue?style=for-the-badge)](LICENSE-APACHE)
 [![Transport](https://img.shields.io/badge/Transport-QUIC_%2B_TLS_1.3-informational?style=for-the-badge)](implementations/rust/crates/net)
 [![Storage](https://img.shields.io/badge/Storage-Embedded_Sled-success?style=for-the-badge)](implementations/rust/crates/storage)
-[![Footprint](https://img.shields.io/badge/Binary_Footprint-%3C_10MB_Static-lightgrey?style=for-the-badge)](#footprint--performance)
+[![Footprint](https://img.shields.io/badge/Binary_Footprint-%3C_10MB_Static-lightgrey?style=for-the-badge)](#-why-veridag)
 
-<p align="center">
-  <a href="#-quickstart-in-under-3-minutes">Quickstart</a> •
-  <a href="#-why-veridag">Why Veridag</a> •
-  <a href="#-enterprise-infrastructure--apis">Enterprise APIs</a> •
-  <a href="#-multi-language-sdks">SDKs</a> •
-  <a href="#-iso-20022-banking-bridge">ISO 20022</a> •
-  <a href="#-soc-2-type-ii--security">SOC-2 &amp; Security</a> •
-  <a href="#-crate-ecosystem">Crate Map</a> •
-  <a href="https://github.com/Hardonian/veridag/tree/main/docs">Docs</a>
-</p>
+[Quickstart](#-quickstart-in-under-3-minutes) • [Why Veridag](#-why-veridag) • [Enterprise APIs](#-enterprise-infrastructure--apis) • [SDKs](#-multi-language-sdks) • [ISO 20022](#-iso-20022-banking-bridge) • [SOC-2 & Security](#-soc-2-type-ii--security) • [Crate Map](#-crate-ecosystem) • [Docs](https://github.com/Hardonian/veridag/tree/main/docs)
 
 ---
-
-</div>
 
 ## 🌐 What is Veridag?
 
@@ -60,15 +45,15 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 
 ### What Veridag Is NOT
 
-* ❌ **Not a speculative cryptocurrency or token casino** — No gas volatility, no speculative hype tokens required to run consensus.
-* ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
-* ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
+- ❌ **Not a speculative cryptocurrency or token casino** — No gas volatility, no speculative hype tokens required to run consensus.
+- ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
+- ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
 
 ### 🏛️ Flagship Institutional Capabilities
 
-* 🏛️ **USDV (Veridag Dollar): USMCA & G8 Multilateral Settlement Substrate** — Engineered for USMCA cross-border trade corridors and G8 economic forum multilateral treasury settlement with strict US Treasury alignment. 100% reserve-backed (US Treasuries $\le 90$d, overnight reverse repo, FDIC cash deposits), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
-* ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
-* ⚡ **ISO 20022 Financial Messaging Mainframe** — Direct ingestion of institutional `pacs.008.001.08` XML wire transfers, automated 1 bps clearing surcharge distribution, and signed `pacs.002.001.10` status reports with cryptographic state root commitments.
+- 🏛️ **USDV (Veridag Dollar): USMCA & G8 Multilateral Settlement Substrate** — Engineered for USMCA cross-border trade corridors and G8 economic forum multilateral treasury settlement with strict US Treasury alignment. 100% reserve-backed (US Treasuries $\le 90$d, overnight reverse repo, FDIC cash deposits), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
+- ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
+- ⚡ **ISO 20022 Financial Messaging Mainframe** — Direct ingestion of institutional `pacs.008.001.08` XML wire transfers, automated 1 bps clearing surcharge distribution, and signed `pacs.002.001.10` status reports with cryptographic state root commitments.
 
 ---
 
@@ -88,25 +73,31 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 ## 🚀 Quickstart (In Under 3 Minutes)
 
 ### 1. Prerequisites
+
 Veridag requires standard **Rust 1.85+** (edition 2021):
+
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup default stable
 ```
 
 ### 2. Clone & Build
+
 ```bash
 git clone https://github.com/Hardonian/veridag.git
 cd veridag
 ```
 
 ### 3. Run the In-Process 4-Validator Consensus Demo
+
 Witness 4 independent validator nodes reach cryptographic agreement on state roots and checkpoint IDs in a single command:
+
 ```bash
 cargo run -p veridag-node -- demo
 ```
 
 **Output:**
+
 ```text
 veridag-node demo: 4-validator committee, in-process
 submitted transfer alice->bob 40 to all mempools
@@ -123,7 +114,9 @@ bob balance: 40 (expected 40)
 ## 🔌 Enterprise Infrastructure & APIs
 
 ### Built-in HTTP / JSON-RPC Daemon
+
 Launch the production validator node daemon with the embedded HTTP server:
+
 ```bash
 # Launch validator node daemon with HTTP RPC enabled
 cargo run -p veridag-node -- run --validator-seed 1 --rpc 0.0.0.0:8080
@@ -139,7 +132,9 @@ curl http://127.0.0.1:8080/v1/checkpoints/latest
 ```
 
 ### Multi-Validator Docker Compose Mesh
+
 Launch 4 independent validator nodes communicating over an authenticated QUIC mesh with mapped RPC ports:
+
 ```bash
 docker compose up -d
 curl http://localhost:8081/v1/health
@@ -152,6 +147,7 @@ curl http://localhost:8081/v1/health
 Veridag maintains first-class, bit-for-bit conformant client libraries across Rust, TypeScript, and Python:
 
 ### TypeScript SDK (`@veridag/sdk`)
+
 ```typescript
 import { VeridagClient, Keypair, TxBuilder } from "@veridag/sdk";
 
@@ -167,6 +163,7 @@ console.log("Tx admitted into DAG:", receipt.tx_id);
 ```
 
 ### Python SDK (`veridag`)
+
 ```python
 from veridag import VeridagClient, Keypair, TxBuilder
 
@@ -196,11 +193,12 @@ cargo test -p veridag-stablecoin iso20022
 ## 🛡️ SOC-2 Type II & Security
 
 Veridag maps strictly to **AICPA Trust Services Criteria** across:
-* **CC6 Logical Access**: Ed25519 asymmetric signatures, domain separation tags, consortium multi-tenancy.
-* **CC7 Operations**: Causal DAG audit log, SMT inclusion proofs, automated `/v1/health` monitoring.
-* **A1 Availability**: Bullshark $3f+1$ Byzantine Fault Tolerance with asynchronous fallback.
-* **PI1 Processing Integrity**: Canonical VCE-1 non-malleable encoding, metered WebAssembly runtime.
-* **C1 Confidentiality**: TLS 1.3 / Noise transport encryption, zero hardcoded credentials.
+
+- **CC6 Logical Access**: Ed25519 asymmetric signatures, domain separation tags, consortium multi-tenancy.
+- **CC7 Operations**: Causal DAG audit log, SMT inclusion proofs, automated `/v1/health` monitoring.
+- **A1 Availability**: Bullshark $3f+1$ Byzantine Fault Tolerance with asynchronous fallback.
+- **PI1 Processing Integrity**: Canonical VCE-1 non-malleable encoding, metered WebAssembly runtime.
+- **C1 Confidentiality**: TLS 1.3 / Noise transport encryption, zero hardcoded credentials.
 
 For details, review [`compliance/SOC2_TYPE2_CONTROLS.md`](compliance/SOC2_TYPE2_CONTROLS.md) and the interactive 12-vector threat matrix at [`site/app/security/`](site/app/security/).
 
@@ -265,6 +263,7 @@ just site-build        # Build Next.js documentation, explorer & pricing portal
 ## 🔒 Security & Verification Invariants
 
 Veridag enforces non-negotiable core invariants:
+
 1. **Agreement:** Non-faulty nodes commit identical state anchors.
 2. **Finality:** Committed waves are immutable and cannot be rolled back.
 3. **Integrity:** Only validly signed, structurally sound vertices enter the DAG.
@@ -277,7 +276,8 @@ For vulnerability disclosure and security policies, see [SECURITY.md](SECURITY.m
 ## 📄 License
 
 Dual-licensed under either of:
-* Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
-* MIT License ([LICENSE-MIT](LICENSE-MIT))
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT License ([LICENSE-MIT](LICENSE-MIT))
 
 at your option.
