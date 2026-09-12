@@ -297,7 +297,6 @@ enum Cmd {
         #[arg(long, default_value = "0.0.0.0:8080")]
         rpc: String,
     },
-
 }
 
 fn seed(n: u8) -> Keypair {
@@ -648,7 +647,6 @@ async fn handle_http_request(
                                     "sender": format!("0x{}", hex::encode(sender)),
                                 }),
                             );
-
                         } else {
                             return (
                                 400,
@@ -658,7 +656,6 @@ async fn handle_http_request(
                     }
                 }
             }
-
         }
         return (
             400,
@@ -1001,7 +998,8 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
                     let last_ckpt_id = ckpts.last().map(|c| c.id()).unwrap_or(CheckpointId::ZERO);
                     let validators_list: Vec<ValidatorId> = validators.iter().copied().collect();
                     let txids: Vec<_> = txs.iter().map(|t| t.id()).collect();
-                    let anchor_ids: Vec<VertexId> = seq.committed.iter().map(|c| c.anchor).collect();
+                    let anchor_ids: Vec<VertexId> =
+                        seq.committed.iter().map(|c| c.anchor).collect();
                     let mut ckpt = Checkpoint::new(
                         CURRENT_PROTOCOL_VERSION,
                         CHAIN,
@@ -1083,7 +1081,8 @@ mod tests {
             .unwrap();
 
         let val_keys: Vec<Keypair> = (1..=4u8).map(|s| Keypair::from_seed(&[s; 32])).collect();
-        let validators: Vec<ValidatorId> = val_keys.iter().map(|k| ValidatorId(k.address())).collect();
+        let validators: Vec<ValidatorId> =
+            val_keys.iter().map(|k| ValidatorId(k.address())).collect();
         let committee = StaticCommittee::new(validators, 1);
 
         let (tx_sub, mut rx_sub) = tokio::sync::mpsc::channel(10);
@@ -1130,7 +1129,6 @@ mod tests {
         }))
         .unwrap();
 
-
         let (code, submit_json) =
             handle_http_request(&rpc_ctx, "POST", "/v1/tx/submit", &submit_body).await;
         assert_eq!(code, 200);
@@ -1161,5 +1159,3 @@ mod tests {
         assert!(resp_str.contains("\"status\":\"healthy\""));
     }
 }
-
-

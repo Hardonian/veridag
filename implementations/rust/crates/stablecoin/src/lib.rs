@@ -11,7 +11,11 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+/// ISO 20022 financial messaging integration module (pacs.008 / pacs.002).
+pub mod iso20022;
+
 use thiserror::Error;
+
 use veridag_capabilities::{Capability, CapabilityError};
 use veridag_codec::{Decode, DecodeError, Decoder, Encode, Encoder};
 use veridag_crypto::{hash, verify, Keypair};

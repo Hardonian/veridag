@@ -18,6 +18,7 @@ from .types import (
 from .codec import encode_transaction, encode_signed_transaction
 from .crypto import Keypair, blake3, hash_domain, address_of, derive_object_id
 from .builder import TxBuilder
+from .client import VeridagClient
 
 __all__ = [
     "Address",
@@ -39,4 +40,6 @@ __all__ = [
     "address_of",
     "derive_object_id",
     "TxBuilder",
+    "VeridagClient",
 ]
+
