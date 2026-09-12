@@ -41,12 +41,12 @@ cd veridag`}</code></pre>
           <div><span className="terminal-prompt">$ </span>cargo run -p veridag-node -- demo</div>
           <div className="muted">veridag-node demo: 4-validator committee, in-process</div>
           <div className="muted">submitted transfer alice-&gt;bob 40 to all mempools</div>
-          <div className="terminal-highlight">round 1..9: max round reached 9</div>
-          <div>validator 0: state_root=<span className="terminal-success">0xf7aa17319c5c1653...</span> checkpoints=1</div>
-          <div>&nbsp;&nbsp;checkpoint seq=1 id=0x2c0f6f0ba82cb46a...</div>
-          <div>validator 1: state_root=<span className="terminal-success">0xf7aa17319c5c1653...</span> checkpoints=1</div>
-          <div>validator 2: state_root=<span className="terminal-success">0xf7aa17319c5c1653...</span> checkpoints=1</div>
-          <div>validator 3: state_root=<span className="terminal-success">0xf7aa17319c5c1653...</span> checkpoints=1</div>
+          <div className="terminal-highlight">round 1..11: max round reached 11</div>
+          <div>validator 0: state_root=<span className="terminal-success">0xac049e6fdadc2840...</span> checkpoints=1</div>
+          <div>&nbsp;&nbsp;checkpoint seq=1 id=0x3a875556df63e5ff...</div>
+          <div>validator 1: state_root=<span className="terminal-success">0xac049e6fdadc2840...</span> checkpoints=1</div>
+          <div>validator 2: state_root=<span className="terminal-success">0xac049e6fdadc2840...</span> checkpoints=1</div>
+          <div>validator 3: state_root=<span className="terminal-success">0xac049e6fdadc2840...</span> checkpoints=1</div>
           <div className="terminal-success">AGREEMENT OK: identical state root across 4 validators</div>
           <div className="terminal-highlight">bob balance: 40 (expected 40)</div>
         </div>

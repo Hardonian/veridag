@@ -297,7 +297,13 @@ mod tests {
         assert_eq!(local_signer.address(), local_signer.keypair().address());
 
         let sig = local_signer.sign("VERIDAG_TX_V1", b"payload").unwrap();
-        assert!(verify(&local_signer.public_key(), "VERIDAG_TX_V1", b"payload", &sig).is_ok());
+        assert!(verify(
+            &local_signer.public_key(),
+            "VERIDAG_TX_V1",
+            b"payload",
+            &sig
+        )
+        .is_ok());
 
         let kms_signer = RemoteKmsSigner::new(
             "projects/veridag-prod/locations/us/keyRings/hsm/cryptoKeys/val1",

@@ -179,10 +179,19 @@ impl LightClientTracker {
     /// 1. Quorum threshold (2f+1 signatures from trusted committee).
     /// 2. Cryptographic signature correctness.
     /// 3. Monotonic sequence progression.
-    pub fn ingest_checkpoint(&mut self, checkpoint_bytes: &[u8]) -> Result<&Checkpoint, LightClientError> {
+    pub fn ingest_checkpoint(
+        &mut self,
+        checkpoint_bytes: &[u8],
+    ) -> Result<&Checkpoint, LightClientError> {
         let cp = verify_checkpoint(checkpoint_bytes, &self.trusted)?;
-        if self.latest_checkpoint.is_some() && cp.sequence <= self.highest_sequence && cp.epoch <= self.highest_epoch {
-            return Err(LightClientError::NonMonotonicSequence(cp.sequence, self.highest_sequence));
+        if self.latest_checkpoint.is_some()
+            && cp.sequence <= self.highest_sequence
+            && cp.epoch <= self.highest_epoch
+        {
+            return Err(LightClientError::NonMonotonicSequence(
+                cp.sequence,
+                self.highest_sequence,
+            ));
         }
 
         self.highest_sequence = cp.sequence;
@@ -203,7 +212,10 @@ impl LightClientTracker {
         object_bytes: &[u8],
         proof: &InclusionProof,
     ) -> Result<(), LightClientError> {
-        let cp = self.latest_checkpoint.as_ref().ok_or(LightClientError::NoVerifiedCheckpoint)?;
+        let cp = self
+            .latest_checkpoint
+            .as_ref()
+            .ok_or(LightClientError::NoVerifiedCheckpoint)?;
         verify_object_inclusion(object_id, object_bytes, proof, &cp.state_root)
     }
 }

@@ -41,7 +41,7 @@ jobs:
         run: cargo run --release -p veridag-node -- demo 2>&1 | tee /tmp/demo.log
       - name: assert agreement
         run: |
-          roots=$(grep -c "state_root=0xf7aa1731" /tmp/demo.log)
+          roots=$(grep -c "state_root=0xac049e6f" /tmp/demo.log)
           if [ "$roots" -lt 4 ]; then
             echo "FAIL: expected >=4 validators agreeing on state root"; exit 1
           fi

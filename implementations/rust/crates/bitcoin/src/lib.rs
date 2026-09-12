@@ -315,7 +315,9 @@ impl BtcSpvHeaderTracker {
         if !self.headers.is_empty() {
             let last_hash = self.hashes.last().unwrap();
             if &header.prev_block_hash != last_hash {
-                return Err(BitcoinError::ParentNotFound(hex::encode(header.prev_block_hash)));
+                return Err(BitcoinError::ParentNotFound(hex::encode(
+                    header.prev_block_hash,
+                )));
             }
         }
 
@@ -590,6 +592,8 @@ mod tests {
 
         let req_hash = r#"{"jsonrpc":"2.0","method":"getblockhash","params":[0],"id":2}"#;
         let resp_hash = provider.handle_request(req_hash);
-        assert!(resp_hash.contains("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"));
+        assert!(
+            resp_hash.contains("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
+        );
     }
 }

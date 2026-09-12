@@ -97,15 +97,15 @@ impl ResourceLimiter for HostState {
         _current: usize,
         _desired: usize,
         _maximum: Option<usize>,
-    ) -> anyhow::Result<bool> {
+    ) -> Result<bool, wasmtime::Error> {
         Ok(self.abi.units <= self.metering.max_units)
     }
     fn table_growing(
         &mut self,
-        _current: u32,
-        _desired: u32,
-        _maximum: Option<u32>,
-    ) -> anyhow::Result<bool> {
+        _current: usize,
+        _desired: usize,
+        _maximum: Option<usize>,
+    ) -> Result<bool, wasmtime::Error> {
         Ok(self.abi.units <= self.metering.max_units)
     }
 }

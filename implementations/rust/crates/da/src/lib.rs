@@ -388,8 +388,14 @@ pub struct Da2DConfig {
 impl Da2DConfig {
     pub fn new(data_rows: usize, data_cols: usize, parity_rows: usize, parity_cols: usize) -> Self {
         assert!(data_rows >= 1 && data_cols >= 1, "dimensions must be >= 1");
-        assert!(parity_rows >= 1 && parity_cols >= 1, "parity dimensions must be >= 1");
-        assert!(data_rows + parity_rows <= 256 && data_cols + parity_cols <= 256, "exceeds GF(2^8)");
+        assert!(
+            parity_rows >= 1 && parity_cols >= 1,
+            "parity dimensions must be >= 1"
+        );
+        assert!(
+            data_rows + parity_rows <= 256 && data_cols + parity_cols <= 256,
+            "exceeds GF(2^8)"
+        );
         Self {
             data_rows,
             data_cols,
@@ -557,7 +563,8 @@ pub fn reconstruct_2d(
             let present_in_row: Vec<(usize, Vec<u8>)> = (0..t_cols)
                 .filter_map(|c| grid[r][c].as_ref().map(|s| (c, s.clone())))
                 .collect();
-            let missing_in_row: Vec<usize> = (0..t_cols).filter(|&c| grid[r][c].is_none()).collect();
+            let missing_in_row: Vec<usize> =
+                (0..t_cols).filter(|&c| grid[r][c].is_none()).collect();
 
             if !missing_in_row.is_empty() && present_in_row.len() >= d_cols {
                 let data_shards = reconstruct_data_shards(row_cfg, shard_len, &present_in_row)?;
@@ -582,7 +589,8 @@ pub fn reconstruct_2d(
             let present_in_col: Vec<(usize, Vec<u8>)> = (0..t_rows)
                 .filter_map(|r| grid[r][c].as_ref().map(|s| (r, s.clone())))
                 .collect();
-            let missing_in_col: Vec<usize> = (0..t_rows).filter(|&r| grid[r][c].is_none()).collect();
+            let missing_in_col: Vec<usize> =
+                (0..t_rows).filter(|&r| grid[r][c].is_none()).collect();
 
             if !missing_in_col.is_empty() && present_in_col.len() >= d_rows {
                 let data_shards = reconstruct_data_shards(col_cfg, shard_len, &present_in_col)?;
@@ -808,6 +816,9 @@ mod tests {
         let shards_v3 = ValidatorReplicationScheme::assigned_shards(&v3, &validators, cfg);
 
         // Every shard is assigned to exactly one validator
-        assert_eq!(shards_v1.len() + shards_v2.len() + shards_v3.len(), cfg.total_shards());
+        assert_eq!(
+            shards_v1.len() + shards_v2.len() + shards_v3.len(),
+            cfg.total_shards()
+        );
     }
 }

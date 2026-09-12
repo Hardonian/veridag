@@ -118,7 +118,12 @@ impl Libp2pTransport {
         let (frame_tx, _) = broadcast::channel::<Frame>(1024);
 
         let driver_policy = policy.clone();
-        tokio::spawn(swarm_driver(swarm, command_rx, frame_tx.clone(), driver_policy));
+        tokio::spawn(swarm_driver(
+            swarm,
+            command_rx,
+            frame_tx.clone(),
+            driver_policy,
+        ));
 
         Ok(Self {
             command_tx,

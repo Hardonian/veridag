@@ -64,12 +64,15 @@ round 1: max round reached 1
 round 2: max round reached 2
 round 3: max round reached 3
 ...
-round 9: max round reached 9
-validator 0: state_root=0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149 checkpoints=1
-  checkpoint seq=1 id=0x2c0f6f0ba82cb46a9e223dcb44f9c6d480da39b56fce2685799a779140fa7812
-validator 1: state_root=0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149 checkpoints=1
-validator 2: state_root=0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149 checkpoints=1
-validator 3: state_root=0xf7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149 checkpoints=1
+round 11: max round reached 11
+validator 0: state_root=0xac049e6fdadc2840ff5d3a9ee9e4598a4eebf86e68861bccedcab8f46942cb4e checkpoints=1
+  checkpoint seq=1 id=0x3a875556df63e5ff02303aa0971018d2a69e3d1bd344b50cbb459b160daade40
+validator 1: state_root=0xac049e6fdadc2840ff5d3a9ee9e4598a4eebf86e68861bccedcab8f46942cb4e checkpoints=1
+  checkpoint seq=1 id=0x3a875556df63e5ff02303aa0971018d2a69e3d1bd344b50cbb459b160daade40
+validator 2: state_root=0xac049e6fdadc2840ff5d3a9ee9e4598a4eebf86e68861bccedcab8f46942cb4e checkpoints=1
+  checkpoint seq=1 id=0x3a875556df63e5ff02303aa0971018d2a69e3d1bd344b50cbb459b160daade40
+validator 3: state_root=0xac049e6fdadc2840ff5d3a9ee9e4598a4eebf86e68861bccedcab8f46942cb4e checkpoints=1
+  checkpoint seq=1 id=0x3a875556df63e5ff02303aa0971018d2a69e3d1bd344b50cbb459b160daade40
 AGREEMENT OK: identical state root across 4 validators
 bob balance: 40 (expected 40)
 ```
@@ -129,11 +132,11 @@ Sample JSON output:
   "committee_n": 4,
   "committee_quorum": 3,
   "highest_complete_wave": 2,
-  "max_round": 9,
-  "state_root": "f7aa17319c5c16538466bbba21d451cb0d7d4c82b9a7c3b999fb4eb8b22a0149",
-  "committed_tx_count": 1,
+  "max_round": 11,
+  "state_root": "ac049e6fdadc2840ff5d3a9ee9e4598a4eebf86e68861bccedcab8f46942cb4e",
+  "committed_tx_count": 4,
   "checkpoint_count": 1,
-  "checkpoint_ids": ["2c0f6f0ba82cb46a9e223dcb44f9c6d480da39b56fce2685799a779140fa7812"],
+  "checkpoint_ids": ["3a875556df63e5ff02303aa0971018d2a69e3d1bd344b50cbb459b160daade40"],
   "agreement": true
 }
 ```

@@ -179,7 +179,9 @@ impl PrometheusExporter {
 
         for (name, val) in sorted_counters {
             let clean_name = name.replace('-', "_");
-            out.push_str(&format!("# HELP veridag_{clean_name} Veridag metric {clean_name}\n"));
+            out.push_str(&format!(
+                "# HELP veridag_{clean_name} Veridag metric {clean_name}\n"
+            ));
             out.push_str(&format!("# TYPE veridag_{clean_name} counter\n"));
             out.push_str(&format!("veridag_{clean_name} {val}\n\n"));
         }
@@ -189,7 +191,9 @@ impl PrometheusExporter {
 
         for (name, val) in sorted_gauges {
             let clean_name = name.replace('-', "_");
-            out.push_str(&format!("# HELP veridag_{clean_name} Veridag metric {clean_name}\n"));
+            out.push_str(&format!(
+                "# HELP veridag_{clean_name} Veridag metric {clean_name}\n"
+            ));
             out.push_str(&format!("# TYPE veridag_{clean_name} gauge\n"));
             out.push_str(&format!("veridag_{clean_name} {val}\n\n"));
         }

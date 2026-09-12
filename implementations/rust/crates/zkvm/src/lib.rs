@@ -129,8 +129,10 @@ impl ZkvmAdapter for MockZkvmAdapter {
         post_state_root: [u8; 32],
         tx_batch_root: [u8; 32],
     ) -> Result<ZkValidityProof, ZkProofError> {
-        let proof_bytes = Self::derive_proof_bytes(&pre_state_root, &post_state_root, &tx_batch_root).to_vec();
-        let public_journal = ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
+        let proof_bytes =
+            Self::derive_proof_bytes(&pre_state_root, &post_state_root, &tx_batch_root).to_vec();
+        let public_journal =
+            ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
         Ok(ZkValidityProof {
             backend: ZkvmBackend::Mock,
             pre_state_root,
@@ -171,12 +173,17 @@ impl ZkvmAdapter for MockZkvmAdapter {
             });
         }
 
-        let expected_proof = Self::derive_proof_bytes(expected_pre_root, expected_post_root, expected_batch_root);
+        let expected_proof =
+            Self::derive_proof_bytes(expected_pre_root, expected_post_root, expected_batch_root);
         if proof.proof_data != expected_proof {
             return Err(ZkProofError::VerificationFailed);
         }
 
-        let expected_journal = ZkValidityProof::derive_journal(expected_pre_root, expected_post_root, expected_batch_root);
+        let expected_journal = ZkValidityProof::derive_journal(
+            expected_pre_root,
+            expected_post_root,
+            expected_batch_root,
+        );
         if proof.public_journal != expected_journal {
             return Err(ZkProofError::VerificationFailed);
         }
@@ -212,9 +219,13 @@ impl ZkvmAdapter for Sp1Adapter {
         // In the portable baseline, it constructs the canonical proof packet with the program vkey.
         let mut proof_data = Vec::with_capacity(64);
         proof_data.extend_from_slice(&self.program_vkey);
-        proof_data.extend_from_slice(&hash("SP1_STARK_SEAL_V1", &ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root)));
+        proof_data.extend_from_slice(&hash(
+            "SP1_STARK_SEAL_V1",
+            &ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root),
+        ));
 
-        let public_journal = ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
+        let public_journal =
+            ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
         Ok(ZkValidityProof {
             backend: ZkvmBackend::Sp1,
             pre_state_root,
@@ -235,7 +246,9 @@ impl ZkvmAdapter for Sp1Adapter {
         if proof.backend != ZkvmBackend::Sp1 {
             return Err(ZkProofError::UnsupportedBackend(proof.backend));
         }
-        if &proof.pre_state_root != expected_pre_root || &proof.post_state_root != expected_post_root {
+        if &proof.pre_state_root != expected_pre_root
+            || &proof.post_state_root != expected_post_root
+        {
             return Err(ZkProofError::VerificationFailed);
         }
         if &proof.tx_batch_root != expected_batch_root {
@@ -273,9 +286,13 @@ impl ZkvmAdapter for RiscZeroAdapter {
     ) -> Result<ZkValidityProof, ZkProofError> {
         let mut proof_data = Vec::with_capacity(64);
         proof_data.extend_from_slice(&self.image_id);
-        proof_data.extend_from_slice(&hash("RISC0_RECEIPT_SEAL_V1", &ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root)));
+        proof_data.extend_from_slice(&hash(
+            "RISC0_RECEIPT_SEAL_V1",
+            &ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root),
+        ));
 
-        let public_journal = ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
+        let public_journal =
+            ZkValidityProof::derive_journal(&pre_state_root, &post_state_root, &tx_batch_root);
         Ok(ZkValidityProof {
             backend: ZkvmBackend::RiscZero,
             pre_state_root,
@@ -296,7 +313,9 @@ impl ZkvmAdapter for RiscZeroAdapter {
         if proof.backend != ZkvmBackend::RiscZero {
             return Err(ZkProofError::UnsupportedBackend(proof.backend));
         }
-        if &proof.pre_state_root != expected_pre_root || &proof.post_state_root != expected_post_root {
+        if &proof.pre_state_root != expected_pre_root
+            || &proof.post_state_root != expected_post_root
+        {
             return Err(ZkProofError::VerificationFailed);
         }
         if &proof.tx_batch_root != expected_batch_root {
@@ -320,9 +339,13 @@ mod tests {
         let post = [2u8; 32];
         let batch = [3u8; 32];
 
-        let proof = adapter.prove(pre, post, batch).expect("proving should succeed");
+        let proof = adapter
+            .prove(pre, post, batch)
+            .expect("proving should succeed");
         assert_eq!(proof.backend, ZkvmBackend::Mock);
-        assert!(adapter.verify(&proof, &pre, &post, &batch).expect("verification should succeed"));
+        assert!(adapter
+            .verify(&proof, &pre, &post, &batch)
+            .expect("verification should succeed"));
     }
 
     #[test]
@@ -332,9 +355,13 @@ mod tests {
         let post = [2u8; 32];
         let batch = [3u8; 32];
 
-        let proof = adapter.prove(pre, post, batch).expect("proving should succeed");
+        let proof = adapter
+            .prove(pre, post, batch)
+            .expect("proving should succeed");
         let tampered_post = [9u8; 32];
-        let err = adapter.verify(&proof, &pre, &tampered_post, &batch).unwrap_err();
+        let err = adapter
+            .verify(&proof, &pre, &tampered_post, &batch)
+            .unwrap_err();
         assert!(matches!(err, ZkProofError::StateRootMismatch { .. }));
     }
 
@@ -345,7 +372,9 @@ mod tests {
         let post = [2u8; 32];
         let batch = [3u8; 32];
 
-        let mut proof = adapter.prove(pre, post, batch).expect("proving should succeed");
+        let mut proof = adapter
+            .prove(pre, post, batch)
+            .expect("proving should succeed");
         proof.proof_data[0] ^= 0xff;
         let err = adapter.verify(&proof, &pre, &post, &batch).unwrap_err();
         assert_eq!(err, ZkProofError::VerificationFailed);

@@ -363,10 +363,7 @@ impl EvmJsonRpcProvider {
         match req.method.as_str() {
             "eth_chainId" => JsonRpcResponse {
                 jsonrpc: "2.0".into(),
-                result: Some(serde_json::Value::String(format!(
-                    "0x{:x}",
-                    self.chain_id
-                ))),
+                result: Some(serde_json::Value::String(format!("0x{:x}", self.chain_id))),
                 error: None,
                 id,
             },
@@ -402,10 +399,7 @@ impl EvmJsonRpcProvider {
             }
             "eth_sendRawTransaction" => {
                 // Simulate deterministic ingestion
-                let dummy_hash = hash(
-                    "VERIDAG_ETH_TX_V1",
-                    req.params.to_string().as_bytes(),
-                );
+                let dummy_hash = hash("VERIDAG_ETH_TX_V1", req.params.to_string().as_bytes());
                 JsonRpcResponse {
                     jsonrpc: "2.0".into(),
                     result: Some(serde_json::Value::String(format!(
@@ -562,8 +556,8 @@ mod tests {
             finality_proof: FinalityProof::default(),
         };
 
-        let proof = BridgeStateProof::generate(&state, &id, &cp)
-            .expect("proof generation must succeed");
+        let proof =
+            BridgeStateProof::generate(&state, &id, &cp).expect("proof generation must succeed");
 
         assert!(proof.verify(), "generated proof must verify locally");
     }

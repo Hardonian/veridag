@@ -683,10 +683,22 @@ mod tests {
     fn test_dynamic_committee_bft_weights_and_commitment() {
         let keys: Vec<Keypair> = (1..=4).map(kp).collect();
         let validators: Vec<WeightedValidator> = vec![
-            WeightedValidator { id: vid(&keys[0]), weight: 40 },
-            WeightedValidator { id: vid(&keys[1]), weight: 30 },
-            WeightedValidator { id: vid(&keys[2]), weight: 20 },
-            WeightedValidator { id: vid(&keys[3]), weight: 10 },
+            WeightedValidator {
+                id: vid(&keys[0]),
+                weight: 40,
+            },
+            WeightedValidator {
+                id: vid(&keys[1]),
+                weight: 30,
+            },
+            WeightedValidator {
+                id: vid(&keys[2]),
+                weight: 20,
+            },
+            WeightedValidator {
+                id: vid(&keys[3]),
+                weight: 10,
+            },
         ];
 
         let committee = DynamicCommittee::new(1, validators);
@@ -712,10 +724,22 @@ mod tests {
 
         // Assign weights: Val0 has 40, Val1 has 30, Val2 has 20, Val3 has 10 (Total: 100, Q: 67)
         let weighted = vec![
-            WeightedValidator { id: net.validators[0], weight: 40 },
-            WeightedValidator { id: net.validators[1], weight: 30 },
-            WeightedValidator { id: net.validators[2], weight: 20 },
-            WeightedValidator { id: net.validators[3], weight: 10 },
+            WeightedValidator {
+                id: net.validators[0],
+                weight: 40,
+            },
+            WeightedValidator {
+                id: net.validators[1],
+                weight: 30,
+            },
+            WeightedValidator {
+                id: net.validators[2],
+                weight: 20,
+            },
+            WeightedValidator {
+                id: net.validators[3],
+                weight: 10,
+            },
         ];
         let dynamic_comm = DynamicCommittee::new(0, weighted);
 
@@ -733,7 +757,10 @@ mod tests {
         }
 
         let seq_insufficient = commit_dynamic(&dag, &dynamic_comm, 1);
-        assert!(seq_insufficient.committed.is_empty(), "30 weight < 67 must not commit");
+        assert!(
+            seq_insufficient.committed.is_empty(),
+            "30 weight < 67 must not commit"
+        );
 
         // Scenario 2: Val0 (40) votes for anchor -> 30 + 40 = 70 weight >= 67 (Commit!)
         let mut parents = r4.clone();
@@ -752,12 +779,24 @@ mod tests {
     fn test_epoch_handover_transition() {
         let keys: Vec<Keypair> = (1..=4).map(kp).collect();
         let val_epoch0: Vec<WeightedValidator> = vec![
-            WeightedValidator { id: vid(&keys[0]), weight: 50 },
-            WeightedValidator { id: vid(&keys[1]), weight: 50 },
+            WeightedValidator {
+                id: vid(&keys[0]),
+                weight: 50,
+            },
+            WeightedValidator {
+                id: vid(&keys[1]),
+                weight: 50,
+            },
         ];
         let val_epoch1: Vec<WeightedValidator> = vec![
-            WeightedValidator { id: vid(&keys[0]), weight: 40 },
-            WeightedValidator { id: vid(&keys[2]), weight: 60 },
+            WeightedValidator {
+                id: vid(&keys[0]),
+                weight: 40,
+            },
+            WeightedValidator {
+                id: vid(&keys[2]),
+                weight: 60,
+            },
         ];
 
         let comm0 = DynamicCommittee::new(0, val_epoch0);
@@ -768,7 +807,13 @@ mod tests {
         assert!(tracker.next_committee().is_none());
 
         // Queueing non-consecutive epoch must fail
-        let comm_invalid = DynamicCommittee::new(3, vec![WeightedValidator { id: vid(&keys[0]), weight: 10 }]);
+        let comm_invalid = DynamicCommittee::new(
+            3,
+            vec![WeightedValidator {
+                id: vid(&keys[0]),
+                weight: 10,
+            }],
+        );
         assert!(tracker.queue_epoch_transition(comm_invalid).is_err());
 
         // Queue valid next epoch

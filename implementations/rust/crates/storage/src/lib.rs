@@ -245,9 +245,18 @@ mod tests {
         let mut store2 = MemoryStore::new();
         let imported = import_snapshot(&mut store2, &snapshot).unwrap();
         assert_eq!(imported, 3);
-        assert_eq!(store2.get_object(&ObjectId([10; 32])).unwrap(), Some(obj(10)));
-        assert_eq!(store2.get_object(&ObjectId([20; 32])).unwrap(), Some(obj(20)));
-        assert_eq!(store2.get_object(&ObjectId([30; 32])).unwrap(), Some(obj(30)));
+        assert_eq!(
+            store2.get_object(&ObjectId([10; 32])).unwrap(),
+            Some(obj(10))
+        );
+        assert_eq!(
+            store2.get_object(&ObjectId([20; 32])).unwrap(),
+            Some(obj(20))
+        );
+        assert_eq!(
+            store2.get_object(&ObjectId([30; 32])).unwrap(),
+            Some(obj(30))
+        );
     }
 
     #[test]

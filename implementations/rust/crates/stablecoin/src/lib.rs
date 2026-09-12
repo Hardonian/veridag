@@ -502,7 +502,9 @@ impl StablecoinLedger {
         // Verify capability
         minter_cap.check_valid(current_epoch)?;
         if minter_cap.holder != *minter {
-            return Err(StablecoinError::Unauthorized("caller not cap holder".into()));
+            return Err(StablecoinError::Unauthorized(
+                "caller not cap holder".into(),
+            ));
         }
 
         // INVARIANT 1: Supply <= Attested Reserves
@@ -595,7 +597,9 @@ impl StablecoinLedger {
         if let Some(cap) = burner_cap {
             cap.check_valid(current_epoch)?;
             if cap.holder != *from {
-                return Err(StablecoinError::Unauthorized("caller not cap holder".into()));
+                return Err(StablecoinError::Unauthorized(
+                    "caller not cap holder".into(),
+                ));
             }
         }
 
@@ -683,16 +687,17 @@ impl StablecoinLedger {
         }
 
         // Fetch and pre-validate recipient BEFORE debiting sender
-        let to_info: Option<(ObjectVersion, StablecoinAccountPayload)> = if let Some(to_obj) = state.get(&to_id) {
-            let mut d_to = Decoder::new(&to_obj.payload);
-            let to_payload = StablecoinAccountPayload::decode(&mut d_to)?;
-            if to_payload.frozen {
-                return Err(StablecoinError::AccountFrozen(*to));
-            }
-            Some((to_obj.version, to_payload))
-        } else {
-            None
-        };
+        let to_info: Option<(ObjectVersion, StablecoinAccountPayload)> =
+            if let Some(to_obj) = state.get(&to_id) {
+                let mut d_to = Decoder::new(&to_obj.payload);
+                let to_payload = StablecoinAccountPayload::decode(&mut d_to)?;
+                if to_payload.frozen {
+                    return Err(StablecoinError::AccountFrozen(*to));
+                }
+                Some((to_obj.version, to_payload))
+            } else {
+                None
+            };
 
         // All checks passed: now perform atomic debit and credit
         let new_from_bal = from_payload.balance - amount;
@@ -993,7 +998,9 @@ impl StablecoinLedger {
         tenant_id: &[u8; 32],
     ) -> Result<ConsortiumTenant, StablecoinError> {
         let id = ObjectId(hash("VERIDAG_TENANT_V1", tenant_id));
-        let obj = state.get(&id).ok_or(StablecoinError::TenantNotFound(*tenant_id))?;
+        let obj = state
+            .get(&id)
+            .ok_or(StablecoinError::TenantNotFound(*tenant_id))?;
         let mut d = Decoder::new(&obj.payload);
         ConsortiumTenant::decode(&mut d).map_err(StablecoinError::Codec)
     }
@@ -1291,7 +1298,12 @@ mod tests {
 
         // Alice transfers to Bob
         ledger
-            .transfer(&mut state, &alice.address(), &bob.address(), 400 * USDV_SCALE)
+            .transfer(
+                &mut state,
+                &alice.address(),
+                &bob.address(),
+                400 * USDV_SCALE,
+            )
             .expect("transfer must succeed");
 
         let alice_bal = ledger
@@ -1315,13 +1327,23 @@ mod tests {
 
         // Bob cannot transfer out
         let err = ledger
-            .transfer(&mut state, &bob.address(), &alice.address(), 100 * USDV_SCALE)
+            .transfer(
+                &mut state,
+                &bob.address(),
+                &alice.address(),
+                100 * USDV_SCALE,
+            )
             .unwrap_err();
         assert_eq!(err, StablecoinError::AccountFrozen(bob.address()));
 
         // Alice cannot transfer into frozen Bob
         let err2 = ledger
-            .transfer(&mut state, &alice.address(), &bob.address(), 50 * USDV_SCALE)
+            .transfer(
+                &mut state,
+                &alice.address(),
+                &bob.address(),
+                50 * USDV_SCALE,
+            )
             .unwrap_err();
         assert_eq!(err2, StablecoinError::AccountFrozen(bob.address()));
 
@@ -1359,10 +1381,14 @@ mod tests {
             active: true,
         };
 
-        let obj_id = ledger.register_tenant(&mut state, tenant.clone()).expect("tenant register ok");
+        let obj_id = ledger
+            .register_tenant(&mut state, tenant.clone())
+            .expect("tenant register ok");
         assert_ne!(obj_id, ObjectId::ZERO);
 
-        let retrieved = ledger.get_tenant(&state, &tenant.tenant_id).expect("tenant get ok");
+        let retrieved = ledger
+            .get_tenant(&state, &tenant.tenant_id)
+            .expect("tenant get ok");
         assert_eq!(retrieved, tenant);
     }
 
@@ -1437,24 +1463,40 @@ mod tests {
 
         assert_eq!(receipt.total_supply, 100_000 * USDV_SCALE);
         assert_eq!(
-            ledger.get_account(&state, &clearing_house.address()).unwrap().unwrap().balance,
+            ledger
+                .get_account(&state, &clearing_house.address())
+                .unwrap()
+                .unwrap()
+                .balance,
             70_000 * USDV_SCALE
         );
         assert_eq!(
-            ledger.get_account(&state, &merchant_a.address()).unwrap().unwrap().balance,
+            ledger
+                .get_account(&state, &merchant_a.address())
+                .unwrap()
+                .unwrap()
+                .balance,
             20_000 * USDV_SCALE
         );
         assert_eq!(
-            ledger.get_account(&state, &merchant_b.address()).unwrap().unwrap().balance,
+            ledger
+                .get_account(&state, &merchant_b.address())
+                .unwrap()
+                .unwrap()
+                .balance,
             10_000 * USDV_SCALE
         );
 
         // Verify anchored proofpack in state
-        let fetched_anchor = ledger.get_settler_anchor(&state, &anchor.id()).expect("anchor lookup ok");
+        let fetched_anchor = ledger
+            .get_settler_anchor(&state, &anchor.id())
+            .expect("anchor lookup ok");
         assert_eq!(fetched_anchor, anchor);
 
         // Core conservation invariants still hold
-        ledger.verify_invariants(&state).expect("invariants must hold");
+        ledger
+            .verify_invariants(&state)
+            .expect("invariants must hold");
     }
 
     #[test]
@@ -1484,7 +1526,9 @@ mod tests {
             }],
         };
 
-        let err = ledger.execute_settler_batch(&mut state, &batch).unwrap_err();
+        let err = ledger
+            .execute_settler_batch(&mut state, &batch)
+            .unwrap_err();
         assert_eq!(
             err,
             StablecoinError::SettlerMismatch(40_000 * USDV_SCALE, 50_000 * USDV_SCALE)

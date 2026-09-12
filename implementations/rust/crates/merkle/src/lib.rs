@@ -63,7 +63,7 @@ pub struct InclusionProof {
 /// proof cannot be relocated to a different id: the proof verifies against the
 /// leaf for (id, bytes), and any id mismatch changes the leaf and breaks
 /// verification. This is the same raw leaf hash used by
-/// [`ObjectState::state_root`]; see `references/api-quirks.md`.
+/// `ObjectState::state_root`; see `references/api-quirks.md`.
 pub fn leaf_hash(object_id: &ObjectId, object_bytes: &[u8]) -> Hash {
     #[cfg(feature = "metrics")]
     {

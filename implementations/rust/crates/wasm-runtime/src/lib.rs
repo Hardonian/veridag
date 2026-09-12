@@ -11,7 +11,7 @@
 //!   `ResourceLimiter` so a hostile guest cannot loop forever.
 //! - **Pluggable engine**: the [`GuestModule`] contract is engine-agnostic.
 //!   [`NativeEngine`] (default, no heavy deps) runs guest Rust directly; the
-//!   `wasmtime` feature adds [`WasmEngine`] for real Wasm guests. Both satisfy
+//!   `wasmtime` feature adds `WasmEngine` for real Wasm guests. Both satisfy
 //!   the exact same [`HostAbi`] contract, so consensus semantics are identical.
 //!
 //! The host ABI is intentionally tiny: read/write scoped objects, capability-
@@ -123,7 +123,9 @@ impl ComponentLoader {
         manifest: WasmComponentManifest,
     ) -> Result<ValidatedComponent, GuestError> {
         if bytes.len() < 8 {
-            return Err(GuestError::Validation("bytecode too short (< 8 bytes)".into()));
+            return Err(GuestError::Validation(
+                "bytecode too short (< 8 bytes)".into(),
+            ));
         }
         if bytes[..4] != Self::WASM_MAGIC {
             return Err(GuestError::Validation("invalid Wasm magic bytes".into()));
@@ -223,7 +225,7 @@ impl CapabilitySet {
 
 /// The host ABI a guest may call. Every method is authoritative: it enforces
 /// capability scoping and metering before any effect. Implementors MUST NOT
-/// bypass these checks (the [`NativeEngine`] and [`WasmEngine`] both go through
+/// bypass these checks (the [`NativeEngine`] and `WasmEngine` both go through
 /// this trait, so the contract is the single security boundary).
 pub trait HostAbi {
     /// Read an object's raw bytes. Reading is always permitted (objects are

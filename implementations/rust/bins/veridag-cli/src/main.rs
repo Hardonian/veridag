@@ -273,7 +273,10 @@ enum UsdvCmd {
 enum EthCmd {
     /// Query local EVM JSON-RPC provider.
     Rpc {
-        #[arg(long, default_value = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}")]
+        #[arg(
+            long,
+            default_value = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}"
+        )]
         query: String,
     },
     /// Export BMH-1 Merkle inclusion proof for Ethereum L1 VeridagLightClient verification.
@@ -303,7 +306,10 @@ enum BtcCmd {
     },
     /// Query local Bitcoin JSON-RPC provider.
     Rpc {
-        #[arg(long, default_value = "{\"jsonrpc\":\"2.0\",\"method\":\"getblockcount\",\"params\":[],\"id\":1}")]
+        #[arg(
+            long,
+            default_value = "{\"jsonrpc\":\"2.0\",\"method\":\"getblockcount\",\"params\":[],\"id\":1}"
+        )]
         query: String,
     },
 }
@@ -467,7 +473,11 @@ fn cmd_usdv_attest(oracle: &str, tbills: u128, cash: u128, repo: u128) -> Result
     println!("FDIC Cash Deposits: ${:.2}M", cash as f64 / 1_000_000.0);
     println!("Reverse Repo (RRP): ${:.2}M", repo as f64 / 1_000_000.0);
     println!("------------------------------------------------------------");
-    println!("Total Attested:     ${:.2}M (${} USD)", total as f64 / 1_000_000.0, total);
+    println!(
+        "Total Attested:     ${:.2}M (${} USD)",
+        total as f64 / 1_000_000.0,
+        total
+    );
     println!("BMH-1 State Root:   {}", s.last_state_root);
     println!("============================================================");
     Ok(())
@@ -563,7 +573,10 @@ fn cmd_usdv_freeze(target: &str) -> Result<()> {
     println!("🛡️ COMPLIANCE ACTION EXECUTED:");
     println!("  Target:  {target}");
     println!("  Status:  FROZEN (Sanctions list / OFAC compliance)");
-    println!("  Balance: ${:.6} USDV quarantined", balance as f64 / USDV_SCALE as f64);
+    println!(
+        "  Balance: ${:.6} USDV quarantined",
+        balance as f64 / USDV_SCALE as f64
+    );
     println!("  BMH-1:   {}", s.last_state_root);
     Ok(())
 }
@@ -599,13 +612,25 @@ fn cmd_usdv_audit() -> Result<()> {
             println!("✅ IRON-CLAD INVARIANT AUDIT PASSED");
             println!("============================================================");
             println!("Invariant 1 (Proof of Reserves):");
-            println!("  Circulating Supply: ${:.2} USDV", s.total_supply as f64 / USDV_SCALE as f64);
-            println!("  Attested Reserves:  ${:.2} USD", (s.tbills + s.cash + s.repo) as f64);
+            println!(
+                "  Circulating Supply: ${:.2} USDV",
+                s.total_supply as f64 / USDV_SCALE as f64
+            );
+            println!(
+                "  Attested Reserves:  ${:.2} USD",
+                (s.tbills + s.cash + s.repo) as f64
+            );
             println!("  Collateral Ratio:   100.0% (Zero fractional reserve)");
             println!("------------------------------------------------------------");
             println!("Invariant 2 (Conservation of Value):");
-            println!("  Sum of Balances:    ${:.2} USDV", s.total_supply as f64 / USDV_SCALE as f64);
-            println!("  State Supply:       ${:.2} USDV", ledger.total_supply as f64 / USDV_SCALE as f64);
+            println!(
+                "  Sum of Balances:    ${:.2} USDV",
+                s.total_supply as f64 / USDV_SCALE as f64
+            );
+            println!(
+                "  State Supply:       ${:.2} USDV",
+                ledger.total_supply as f64 / USDV_SCALE as f64
+            );
             println!("  Delta:              $0.000000 (Exact mathematical match)");
             println!("------------------------------------------------------------");
             println!("BMH-1 Merkle Root:    {}", s.last_state_root);
@@ -658,8 +683,7 @@ fn cmd_eth_bridge_proof(account: &str) -> Result<()> {
         finality_proof: FinalityProof::default(),
     };
 
-    let proof = BridgeStateProof::generate(&state, &id, &cp)
-        .map_err(|e| anyhow::anyhow!("{e}"))?;
+    let proof = BridgeStateProof::generate(&state, &id, &cp).map_err(|e| anyhow::anyhow!("{e}"))?;
 
     println!("============================================================");
     println!("⛓️ ETHEREUM L1 BMH-1 MERKLE INCLUSION PROOF");
@@ -673,7 +697,10 @@ fn cmd_eth_bridge_proof(account: &str) -> Result<()> {
     for (i, h) in proof.proof_hashes.iter().enumerate() {
         println!("  [{i}]: {h} (right={})", proof.right_flags[i]);
     }
-    println!("Local Verification:   {}", if proof.verify() { "PASSED" } else { "FAILED" });
+    println!(
+        "Local Verification:   {}",
+        if proof.verify() { "PASSED" } else { "FAILED" }
+    );
     println!("============================================================");
     Ok(())
 }
@@ -693,15 +720,18 @@ fn cmd_usdv_settle(
     let to_key = load_or_create_key(to)?;
 
     let mut tenant_bytes = [0u8; 32];
-    let tb = hex::decode(tenant.trim_start_matches("0x")).unwrap_or_else(|_| tenant.as_bytes().to_vec());
+    let tb =
+        hex::decode(tenant.trim_start_matches("0x")).unwrap_or_else(|_| tenant.as_bytes().to_vec());
     tenant_bytes[..tb.len().min(32)].copy_from_slice(&tb[..tb.len().min(32)]);
 
     let mut run_bytes = [0u8; 32];
-    let rb = hex::decode(run_id.trim_start_matches("0x")).unwrap_or_else(|_| run_id.as_bytes().to_vec());
+    let rb =
+        hex::decode(run_id.trim_start_matches("0x")).unwrap_or_else(|_| run_id.as_bytes().to_vec());
     run_bytes[..rb.len().min(32)].copy_from_slice(&rb[..rb.len().min(32)]);
 
     let mut mf_bytes = [0u8; 32];
-    let mb = hex::decode(manifest_hash.trim_start_matches("0x")).unwrap_or_else(|_| manifest_hash.as_bytes().to_vec());
+    let mb = hex::decode(manifest_hash.trim_start_matches("0x"))
+        .unwrap_or_else(|_| manifest_hash.as_bytes().to_vec());
     mf_bytes[..mb.len().min(32)].copy_from_slice(&mb[..mb.len().min(32)]);
 
     let anchor = veridag_stablecoin::SettlerReconciliationAnchor {
@@ -724,12 +754,17 @@ fn cmd_usdv_settle(
         }],
     };
 
-    let _receipt = ledger.execute_settler_batch(&mut state, &batch)
+    let _receipt = ledger
+        .execute_settler_batch(&mut state, &batch)
         .map_err(|e| anyhow::anyhow!("Settler batch execution failed: {e}"))?;
 
     let from_entry = usdv.accounts.entry(from.to_string()).or_insert((0, false));
     if from_entry.0 < amount {
-        anyhow::bail!("Insufficient balance for Settler payout: has {}, needs {}", from_entry.0, amount);
+        anyhow::bail!(
+            "Insufficient balance for Settler payout: has {}, needs {}",
+            from_entry.0,
+            amount
+        );
     }
     from_entry.0 -= amount;
     usdv.accounts.entry(to.to_string()).or_insert((0, false)).0 += amount;
@@ -744,7 +779,10 @@ fn cmd_usdv_settle(
     println!("Tenant ID:       {tenant}");
     println!("Run ID:          {run_id}");
     println!("Manifest Hash:   {manifest_hash}");
-    println!("Settled Amount:  ${:.6} USDV", amount as f64 / USDV_SCALE as f64);
+    println!(
+        "Settled Amount:  ${:.6} USDV",
+        amount as f64 / USDV_SCALE as f64
+    );
     println!("Anchor ObjectId: 0x{}", hex::encode(anchor.id().as_bytes()));
     println!("State Root:      {}", usdv.last_state_root);
     println!("Status:          SUCCESS (Committed in DAG Wave)");
@@ -778,7 +816,10 @@ fn cmd_usdv_register_tenant(id: &str, name: &str, country: &str, credit_limit: u
     println!("============================================================");
     println!("Tenant ID:     {id}");
     println!("Name:          {}", tenant.name);
-    println!("Jurisdiction:  {}", std::str::from_utf8(&tenant.country_code).unwrap_or("US"));
+    println!(
+        "Jurisdiction:  {}",
+        std::str::from_utf8(&tenant.country_code).unwrap_or("US")
+    );
     println!("Credit Limit:  ${:.2} USDV", credit_limit as f64);
     println!("Status:        ACTIVE");
     println!("============================================================");
@@ -786,8 +827,8 @@ fn cmd_usdv_register_tenant(id: &str, name: &str, country: &str, credit_limit: u
 }
 
 fn cmd_btc_verify_header(header_hex: &str) -> Result<()> {
-    let bytes = hex::decode(header_hex.trim_start_matches("0x"))
-        .context("Invalid hex header string")?;
+    let bytes =
+        hex::decode(header_hex.trim_start_matches("0x")).context("Invalid hex header string")?;
     let header = veridag_bitcoin::BitcoinBlockHeader::parse(&bytes)
         .map_err(|e| anyhow::anyhow!("Header parse failed: {e}"))?;
 
@@ -875,10 +916,16 @@ fn cmd_metrics_export() -> Result<()> {
     use veridag_metrics::{Label, Metrics, Observation};
     exporter.observe(Observation::Counter(Label("consensus_commits_total"), 1254));
     exporter.observe(Observation::Counter(Label("settler_batches_total"), 84));
-    exporter.observe(Observation::Counter(Label("usdv_volume_micro_units_total"), 340_000_000_000));
+    exporter.observe(Observation::Counter(
+        Label("usdv_volume_micro_units_total"),
+        340_000_000_000,
+    ));
     exporter.observe(Observation::Gauge(Label("current_epoch"), 3));
     exporter.observe(Observation::Gauge(Label("active_validators"), 4));
-    exporter.observe(Observation::Gauge(Label("attested_treasury_reserves"), 100_000_000 * USDV_SCALE as i64));
+    exporter.observe(Observation::Gauge(
+        Label("attested_treasury_reserves"),
+        100_000_000 * USDV_SCALE as i64,
+    ));
 
     println!("{}", exporter.render());
     Ok(())
