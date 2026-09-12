@@ -1,0 +1,12 @@
+pyproject.toml
+tests/test_conformance.py
+veridag/__init__.py
+veridag/builder.py
+veridag/codec.py
+veridag/crypto.py
+veridag/types.py
+veridag.egg-info/PKG-INFO
+veridag.egg-info/SOURCES.txt
+veridag.egg-info/dependency_links.txt
+veridag.egg-info/requires.txt
+veridag.egg-info/top_level.txt

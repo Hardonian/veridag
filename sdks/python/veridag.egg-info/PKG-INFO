@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: veridag
+Version: 0.1.0a0
+Summary: Official Veridag Python SDK: deterministic transaction builder and client
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: cryptography>=41.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
