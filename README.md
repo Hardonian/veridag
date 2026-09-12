@@ -17,7 +17,7 @@
 
 ---
 
-## 🌐 What is Veridag?
+## What is Veridag?
 
 **Veridag** is an implementation-independent protocol and ultra-lightweight Rust engine for **deterministic, Byzantine-resilient, capability-secured distributed computation**.
 
@@ -49,7 +49,7 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 - ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
 - ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
 
-### 🏛️ Flagship Institutional Capabilities
+### Flagship Institutional Capabilities
 
 - 🏛️ **USDV (Veridag Dollar): USMCA & G8 Multilateral Settlement Substrate** — Engineered for USMCA cross-border trade corridors and G8 economic forum multilateral treasury settlement with strict US Treasury alignment. 100% reserve-backed (US Treasuries $\le 90$d, overnight reverse repo, FDIC cash deposits), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
 - ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
@@ -57,7 +57,7 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 
 ---
 
-## ⚡ Why Veridag?
+## Why Veridag?
 
 | Property | What It Means for You |
 | :--- | :--- |
@@ -70,7 +70,7 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 
 ---
 
-## 🚀 Quickstart (In Under 3 Minutes)
+## Quickstart (In Under 3 Minutes)
 
 ### 1. Prerequisites
 
@@ -111,7 +111,7 @@ bob balance: 40 (expected 40)
 
 ---
 
-## 🔌 Enterprise Infrastructure & APIs
+## Enterprise Infrastructure & APIs
 
 ### Built-in HTTP / JSON-RPC Daemon
 
@@ -142,7 +142,7 @@ curl http://localhost:8081/v1/health
 
 ---
 
-## 💻 Multi-Language SDKs
+## Multi-Language SDKs
 
 Veridag maintains first-class, bit-for-bit conformant client libraries across Rust, TypeScript, and Python:
 
@@ -180,7 +180,7 @@ print("Tx admitted:", res["tx_id"])
 
 ---
 
-## 🏦 ISO 20022 Banking Bridge
+## ISO 20022 Banking Bridge
 
 Veridag provides native parsing and atomic DAG execution of ISO 20022 `pacs.008.001.08` credit transfer instructions with automatic 1 bps clearing surcharge splits (80% validator pool, 20% insurance reserve) and cryptographic `pacs.002.001.10` execution receipts:
 
@@ -190,7 +190,7 @@ cargo test -p veridag-stablecoin iso20022
 
 ---
 
-## 🛡️ SOC-2 Type II & Security
+## SOC-2 Type II & Security
 
 Veridag maps strictly to **AICPA Trust Services Criteria** across:
 
@@ -204,7 +204,7 @@ For details, review [`compliance/SOC2_TYPE2_CONTROLS.md`](compliance/SOC2_TYPE2_
 
 ---
 
-## 📦 Crate Ecosystem
+## Crate Ecosystem
 
 ```text
 implementations/rust/
@@ -240,7 +240,7 @@ implementations/rust/
 
 ---
 
-## 🧰 Developer Cheatsheet
+## Developer Cheatsheet
 
 ```bash
 # Setup & Linting
@@ -260,7 +260,7 @@ just site-build        # Build Next.js documentation, explorer & pricing portal
 
 ---
 
-## 🔒 Security & Verification Invariants
+## Security & Verification Invariants
 
 Veridag enforces non-negotiable core invariants:
 
@@ -273,7 +273,7 @@ For vulnerability disclosure and security policies, see [SECURITY.md](SECURITY.m
 
 ---
 
-## 📄 License
+## License
 
 Dual-licensed under either of:
 
