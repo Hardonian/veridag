@@ -5,30 +5,35 @@ services:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 1 --bind 0.0.0.0:8000 --peers node2:8000,node3:8000,node4:8000
+    command: daemon --seed 1 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node2:8000,node3:8000,node4:8000
     ports:
       - "8001:8000"
+      - "8081:8080"
 
   node2:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 2 --bind 0.0.0.0:8000 --peers node1:8000,node3:8000,node4:8000
+    command: daemon --seed 2 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node3:8000,node4:8000
     ports:
       - "8002:8000"
+      - "8082:8080"
 
   node3:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 3 --bind 0.0.0.0:8000 --peers node1:8000,node2:8000,node4:8000
+    command: daemon --seed 3 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node4:8000
     ports:
       - "8003:8000"
+      - "8083:8080"
 
   node4:
     build: 
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 4 --bind 0.0.0.0:8000 --peers node1:8000,node2:8000,node3:8000
+    command: daemon --seed 4 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node3:8000
     ports:
       - "8004:8000"
+      - "8084:8080"
+

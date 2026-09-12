@@ -6,7 +6,8 @@
   "type": "module",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test": "node tests/conformance.test.mjs"
+    "test": "node tests/conformance.test.mjs && node tests/client.test.mjs"
+
   },
   "keywords": [
     "veridag",

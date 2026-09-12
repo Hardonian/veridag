@@ -184,3 +184,13 @@ export class Keypair {
     return new Uint8Array(sig);
   }
 }
+
+export function bytesToHex(bytes: Uint8Array): string {
+  return Buffer.from(bytes).toString("hex");
+}
+
+export function hexToBytes(hex: string): Uint8Array {
+  const clean = hex.startsWith("0x") ? hex.slice(2) : hex;
+  return new Uint8Array(Buffer.from(clean, "hex"));
+}
+
