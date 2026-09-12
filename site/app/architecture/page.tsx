@@ -74,7 +74,16 @@ export default function Architecture() {
             <tr><td><code>veridag-consensus</code></td><td>Consensus</td><td>BaselineDagBft pure commit rule &amp; wave ordering</td></tr>
             <tr><td><code>veridag-checkpoint</code></td><td>Finality</td><td>Quorum finality proofs (2f+1) &amp; checkpoint chain</td></tr>
             <tr><td><code>veridag-storage</code></td><td>Storage</td><td>Sled persistent &amp; Memory storage engines</td></tr>
-            <tr><td><code>veridag-net</code></td><td>Network</td><td>QUIC authenticated validator transport</td></tr>
+            <tr><td><code>veridag-net</code></td><td>Network</td><td>QUIC authenticated validator transport and selective libp2p discovery</td></tr>
+            <tr><td><code>veridag-stablecoin</code></td><td>Sovereign</td><td>USMCA/G8 USDV stablecoin, Proof of Reserves, and Settler reconciliation anchors</td></tr>
+            <tr><td><code>veridag-bitcoin</code></td><td>Multi-Chain</td><td>Bitcoin SPV client, 80-byte header parsing, compact nBits PoW, and UTXO bridge codecs</td></tr>
+            <tr><td><code>veridag-ethereum</code></td><td>Multi-Chain</td><td>EVM JSON-RPC provider, Solidity L1 light client, and cross-chain portal</td></tr>
+            <tr><td><code>veridag-metrics</code></td><td>Telemetry</td><td>OpenMetrics / Prometheus exposition exporter and operational gauges</td></tr>
+            <tr><td><code>veridag-wasm-runtime</code></td><td>Runtime</td><td>Deterministic Wasm execution engine with capability-scoped host ABI</td></tr>
+            <tr><td><code>veridag-light-client</code></td><td>Client</td><td>2f+1 quorum checkpoint tracking and object Merkle inclusion proofs</td></tr>
+            <tr><td><code>veridag-zkvm</code></td><td>ZK</td><td>Pluggable zkVM state validity proofs (SP1, RISC Zero) decoupled from consensus</td></tr>
+            <tr><td><code>veridag-da</code></td><td>DA</td><td>2D Reed-Solomon tensor erasure coding with SIMD vector acceleration</td></tr>
+            <tr><td><code>veridag-sdk</code></td><td>SDK</td><td>Idiomatic client with bit-for-bit Rust, TypeScript, and Python conformance</td></tr>
             <tr><td><code>veridag-testkit</code></td><td>Testing</td><td>Vector generation &amp; malformed fuzz suites</td></tr>
           </tbody>
         </table>

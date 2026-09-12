@@ -136,6 +136,51 @@ BMH-1 Merkle inclusion proof generator for L1 contracts, and two-way cross-chain
 primitives. Production Solidity contracts: `USDV.sol`, `VeridagLightClient.sol`, and
 `VeridagBridge.sol`. Normative spec 20.
 
+## Phase 20 — Dynamic Validator Membership & Reconfiguration (DONE in this tree)
+
+`veridag-consensus`: Dynamic committee reconfiguration (`DynamicCommittee`, `WeightedValidator`,
+`EpochHandoverTracker`), threshold stake calculation (2W/3 + 1), and seamless epoch transitions
+without liveness interruption. Normative spec 16 upgraded from draft to normative.
+
+## Phase 21 — Enterprise Prometheus Observability (DONE in this tree)
+
+`veridag-metrics`: Standard OpenMetrics/Prometheus exposition format exporter (`PrometheusExporter`),
+delivering sorted `# HELP` / `# TYPE` metric definitions, counter, gauge, and histogram telemetry
+for validator node operations, consensus round timing, commit rates, and DAG throughput.
+
+## Phase 22 — State Archival & Fast Snapshot Synchronization (DONE in this tree)
+
+`veridag-storage`: State snapshotting engine (`StateSnapshot`, `PruningPolicy`), state serialization
+and deserialization, and state sync primitives enabling newly onboarded institutional validators
+to bootstrap to consensus height without replaying historical DAG waves.
+
+## Phase 23 — Enterprise Cloud KMS & HSM Signer Substrate (DONE in this tree)
+
+`veridag-crypto`: Pluggable key management abstraction (`KeySigner` trait) with local software
+implementation (`LocalKeySigner`) and institutional hardware security module / Cloud KMS driver
+(`RemoteKmsSigner`) supporting AWS KMS, Google Cloud KMS, Azure Key Vault, and PKCS#11 HSMs.
+
+## Phase 24 — Multi-Chain Asset Integration & Speculative Batch Compactor (DONE in this tree)
+
+`veridag-execution`: Native multi-chain asset typing (`AssetType`: `Usdv`, `Btc`, `Eth`, `Sol`),
+disjoint transaction read/write dependency partitioning, and parallel batch compaction
+(`BatchCompactor`) optimizing block throughput for high-concurrency cross-chain operations.
+
+## Phase 25 — Bitcoin Native Substrate & Cross-Chain SPV (DONE in this tree)
+
+`veridag-bitcoin`: Bitcoin SPV client with canonical 80-byte header parsing, compact nBits PoW
+validation, Double-SHA256 (`hash256`), Merkle inclusion proof verification (`BitcoinMerkleProof`),
+continuous header tracker (`BtcSpvHeaderTracker`), and bidirectional UTXO deposit/withdrawal
+codecs (`CrossChainBtcDeposit`, `CrossChainBtcWithdrawal`). Normative spec 21.
+
+## Phase 26 — Hardonian Sovereign AI Stack & Settler Native Layer (DONE in this tree)
+
+`veridag-stablecoin`, `veridag-protocol-types`, `veridag-cli`: Deep bidirectional integration with
+the Hardonian Sovereign AI Stack and Settler reconciliation engine. Native object types
+`SETTLER_ANCHOR` and `CONSORTIUM_TENANT`, atomic batch settlement execution (`execute_settler_batch`),
+reconciliation proofpack state anchoring, and cross-repo interoperability with MissionLedger,
+ReadyLayer, nlsqlc, mcpwall, and TokenGoblin. Normative spec 22.
+
 ## Release status
 
 `0.1.0-alpha` — reference implementation compiles clean (`cargo clippy

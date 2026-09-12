@@ -121,6 +121,22 @@ cd veridag`}</code></pre>
           </tbody>
         </table>
       </div>
+
+      <h2>8. Institutional Substrate Operations (USDV, Settler, Bitcoin SPV)</h2>
+      <p>
+        Interact directly with sovereign USDV stablecoin reserves, execute atomic Settler reconciliation batches, and verify Bitcoin SPV block headers:
+      </p>
+      <pre><code>{`# 1. Attest institutional USDV reserves (US Treasuries & Cash)
+cargo run -p veridag-cli -- usdv attest-reserves --tbills 80000000 --cash 15000000 --repo 5000000
+
+# 2. Settle Settler reconciliation batch atomically with zero variance
+cargo run -p veridag-cli -- usdv settle --tenant settler-us --run-id rec_01 --manifest-hash 0xca49... --from alice --to bob --amount 1000000
+
+# 3. Verify Bitcoin SPV block header and proof-of-work
+cargo run -p veridag-cli -- btc verify-header --header-hex 010000000000...
+
+# 4. Export Prometheus / OpenMetrics telemetry
+cargo run -p veridag-cli -- metrics`}</code></pre>
     </div>
   );
 }

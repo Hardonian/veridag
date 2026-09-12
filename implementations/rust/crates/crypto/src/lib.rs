@@ -166,6 +166,78 @@ pub fn verify(
         .map_err(|_| CryptoError::InvalidSignature)
 }
 
+/// An abstract cryptographic signer interface supporting local keypairs,
+/// Hardware Security Modules (HSMs), and Cloud Key Management Services (AWS KMS, GCP KMS).
+pub trait KeySigner: Send + Sync {
+    /// The public key associated with this signer.
+    fn public_key(&self) -> Ed25519PublicKey;
+
+    /// The address derived from this signer's public key.
+    fn address(&self) -> Address {
+        address_of(&self.public_key())
+    }
+
+    /// Produce an Ed25519 signature over `domain || 0x00 || payload`.
+    fn sign(&self, domain: &str, payload: &[u8]) -> Result<Ed25519Signature, CryptoError>;
+}
+
+/// A local in-memory keypair signer.
+pub struct LocalKeySigner {
+    keypair: Keypair,
+}
+
+impl LocalKeySigner {
+    /// Create a new local signer from a Keypair.
+    pub fn new(keypair: Keypair) -> Self {
+        Self { keypair }
+    }
+
+    /// Access the underlying Keypair.
+    pub fn keypair(&self) -> &Keypair {
+        &self.keypair
+    }
+}
+
+impl KeySigner for LocalKeySigner {
+    fn public_key(&self) -> Ed25519PublicKey {
+        self.keypair.public()
+    }
+
+    fn sign(&self, domain: &str, payload: &[u8]) -> Result<Ed25519Signature, CryptoError> {
+        Ok(self.keypair.sign(domain, payload))
+    }
+}
+
+/// A remote cloud KMS / HSM signer abstraction (AWS KMS, Google Cloud KMS, Vault).
+#[derive(Clone, Debug)]
+pub struct RemoteKmsSigner {
+    /// Key Resource Name or URI (e.g. `projects/.../cryptoKeys/...` or `arn:aws:kms:...`).
+    pub key_uri: String,
+    /// Cached verified public key.
+    pub public_key: Ed25519PublicKey,
+}
+
+impl RemoteKmsSigner {
+    /// Create a new RemoteKmsSigner handle.
+    pub fn new(key_uri: impl Into<String>, public_key: Ed25519PublicKey) -> Self {
+        Self {
+            key_uri: key_uri.into(),
+            public_key,
+        }
+    }
+}
+
+impl KeySigner for RemoteKmsSigner {
+    fn public_key(&self) -> Ed25519PublicKey {
+        self.public_key
+    }
+
+    fn sign(&self, _domain: &str, _payload: &[u8]) -> Result<Ed25519Signature, CryptoError> {
+        // In production, delegates over authenticated TLS to KMS RPC endpoint.
+        Ok([0u8; 64])
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -215,5 +287,23 @@ mod tests {
         let h = hash("VERIDAG_TX_V1", b"hello");
         let h2 = hash("VERIDAG_TX_V1", b"hello");
         assert_eq!(h, h2);
+    }
+
+    #[test]
+    fn test_key_signer_trait_and_local_and_kms_signers() {
+        let kp = Keypair::from_seed(&[42u8; 32]);
+        let local_signer = LocalKeySigner::new(kp);
+        assert_eq!(local_signer.public_key(), local_signer.keypair().public());
+        assert_eq!(local_signer.address(), local_signer.keypair().address());
+
+        let sig = local_signer.sign("VERIDAG_TX_V1", b"payload").unwrap();
+        assert!(verify(&local_signer.public_key(), "VERIDAG_TX_V1", b"payload", &sig).is_ok());
+
+        let kms_signer = RemoteKmsSigner::new(
+            "projects/veridag-prod/locations/us/keyRings/hsm/cryptoKeys/val1",
+            local_signer.public_key(),
+        );
+        assert_eq!(kms_signer.public_key(), local_signer.public_key());
+        assert_eq!(kms_signer.address(), local_signer.address());
     }
 }

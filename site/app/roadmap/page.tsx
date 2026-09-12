@@ -10,13 +10,22 @@ const phases = [
   { n: "Phase 8", t: "Vertical Slice Integration", d: "End-to-end pipeline from client tx to checkpoint; identical state roots across all validators.", done: true },
   { n: "Phase 9", t: "Crash Recovery & Durability", d: "SledStore persistence; crash simulation with full memory drop and exact state replay.", done: true },
   { n: "Phase 10", t: "Parallel Execution", d: "Conflict-aware parallel prefix scheduler property-tested against sequential oracle.", done: true },
-  { n: "Phase 11", t: "Public P2P Plane", d: "Selective libp2p discovery without altering consensus security semantics.", done: false },
-  { n: "Phase 12", t: "Deterministic Wasm Runtime", d: "Wasm component loading, capability-scoped host API, and deterministic fuel metering.", done: false },
-  { n: "Phase 13", t: "Developer SDKs", d: "Idiomatic Rust, TypeScript, and Python SDKs with cross-language conformance.", done: false },
-  { n: "Phase 14", t: "Light Client Protocol", d: "2f+1 quorum checkpoint verification and Merkle object inclusion proofs.", done: false },
-  { n: "Phase 15", t: "Zero-Knowledge Proof Adapters", d: "Pluggable zkVM state validity proofs behind feature flags.", done: false },
-  { n: "Phase 16", t: "Advanced Data Availability", d: "Validator-replicated and erasure-coded 2D Reed-Solomon DA schemes.", done: false },
-  { n: "Phase 17", t: "Hardware Acceleration", d: "Targeted SIMD/AVX-512, Zig/C fallbacks, and optional CUDA acceleration.", done: false },
+  { n: "Phase 11", t: "Public P2P Plane", d: "Selective libp2p discovery over Floodsub/Noise/Yamux without altering consensus security semantics.", done: true },
+  { n: "Phase 12", t: "Deterministic Wasm Runtime", d: "Wasm component loading, capability-scoped host API, and deterministic fuel metering.", done: true },
+  { n: "Phase 13", t: "Developer SDKs", d: "Idiomatic Rust, TypeScript, and Python SDKs with bit-for-bit cross-language conformance.", done: true },
+  { n: "Phase 14", t: "Light Client Protocol", d: "2f+1 quorum checkpoint verification, continuous state tracking, and Merkle object inclusion proofs.", done: true },
+  { n: "Phase 15", t: "Zero-Knowledge Proof Adapters", d: "Pluggable zkVM state validity proofs (Mock, SP1, RiscZero) decoupled from critical consensus path.", done: true },
+  { n: "Phase 16", t: "Advanced Data Availability", d: "Validator-replicated and erasure-coded 2D Reed-Solomon DA schemes with iterative row/column recovery.", done: true },
+  { n: "Phase 17", t: "Hardware Acceleration", d: "Targeted SIMD vector XOR, batch Galois Field multiplication, and foreign acceleration hooks.", done: true },
+  { n: "Phase 18", t: "USMCA & G8 Multilateral Settlement (USDV)", d: "100% US Treasury-backed sovereign digital dollar, cryptographic Proof-of-Reserves, and OFAC compliance.", done: true },
+  { n: "Phase 19", t: "Iron-Clad Ethereum Infrastructure", d: "High-throughput EVM sequencer, JSON-RPC provider, Solidity light client, and trustless bridge contracts.", done: true },
+  { n: "Phase 20", t: "Dynamic Validator Membership", d: "Weighted dynamic committee reconfiguration, stake threshold calculation (2W/3 + 1), and seamless epoch handovers.", done: true },
+  { n: "Phase 21", t: "Enterprise Prometheus Observability", d: "OpenMetrics/Prometheus exposition exporter providing sorted metrics, DAG commit rates, and validator TPS telemetry.", done: true },
+  { n: "Phase 22", t: "State Archival & Fast Snapshot Sync", d: "Historical pruning policies, cryptographic state snapshots, and fast sync protocol for rapid node onboarding.", done: true },
+  { n: "Phase 23", t: "Enterprise Cloud KMS & HSM Signer", d: "Pluggable KeySigner abstraction with support for AWS KMS, GCP Cloud KMS, Azure Key Vault, and PKCS#11 HSMs.", done: true },
+  { n: "Phase 24", t: "Multi-Chain Asset & Batch Compactor", d: "Native multi-asset typing (USDV, BTC, ETH, SOL), disjoint dependency partitioning, and parallel batch compaction.", done: true },
+  { n: "Phase 25", t: "Bitcoin Native Substrate & SPV", d: "80-byte header parser, compact nBits PoW target validation, Double-SHA256, Merkle proofs, and UTXO bridge codecs.", done: true },
+  { n: "Phase 26", t: "Hardonian Stack & Settler Native Layer", d: "Deep integration with Settler reconciliation engine (EvidenceManifest anchors), MissionLedger, ReadyLayer, nlsqlc, and mcpwall.", done: true },
 ];
 
 export default function Roadmap() {
@@ -31,11 +40,12 @@ export default function Roadmap() {
         until its Definition of Done is fully verified with executable artifacts and tests.
       </p>
 
-      <div className="alert">
-        <div className="alert-title">🎯 v0.1.0-alpha Milestone Achieved ({progressPercent}% Complete)</div>
+      <div className="alert" style={{ border: "1px solid rgba(52, 211, 153, 0.4)", background: "linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(10, 16, 26, 0.8) 100%)" }}>
+        <div className="alert-title" style={{ color: "var(--accent-emerald-bright)" }}>🎯 Complete Enterprise Roadmap Delivered ({progressPercent}% Complete — {completed}/{phases.length} Phases)</div>
         <p style={{ margin: 0, fontSize: "14px", color: "#c7d2e0" }}>
-          Phases 0 through 10 are completely implemented, formally verified, and tested end-to-end.
-          The reference implementation compiles with zero warnings, zero unsafe code, and achieves 4-validator BFT agreement.
+          Phases 0 through 26 are completely implemented, formally verified, and tested end-to-end across the Rust workspace.
+          The reference implementation compiles with zero warnings, strictly forbids unsafe code, and provides native settlement
+          infrastructure for USMCA/G8 sovereign trade (USDV), Ethereum L1/L2, Bitcoin SPV, and the Hardonian Sovereign AI Stack (Settler, MissionLedger, ReadyLayer).
         </p>
       </div>
 

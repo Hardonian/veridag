@@ -1353,7 +1353,7 @@ mod tests {
         let tenant = ConsortiumTenant {
             tenant_id: [0x55; 32],
             name: "Settler Technologies Corp".to_string(),
-            country_code: [b'C', b'A'],
+            country_code: *b"CA",
             allocated_credit_limit: 10_000_000 * USDV_SCALE,
             settled_volume: 2_500_000 * USDV_SCALE,
             active: true,

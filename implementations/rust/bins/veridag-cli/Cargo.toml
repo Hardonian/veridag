@@ -17,6 +17,8 @@ veridag-protocol-types = { path = "../../crates/protocol-types" }
 veridag-transaction = { path = "../../crates/transaction" }
 veridag-stablecoin = { path = "../../crates/stablecoin" }
 veridag-ethereum = { path = "../../crates/ethereum" }
+veridag-bitcoin = { path = "../../crates/bitcoin" }
+veridag-metrics = { path = "../../crates/metrics" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true

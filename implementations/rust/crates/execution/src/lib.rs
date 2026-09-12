@@ -387,6 +387,75 @@ impl Executor {
     }
 }
 
+/// A partition of transactions with disjoint read/write sets suitable for parallel pipelining.
+#[derive(Clone, Debug, Default)]
+pub struct DisjointPartition {
+    /// Transactions included in this partition.
+    pub transactions: Vec<SignedTransaction>,
+    /// Combined footprint of object IDs accessed.
+    pub footprint: std::collections::BTreeSet<ObjectId>,
+}
+
+/// Pipelined batch compactor that clusters incoming transactions into non-conflicting disjoint partitions (Phase 24).
+#[derive(Clone, Debug, Default)]
+pub struct BatchCompactor;
+
+impl BatchCompactor {
+    /// Partition a list of transactions into non-conflicting clusters.
+    pub fn partition(transactions: Vec<SignedTransaction>) -> Vec<Vec<SignedTransaction>> {
+        let mut partitions: Vec<DisjointPartition> = Vec::new();
+
+        for tx in transactions {
+            let mut tx_footprint = std::collections::BTreeSet::new();
+            match &tx.tx.operation {
+                Operation::TransferValue { from, to, .. } => {
+                    tx_footprint.insert(from.id);
+                    tx_footprint.insert(Object::derive_id(to, 0));
+                }
+                Operation::UpdateObject { object, .. } => {
+                    tx_footprint.insert(object.id);
+                }
+                Operation::DeleteObject { object } => {
+                    tx_footprint.insert(object.id);
+                }
+                Operation::TransferObject { object, .. } => {
+                    tx_footprint.insert(object.id);
+                }
+                Operation::RevokeCapability { capability_id } => {
+                    tx_footprint.insert(ObjectId(capability_id.0));
+                }
+                Operation::GrantCapability { capability } => {
+                    tx_footprint.insert(ObjectId(capability.id.0));
+                }
+                Operation::CreateObject { .. } => {}
+                Operation::InvokeApplication { app, .. } => {
+                    tx_footprint.insert(ObjectId(hash("VERIDAG_APP_V1", &app.0)));
+                }
+            }
+
+            // Find first partition where footprint is disjoint
+            let mut placed = false;
+            for part in &mut partitions {
+                if part.footprint.is_disjoint(&tx_footprint) {
+                    part.footprint.extend(tx_footprint.clone());
+                    part.transactions.push(tx.clone());
+                    placed = true;
+                    break;
+                }
+            }
+
+            if !placed {
+                partitions.push(DisjointPartition {
+                    transactions: vec![tx],
+                    footprint: tx_footprint,
+                });
+            }
+        }
+
+        partitions.into_iter().map(|p| p.transactions).collect()
+    }
+}
+
 /// Decode a Capability from an object payload.
 fn decode_capability(obj: &Object) -> Result<Capability, veridag_codec::DecodeError> {
     use veridag_codec::{Decode, Decoder};
@@ -835,5 +904,47 @@ mod tests {
             r1, r2,
             "same ordered batch -> identical receipts and state root"
         );
+    }
+
+    #[test]
+    fn test_batch_compactor_partitions_disjoint_transactions() {
+        let alice = Keypair::generate().unwrap();
+        let bob = Keypair::generate().unwrap();
+        let charlie = Keypair::generate().unwrap();
+        let dave = Keypair::generate().unwrap();
+
+        // Tx1: Alice -> Bob
+        let tx1 = sign(
+            &alice,
+            0,
+            Operation::TransferValue {
+                from: ObjectRef {
+                    id: Object::derive_id(&alice.address(), 0),
+                    expected: 0,
+                },
+                to: bob.address(),
+                amount: 10,
+            },
+        );
+
+        // Tx2: Charlie -> Dave (completely disjoint from Alice and Bob)
+        let tx2 = sign(
+            &charlie,
+            0,
+            Operation::TransferValue {
+                from: ObjectRef {
+                    id: Object::derive_id(&charlie.address(), 0),
+                    expected: 0,
+                },
+                to: dave.address(),
+                amount: 25,
+            },
+        );
+
+        let partitions = BatchCompactor::partition(vec![tx1.clone(), tx2.clone()]);
+        // Since Tx1 and Tx2 are disjoint, they can be grouped into the first partition or separate
+        assert!(!partitions.is_empty());
+        let total_clustered: usize = partitions.iter().map(|p| p.len()).sum();
+        assert_eq!(total_clustered, 2);
     }
 }
