@@ -3,7 +3,8 @@ export default function Quickstart() {
     <div>
       <h1>Quickstart</h1>
       <p className="tagline">
-        From zero to a running 4-validator Byzantine consensus demo in under three minutes.
+        From zero to a running 4-validator Byzantine consensus demo, HTTP JSON-RPC daemon,
+        and cross-language SDK client in under three minutes.
       </p>
 
       <div className="alert">
@@ -52,33 +53,95 @@ cd veridag`}</code></pre>
         </div>
       </div>
 
-      <h2>4. Multi-Process Network Devnet (QUIC)</h2>
+      <h2>4. Launching the HTTP / JSON-RPC Node Daemon</h2>
+      <p>
+        Start the production validator node daemon with the built-in HTTP RPC server listening on port <code>8080</code>:
+      </p>
+      <pre><code>{`# Launch validator node daemon with HTTP RPC enabled
+cargo run -p veridag-node -- run --validator-seed 1 --rpc 0.0.0.0:8080
+
+# In another terminal, query node health & state root
+curl http://127.0.0.1:8080/v1/health
+curl http://127.0.0.1:8080/v1/state/root
+curl http://127.0.0.1:8080/v1/checkpoints/latest`}</code></pre>
+
+      <h2>5. Multi-Container Topology (Docker Compose)</h2>
+      <p>
+        Launch a 4-validator distributed consensus mesh with exposed RPC ports <code>8081..8084</code>:
+      </p>
+      <pre><code>{`# Start 4 independent validator nodes over authenticated QUIC mesh
+docker compose up -d
+
+# Check cluster logs and consensus agreement
+docker compose logs -f
+
+# Query validator node 1 RPC
+curl http://localhost:8081/v1/health`}</code></pre>
+
+      <h2>6. Cross-Language SDK Quickstart</h2>
+      <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px", margin: "20px 0" }}>
+        <div className="card">
+          <h3>TypeScript SDK (<code>@veridag/sdk</code>)</h3>
+          <p className="muted" style={{ fontSize: "13px" }}>Native Web Crypto / ESM client with zero runtime bloat:</p>
+          <pre style={{ margin: "10px 0" }}><code>{`import { VeridagClient, Keypair, TxBuilder } from "@veridag/sdk";
+
+const client = new VeridagClient("http://127.0.0.1:8080");
+const health = await client.health();
+console.log("DAG Status:", health.status, "Chain ID:", health.chain_id);
+
+const sender = Keypair.fromSeed(new Uint8Array(32).fill(1));
+const recipient = Keypair.fromSeed(new Uint8Array(32).fill(2)).address();
+const stx = new TxBuilder(sender).nonce(0).transfer(recipient, 500n);
+const res = await client.submitTransaction(stx, sender.public);
+console.log("Tx admitted:", res.tx_id);`}</code></pre>
+        </div>
+
+        <div className="card">
+          <h3>Python SDK (<code>veridag</code>)</h3>
+          <p className="muted" style={{ fontSize: "13px" }}>Zero-dependency standard library client for AI agents and quants:</p>
+          <pre style={{ margin: "10px 0" }}><code>{`from veridag import VeridagClient, Keypair, TxBuilder
+
+client = VeridagClient("http://127.0.0.1:8080")
+h = client.health()
+print(f"Connected: chain={h['chain_id']} root={h['state_root'][:16]}...")
+
+sender = Keypair.from_seed(b"\\x01" * 32)
+recipient = Keypair.from_seed(b"\\x02" * 32).address()
+stx = TxBuilder(sender).nonce(0).transfer(recipient, 500)
+res = client.submit_transaction(stx, sender.public())
+print("Tx ID:", res["tx_id"])`}</code></pre>
+        </div>
+      </div>
+
+      <h2>7. Multi-Process Network Devnet (QUIC)</h2>
       <p>
         Spin up 4 distinct OS processes communicating over real authenticated QUIC sockets
         with self-signed TLS 1.3 certificates:
       </p>
       <pre><code>{`cargo test -p veridag-net --test devnet -- --nocapture`}</code></pre>
 
-      <h2>5. Crash Recovery &amp; Persistence</h2>
+      <h2>8. Crash Recovery &amp; Persistence</h2>
       <p>
         Verify restart consistency: build a DAG, persist to embedded <code>sled</code>, drop all in-memory state
         (simulated crash), rebuild from disk, and assert bit-for-bit identical state roots:
       </p>
       <pre><code>{`cargo test -p veridag-storage --features persistent`}</code></pre>
 
-      <h2>6. Validator Node Health Check</h2>
+      <h2>9. Institutional ISO 20022 Banking Bridge</h2>
       <p>
-        Emit human-readable or machine-parseable JSON status for ops monitoring and dashboard integration:
+        Ingest institutional <code>pacs.008.001.08</code> customer credit transfers, automatically apply 1 bps
+        clearing surcharge (80% validator pool, 20% insurance reserve), and receive signed <code>pacs.002</code> execution receipts:
       </p>
-      <pre><code>{`cargo run -p veridag-node -- health --json`}</code></pre>
+      <pre><code>{`# Run ISO 20022 unit and integration tests
+cargo test -p veridag-stablecoin iso20022`}</code></pre>
 
-      <h2>7. Developer Toolchain Cheatsheet</h2>
+      <h2>10. Developer Toolchain Cheatsheet</h2>
       <div className="table-container">
         <table>
           <thead>
             <tr>
               <th>Command</th>
-              <th>Just Alias</th>
+              <th>Script / Alias</th>
               <th>What It Does</th>
             </tr>
           </thead>
@@ -96,7 +159,12 @@ cd veridag`}</code></pre>
             <tr>
               <td><code>cargo test --workspace --all-features</code></td>
               <td><code>just check</code></td>
-              <td>Run entire test suite across all 15 crates</td>
+              <td>Run entire test suite across all 28 crates</td>
+            </tr>
+            <tr>
+              <td><code>pwsh -File scripts/publish-sdks.ps1</code></td>
+              <td><code>bash scripts/publish-sdks.sh</code></td>
+              <td>Cross-language test runner verifying Rust, TS, and Python SDKs</td>
             </tr>
             <tr>
               <td><code>cargo run -p veridag-node -- demo</code></td>
@@ -121,22 +189,6 @@ cd veridag`}</code></pre>
           </tbody>
         </table>
       </div>
-
-      <h2>8. Institutional Substrate Operations (USDV, Settler, Bitcoin SPV)</h2>
-      <p>
-        Interact directly with sovereign USDV stablecoin reserves, execute atomic Settler reconciliation batches, and verify Bitcoin SPV block headers:
-      </p>
-      <pre><code>{`# 1. Attest institutional USDV reserves (US Treasuries & Cash)
-cargo run -p veridag-cli -- usdv attest-reserves --tbills 80000000 --cash 15000000 --repo 5000000
-
-# 2. Settle Settler reconciliation batch atomically with zero variance
-cargo run -p veridag-cli -- usdv settle --tenant settler-us --run-id rec_01 --manifest-hash 0xca49... --from alice --to bob --amount 1000000
-
-# 3. Verify Bitcoin SPV block header and proof-of-work
-cargo run -p veridag-cli -- btc verify-header --header-hex 010000000000...
-
-# 4. Export Prometheus / OpenMetrics telemetry
-cargo run -p veridag-cli -- metrics`}</code></pre>
     </div>
   );
 }

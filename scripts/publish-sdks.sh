@@ -29,14 +29,15 @@ npm test
 echo "  [PASS] TypeScript SDK conformance verified."
 
 # 3. Python SDK
-echo "[3/3] Verifying Python SDK conformance..."
+echo "[3/3] Verifying Python SDK conformance & HTTP client..."
 cd "$ROOT_DIR/sdks/python"
 if command -v uv >/dev/null 2>&1; then
-    uv run tests/test_conformance.py
+    uv run python -m unittest discover -s tests
 else
-    python3 tests/test_conformance.py
+    python3 -m unittest discover -s tests
 fi
-echo "  [PASS] Python SDK conformance verified."
+echo "  [PASS] Python SDK conformance and client verified."
+
 
 echo "================================================================="
 echo " ALL 3 SDKS MATCH GOLDEN VECTORS 100% BIT-FOR-BIT!"
