@@ -31,10 +31,11 @@ All performance benchmarks are reproducible using `cargo bench` and Criterion.
 
 ## 2. Real-Time Observability (`veridag-metrics`)
 
-Production nodes expose Prometheus metrics over `/metrics`:
+Production nodes expose Prometheus metrics over `/v1/metrics`:
 * `veridag_dag_round`: Current round of the local validator DAG.
 * `veridag_committed_waves_total`: Cumulative BFT wave anchors finalized.
 * `veridag_mempool_size`: Current queued transactions awaiting vertex packaging.
 * `veridag_checkpoint_index`: Latest monotonic finalized checkpoint index.
 * `veridag_execution_duration_seconds`: Histogram of batch execution and state root computation latency.
 
+See `ops/deployment.md` for the full metric catalogue and a Grafana alert example.
