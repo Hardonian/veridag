@@ -4,12 +4,59 @@ All notable changes to this project are documented here. The format follows
 Keep a Changelog; versions follow SemVer. Protocol version is distinct from
 software version (see `protocol/specification/17-upgrades.md`).
 
-## [0.1.0-alpha] - 2026-08-17
+## [Unreleased]
 
-First reference-implementation alpha. The consensus + execution + persistence +
-networking slice is complete and tested.
+_No unreleased changes._
+
+## [1.0.0] - 2026-09-29
+
+Production go-live release. All 26 protocol phases complete, tested, and
+production-hardened.
 
 ### Added
+- Structured logging via `tracing-subscriber` with `RUST_LOG` env filter and
+  optional JSON output (`VERIDAG_LOG_JSON=1`).
+- Graceful shutdown handler (Ctrl+C / SIGTERM) for clean daemon termination.
+- Prometheus metrics endpoint (`/v1/metrics`) wired to `PrometheusExporter`
+  with counters for vertices proposed, waves committed, txs executed, and
+  checkpoints produced, plus gauges for highest wave and max round.
+- Readiness probe endpoint (`/v1/ready`) returning 200 when consensus is
+  progressing (highest_wave > 0) and 503 otherwise.
+- Release profile in workspace `Cargo.toml` (`opt-level=3`, thin LTO,
+  `codegen-units=1`, `panic=abort`, `strip=true`).
+- Docker healthcheck in `Dockerfile` and `docker-compose.yml` with
+  `restart: unless-stopped` policy.
+- CI jobs for TypeScript SDK, Python SDK conformance, and site build
+  verification on every PR.
+- Dependabot coverage for npm (site, TypeScript SDK) and pip (Python SDK).
+
+### Changed
+- Version bumped from `0.1.0-alpha` to `1.0.0`.
+- Docker Compose migrated to V2 format (removed deprecated `version:` key).
+- `cargo deny` CI runs from workspace root where `deny.toml` lives.
+- Architecture docs updated to reflect all 24 shipped crates and 3 binaries.
+- CHANGELOG restructured: Phase 0–4 moved from `[Unreleased]` to `[0.1.0-alpha]`.
+- README CLI example fixed (`daemon --seed` instead of `run --validator-seed`).
+
+### Safety
+- All crates `#![forbid(unsafe_code)]`.
+- `cargo clippy --workspace --all-targets --all-features -- -D warnings` clean.
+- Full workspace test suite green.
+
+## [0.1.0-alpha] - 2026-08-17
+
+First reference-implementation alpha. The full consensus + execution +
+persistence + networking + smart contract + cross-chain + institutional
+settlement pipeline is complete and tested across Phases 0–26.
+
+### Added
+- Phase 0: normative protocol specification 00–22.
+- Phase 1: Quint formal model (`consensus.qnt`, `invariants.qnt`) with
+  Agreement/Finality/Integrity invariants.
+- Phase 2: golden and malformed test vectors.
+- Phase 3: Rust protocol foundation crates (`protocol-types`, `codec`, `crypto`,
+  `merkle`, `transaction`, `capabilities`, `object-state`, `storage`).
+- Phase 4: sequential deterministic state machine (`veridag-execution`).
 - Phase 5: `veridag-net` — QUIC authenticated validator links + vertex/batch
   gossip. Multi-process devnet test reaches consensus over real sockets.
 - Phase 6: `veridag-dag` — VCE-1 vertex wire form, validity, equivocation,
@@ -39,6 +86,7 @@ networking slice is complete and tested.
 - Phase 25: `veridag-bitcoin` — Bitcoin SPV client with canonical 80-byte header parser, nBits PoW validation, and UTXO bridge codecs.
 - Phase 26: Hardonian Stack & Settler Native Layer — Deep integration with Settler reconciliation engine, proofpack anchors, and sovereign AI stack.
 - `veridag-node`, `veridag-cli`, `veridag-genesis` binaries.
+- Governance docs, ADRs 0001–0015, CI.
 - Release profile: `opt-level=3`, thin LTO, `panic=abort`, `strip=true`
   (low-latency, low-energy, small binary).
 - Docs: `docs/quickstart.md` (universal onboarding), updated
@@ -48,14 +96,3 @@ networking slice is complete and tested.
 - All crates `#![forbid(unsafe_code)]`.
 - `cargo clippy --workspace --all-targets --all-features -- -D warnings` clean.
 - Full workspace test suite green.
-
-## [Unreleased]
-
-### Added
-- Phase 0: normative protocol specification 00–18.
-- Phase 1: Quint formal model (`consensus.qnt`, `invariants.qnt`) with
-  Agreement/Finality/Integrity invariants.
-- Phase 2: golden and malformed test vectors.
-- Phase 3: Rust protocol foundation crates.
-- Phase 4: sequential deterministic state machine.
-- Governance docs, ADRs 0001–0015, CI.

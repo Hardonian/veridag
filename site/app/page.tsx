@@ -6,7 +6,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-eyebrow">
-          <span>⚡ Protocol v0.1.0-alpha Released</span>
+          <span>⚡ Protocol v1.0.0 Released</span>
           <span style={{ opacity: 0.5 }}>•</span>
           <span>🏛️ Sovereign Multilateral USDV</span>
           <span style={{ opacity: 0.5 }}>•</span>

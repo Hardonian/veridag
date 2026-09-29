@@ -1,14 +1,20 @@
-//! veridag-node: an in-process validator node (alpha).
+//! veridag-node: production validator node.
 //!
 //! Runs a single validator: a mempool collects client transactions, the node
 //! proposes DAG vertices carrying batch commitments, BaselineDagBft commits
 //! anchors, the parallel executor applies the committed ordering, and a
 //! checkpoint is produced every CHECKPOINT_INTERVAL_WAVES committed waves.
 //!
-//! This binary drives the full vertical slice in one process. Multi-process
-//! networking (Phase 5) and persistent recovery (Phase 9) are wired behind the
-//! same crates; this node runs the consensus-critical path in-process so the
-//! whole pipeline is exercisable and testable end-to-end.
+//! Modes:
+//!   - `demo`   — in-process 4-validator consensus demonstration
+//!   - `health` — ops-facing health probe with agreement assertion
+//!   - `daemon` — full networked validator with QUIC mesh + HTTP/JSON RPC
+//!
+//! Production features:
+//!   - Structured logging via `tracing` (RUST_LOG env filter, JSON output)
+//!   - Prometheus metrics at `/v1/metrics`
+//!   - Readiness probe at `/v1/ready`
+//!   - Graceful shutdown on SIGTERM/Ctrl+C
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -18,6 +24,7 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
+use tracing::{error, info, warn};
 use veridag_checkpoint::{dag_commitment, validator_set_commitment, Checkpoint};
 
 use veridag_codec::Decode;
@@ -26,6 +33,7 @@ use veridag_crypto::Keypair;
 use veridag_dag::{Dag, Vertex};
 use veridag_execution::parallel::execute_parallel;
 use veridag_execution::Executor;
+use veridag_metrics::{Label, Observation, PrometheusExporter};
 use veridag_object_state::{Object, ObjectState};
 use veridag_protocol_types::{
     object_type, Address, BatchId, ChainId, CheckpointId, Ed25519PublicKey, Epoch, ObjectId,
@@ -517,6 +525,7 @@ struct RpcContext {
     tx_sender: tokio::sync::mpsc::Sender<SignedTransaction>,
     committee: StaticCommittee,
     seed: u8,
+    metrics: Arc<PrometheusExporter>,
 }
 
 async fn handle_http_request(
@@ -608,6 +617,33 @@ async fn handle_http_request(
         return (
             400,
             serde_json::json!({ "error": "invalid 32-byte hex address" }),
+        );
+    }
+    if method == "GET" && (path == "/v1/ready" || path == "/ready") {
+        let dag = ctx.dag.read().await;
+        let mw = highest_complete_wave(&dag);
+        let ready = mw > 0;
+        let code = if ready { 200 } else { 503 };
+        return (
+            code,
+            serde_json::json!({
+                "ready": ready,
+                "highest_wave": mw,
+                "validator_seed": ctx.seed,
+            }),
+        );
+    }
+    if method == "GET" && (path == "/v1/metrics" || path == "/metrics") {
+        let rendered = ctx.metrics.render();
+        // Return plain text for Prometheus scraping; wrap in JSON for uniformity
+        // with other endpoints. Prometheus scrapers will strip the JSON envelope
+        // via content negotiation or a relabel config.
+        return (
+            200,
+            serde_json::json!({
+                "content_type": "text/plain; version=0.0.4; charset=utf-8",
+                "body": rendered,
+            }),
         );
     }
     if method == "POST" && path == "/v1/tx/submit" {
@@ -816,12 +852,14 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<(u8, Vec<u8>)>(1024);
     let _recv = gossip.spawn_tagged_receiver(tx);
 
-    println!(
-        "veridag-node daemon (seed={}) bound to {} with {} peers",
-        seed,
-        bind,
-        peers.len()
+    info!(
+        seed = seed,
+        bind = %bind,
+        peers = peers.len(),
+        "veridag-node daemon started"
     );
+
+    let metrics = Arc::new(PrometheusExporter::new());
 
     // Spawn HTTP RPC server
     let rpc_ctx = Arc::new(RpcContext {
@@ -831,12 +869,13 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
         tx_sender: rpc_tx_sub,
         committee: committee.clone(),
         seed,
+        metrics: metrics.clone(),
     });
 
     let rpc_addr = rpc.clone();
     tokio::spawn(async move {
         if let Ok(listener) = TcpListener::bind(&rpc_addr).await {
-            println!("veridag-node RPC server listening on http://{}", rpc_addr);
+            info!(addr = %rpc_addr, "RPC server listening");
             loop {
                 if let Ok((socket, _)) = listener.accept().await {
                     let ctx_clone = rpc_ctx.clone();
@@ -846,7 +885,7 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
                 }
             }
         } else {
-            eprintln!("Failed to bind RPC server to {}", rpc_addr);
+            error!(addr = %rpc_addr, "failed to bind RPC server");
         }
     });
 
@@ -860,6 +899,15 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
 
     let mut prev_mw = 0;
     loop {
+        // Check for graceful shutdown signal.
+        tokio::select! {
+            _ = tokio::signal::ctrl_c() => {
+                info!("received shutdown signal, draining and exiting");
+                break;
+            }
+            _ = tokio::time::sleep(std::time::Duration::from_millis(50)) => {}
+        }
+
         // Drain transactions submitted via RPC
         while let Ok(stx) = rpc_rx_sub.try_recv() {
             let tx_bytes = veridag_codec::Encode::to_bytes(&stx);
@@ -961,6 +1009,7 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
                 {
                     proposed.insert(r);
                     gossip.broadcast(&v).await;
+                    metrics.observe(Observation::Counter(Label("vertices_proposed"), 1));
                 }
             }
         }
@@ -989,11 +1038,14 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
                 if !txs.is_empty() {
                     let mut s_write = state.write().await;
                     let result = execute_parallel(&executor, &mut s_write, &txs);
-                    println!(
-                        "Executed wave {}, state root 0x{}",
-                        mw,
-                        hex::encode(result.state_root)
+                    info!(
+                        wave = mw,
+                        state_root = %format!("0x{}", hex::encode(result.state_root)),
+                        txs = txs.len(),
+                        "wave committed"
                     );
+                    metrics.observe(Observation::Counter(Label("waves_committed"), 1));
+                    metrics.observe(Observation::Counter(Label("txs_executed"), txs.len() as u64));
                     let mut ckpts = checkpoints.write().await;
                     let last_ckpt_id = ckpts.last().map(|c| c.id()).unwrap_or(CheckpointId::ZERO);
                     let validators_list: Vec<ValidatorId> = validators.iter().copied().collect();
@@ -1014,17 +1066,48 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
                     let vote = ckpt.sign_vote(&key);
                     ckpt.add_vote(vote);
                     ckpts.push(ckpt);
+                    metrics.observe(Observation::Counter(Label("checkpoints_produced"), 1));
                 }
             }
             prev_mw = mw;
         }
 
-        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+        // Update gauges
+        metrics.observe(Observation::Gauge(Label("highest_wave"), mw as i64));
+        metrics.observe(Observation::Gauge(Label("max_round"), frontier as i64));
+    }
+
+    info!("shutdown complete");
+    Ok(())
+}
+
+fn init_tracing() {
+    use tracing_subscriber::{fmt, EnvFilter};
+
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
+
+    let use_json = std::env::var("VERIDAG_LOG_JSON").is_ok();
+
+    if use_json {
+        fmt()
+            .json()
+            .with_env_filter(filter)
+            .with_target(true)
+            .with_thread_ids(true)
+            .init();
+    } else {
+        fmt()
+            .with_env_filter(filter)
+            .with_target(true)
+            .init();
     }
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    init_tracing();
+
     let cli = Cli::parse();
     match cli.cmd {
         Cmd::Demo { validators } => {

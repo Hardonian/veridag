@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <span className="brand-icon">⚡</span>
               <span>Veridag</span>
             </Link>
-            <span className="brand-badge">v0.1.0-alpha</span>
+            <span className="brand-badge">v1.0.0</span>
           </div>
           <nav>
             {nav.map((n) => (

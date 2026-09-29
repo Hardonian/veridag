@@ -1,6 +1,6 @@
 {
   "name": "@veridag/client",
-  "version": "0.1.0-alpha",
+  "version": "1.0.0",
   "description": "Veridag TypeScript client — submit txs, read state, verify checkpoints",
   "type": "module",
   "main": "dist/index.js",

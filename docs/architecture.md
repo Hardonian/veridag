@@ -44,26 +44,36 @@ benchmark numbers. Every hot-path choice is made to stay predictable and cheap:
 |-------|----------------|
 | `veridag-protocol-types` | Canonical identifiers, core types, domain tags |
 | `veridag-codec` | VCE-1 encoder/decoder (canonical wire form) |
-| `veridag-crypto` | BLAKE3 hashing, Ed25519 sign/verify, domain preimages |
+| `veridag-crypto` | BLAKE3 hashing, Ed25519 sign/verify, domain preimages, pluggable `KeySigner` (AWS/GCP/Azure KMS, PKCS#11 HSM) |
 | `veridag-merkle` | BMH-1 state commitments + inclusion proofs |
 | `veridag-transaction` | Transaction model, validation, anti-replay |
-| `veridag-capabilities` | Capability objects and enforcement |
+| `veridag-capabilities` | Object-capability authorization tokens and enforcement |
 | `veridag-object-state` | Object set, version discipline, account/balance |
-| `veridag-execution` | Sequential deterministic executor + parallel scheduler |
+| `veridag-execution` | Sequential deterministic executor, conflict-aware parallel scheduler, multi-chain asset typing, batch compaction |
 | `veridag-dag` | VCE-1 vertex wire form, validity, equivocation, quorum |
-| `veridag-consensus` | BaselineDagBft: pure-function commit rule + leader schedule |
+| `veridag-consensus` | BaselineDagBft pure-function commit rule, leader schedule, dynamic committee reconfiguration, epoch handovers |
 | `veridag-checkpoint` | Quorum finality, checkpoint construction/verification |
-| `veridag-storage` | StateStore/DagStore/CheckpointStore traits + Memory + Sled |
-| `veridag-net` | QUIC authenticated links + vertex/batch gossip |
-| `veridag-testkit` | Vector generation/validation, malformed suite |
+| `veridag-storage` | StateStore/DagStore/CheckpointStore traits + Memory + Sled, state snapshotting, archival pruning, fast sync |
+| `veridag-net` | QUIC authenticated links + vertex/batch gossip + selective libp2p public discovery plane |
+| `veridag-wasm-runtime` | Deterministic Wasmtime sandbox, capability-scoped host ABI, fuel metering |
+| `veridag-zkvm` | Pluggable zkVM adapters (Mock, SP1, RiscZero) for state validity proofs |
+| `veridag-da` | 2D Reed-Solomon tensor erasure coding, validator replication, SIMD hardware acceleration |
+| `veridag-light-client` | 2f+1 quorum checkpoint verification, epoch tracking, BMH-1 Merkle inclusion proofs |
+| `veridag-stablecoin` | USDV sovereign dollar, ISO 20022 engine, Proof-of-Reserves, OFAC sanctions compliance |
+| `veridag-ethereum` | EVM JSON-RPC provider, BMH-1 inclusion proofs, L1 bridge primitives |
+| `veridag-bitcoin` | Bitcoin SPV client, PoW validation, Merkle proofs, UTXO bridge codecs |
+| `veridag-metrics` | Zero-overhead observability: Prometheus/OpenMetrics exporter, counter/gauge/histogram telemetry |
+| `veridag-sdk` | Native Rust client SDK |
+| `veridag-qa` | Property-test harness, adversarial fuzzing, criterion benchmarks |
+| `veridag-testkit` | Golden vector generation/validation, malformed suite, cross-language conformance |
 
 ### Binaries (`implementations/rust/bins`)
 
 | Binary | Purpose |
 |--------|---------|
-| `veridag-node` | Reference validator node (in-process demo + devnet entrypoint) |
-| `veridag-cli` | Key management, ledger inspection, dev tooling |
-| `veridag-genesis` | Genesis state generation |
+| `veridag-node` | Full validator daemon (demo mode, health probe, networked QUIC daemon with HTTP/JSON RPC) |
+| `veridag-cli` | Key management, dev-ledger execution, USDV institutional management, Ethereum tooling |
+| `veridag-genesis` | Deterministic genesis generation, inspection, and commitment verification |
 
 ## Data flow
 
@@ -72,13 +82,17 @@ client tx
   -> validate (transaction crate)
   -> batch commitment (VCE-1)
   -> DAG vertex (veridag-dag, signed)
-  -> gossip over QUIC (veridag-net)
+  -> gossip over QUIC (veridag-net, validator fast path)
   -> BaselineDagBft commit (veridag-consensus, pure function)
   -> canonical causal ordering
   -> conflict-aware execution (veridag-execution: parallel prefix + sequential suffix)
+  -> optional: Wasm smart contract execution (veridag-wasm-runtime, metered)
   -> BMH-1 state root (veridag-merkle)
-  -> checkpoint (veridag-checkpoint)
+  -> checkpoint with 2f+1 finality proof (veridag-checkpoint)
   -> persist (veridag-storage: sled)
+  -> optional: DA erasure coding (veridag-da)
+  -> optional: zkVM state validity proof (veridag-zkvm)
+  -> optional: L1 settlement (veridag-ethereum / veridag-bitcoin)
 ```
 
 Every step is a deterministic function of its inputs. The commit rule
@@ -93,6 +107,9 @@ node computes an identical committed anchor and ordering.
   purpose cannot be reused elsewhere.
 * **Low setup latency**: 1-RTT handshake, connection migration, built-in
   congestion control. Suitable for validators on flaky or mobile links.
+
+libp2p is used *only* for the public discovery/relay plane, strictly isolated
+from the consensus-critical QUIC mesh.
 
 ## Why sled (not Postgres/Redis)
 
@@ -112,9 +129,11 @@ node computes an identical committed anchor and ordering.
   for another.
 * Crash recovery is test-proven: drop all memory, reopen from disk, rebuild
   the DAG, re-run consensus, re-execute → byte-identical state.
+* Wasm runtime is default-deny: non-deterministic imports (WASI time/random/
+  sockets) are rejected; host calls require capability handles.
 
-## What is NOT in 0.1.0-alpha (see ROADMAP.md)
+## Capabilities summary
 
-Public libp2p P2P, the deterministic Wasm runtime, TypeScript/Python/Go SDKs,
-light-client proofs, and zk proof adapters are explicitly deferred. The core
-consensus + execution + persistence + networking slice is complete and tested.
+The reference implementation spans Phases 0–26 of the protocol roadmap. All
+phases are complete and tested. See `ROADMAP.md` for per-phase details and
+`CHANGELOG.md` for the release history.

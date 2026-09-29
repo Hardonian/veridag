@@ -15,7 +15,7 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         status: "healthy",
-        version: "0.1.0-alpha",
+        version: "1.0.0",
         protocol_version: 1,
         chain_id: 1,
         validator_seed: 1,

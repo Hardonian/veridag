@@ -8,3 +8,15 @@ updates:
     directory: "/"
     schedule:
       interval: weekly
+  - package-ecosystem: npm
+    directory: "/site"
+    schedule:
+      interval: weekly
+  - package-ecosystem: npm
+    directory: "/sdks/typescript"
+    schedule:
+      interval: weekly
+  - package-ecosystem: pip
+    directory: "/sdks/python"
+    schedule:
+      interval: weekly

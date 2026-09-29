@@ -2,7 +2,7 @@
 
 ## The Deterministic Distributed Trust Fabric for AI Agents, Edge Swarms, and Enterprise State
 
-[![Version](https://img.shields.io/badge/version-0.1.0--alpha-emerald?style=for-the-badge&logo=rust)](https://github.com/Hardonian/veridag/releases)
+[![Version](https://img.shields.io/badge/version-1.0.0-emerald?style=for-the-badge&logo=rust)](https://github.com/Hardonian/veridag/releases)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
 [![Safety](https://img.shields.io/badge/unsafe-FORBIDDEN-blueviolet?style=for-the-badge&logo=shield)](implementations/rust/Cargo.toml)
 [![Formal Verification](https://img.shields.io/badge/Formal%20Model-Quint%20Verified-cyan?style=for-the-badge&logo=probot)](formal/quint/)
@@ -117,7 +117,7 @@ Launch the production validator node daemon with the embedded HTTP server:
 
 ```bash
 # Launch validator node daemon with HTTP RPC enabled
-cargo run -p veridag-node -- run --validator-seed 1 --rpc 0.0.0.0:8080
+cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080
 
 # Query node health
 curl http://127.0.0.1:8080/v1/health

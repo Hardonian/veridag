@@ -10,7 +10,7 @@ resolver = "2"
 edition = "2021"
 rust-version = "1.85"
 license = "Apache-2.0 OR MIT"
-version = "0.1.0-alpha"
+version = "1.0.0"
 authors = ["Veridag Protocol Contributors"]
 description = "Veridag: deterministic, Byzantine-resilient, capability-secured distributed execution substrate"
 repository = "https://github.com/Hardonian/veridag"
@@ -36,7 +36,15 @@ rcgen = "0.14"
 rustls = { version = "0.23", default-features = false }
 futures = "0.3"
 tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 sled = "0.34"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

@@ -67,3 +67,55 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: cargo build --release -p veridag-node --target aarch64-unknown-linux-gnu
+
+  # TypeScript SDK conformance on every PR.
+  sdk-typescript:
+    name: TypeScript SDK conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdks/typescript
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install & test
+        run: |
+          npm ci || npm install
+          npm test
+
+  # Python SDK conformance on every PR.
+  sdk-python:
+    name: Python SDK conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sdks/python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: install uv & run conformance
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="$HOME/.local/bin:$PATH"
+          uv run python -m unittest discover -s tests
+
+  # Verify the Next.js site builds without errors.
+  site:
+    name: site build verification
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: install & build
+        run: |
+          npm ci || npm install
+          npm run build

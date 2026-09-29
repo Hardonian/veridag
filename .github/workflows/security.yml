@@ -15,8 +15,8 @@ jobs:
       - name: cargo deny
         run: |
           cargo install cargo-deny --locked || true
-          cd implementations/rust && cargo deny check || echo "deny not fully configured yet"
+          cargo deny check
       - name: cargo audit
         run: |
           cargo install cargo-audit --locked || true
-          cd implementations/rust && cargo audit || echo "audit requires Cargo.lock"
+          cargo audit
