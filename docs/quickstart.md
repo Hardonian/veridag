@@ -84,12 +84,18 @@ Start the production validator node daemon with the built-in HTTP RPC server lis
 
 ```bash
 # Launch validator node daemon with HTTP RPC enabled
-cargo run -p veridag-node -- run --validator-seed 1 --rpc 0.0.0.0:8080
+cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080
 
 # In another terminal, query node health & state root
 curl http://127.0.0.1:8080/v1/health
 curl http://127.0.0.1:8080/v1/state/root
 curl http://127.0.0.1:8080/v1/checkpoints/latest
+
+# Query Prometheus metrics
+curl http://127.0.0.1:8080/v1/metrics
+
+# Query readiness (200 = consensus progressing, 503 = not yet)
+curl http://127.0.0.1:8080/v1/ready
 ```
 
 ---
@@ -183,13 +189,17 @@ cargo test -p veridag-stablecoin iso20022
 | :--- | :--- | :--- |
 | `cargo fmt --check` | `just check` | Verify syntax and canonical code formatting |
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | `just check` | Enforce zero-warning lint gate and `forbid(unsafe_code)` |
-| `cargo test --workspace --all-features` | `just check` | Execute full test suite across all 28 crates |
+| `cargo test --workspace --all-features` | `just check` | Execute full test suite across all crates |
+| `cargo deny check && cargo audit` | `just audit` | Security advisory, license, and banned-deps scan |
+| `cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080` | `just daemon` | Launch local dev node with HTTP RPC |
+| `cargo bench -p veridag-qa` | `just bench` | Run hot-path criterion benchmarks |
 | `pwsh -File scripts/publish-sdks.ps1` | `bash scripts/publish-sdks.sh` | Conformance runner testing Rust, TS, and Python SDKs |
 | `cargo build --release` | `cargo build --release` | Produce stripped, `panic=abort` optimized release binary |
 | `cargo run -p veridag-node -- demo` | `just demo` | Run the in-process 4-validator consensus demo |
 | `cargo test -p veridag-net --test devnet` | `just devnet` | Run the multi-process QUIC network devnet |
 | `cargo test -p veridag-consensus --test simulation` | `just sim` | Run the deterministic simulation harness |
 | `cargo test -p veridag-testkit --test vectors` | `just vectors` | Run protocol golden vector tests |
+| `just release-gate` | `just release-gate` | Full pre-release: check + vectors + audit + SDK tests + site build |
 
 ---
 

@@ -183,9 +183,11 @@ ReadyLayer, nlsqlc, mcpwall, and TokenGoblin. Normative spec 22.
 
 ## Release status
 
-`0.1.0-alpha` — reference implementation compiles clean (`cargo clippy
---workspace --all-targets --all-features -- -D warnings`), all workspace tests
-green, release binary builds (`panic = "abort"`, `strip = true`) and the demo
-produces identical state roots + checkpoints across 4 validators. See
-`docs/quickstart.md` for universal onboarding and `docs/architecture.md` for
-the system design.
+`1.0.0` — production go-live release. All 26 phases complete. Reference
+implementation compiles clean (`cargo clippy --workspace --all-targets
+--all-features -- -D warnings`), all workspace tests green, release binary
+builds (`panic = "abort"`, `strip = true`) and the demo produces identical
+state roots + checkpoints across 4 validators. Structured logging, Prometheus
+metrics (`/v1/metrics`), readiness probe (`/v1/ready`), and graceful shutdown
+are production-wired. See `docs/quickstart.md` for universal onboarding and
+`docs/architecture.md` for the system design.
