@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "veridag"
-version = "0.1.0a0"
+version = "1.0.0"
 description = "Official Veridag Python SDK: deterministic transaction builder and client"
 readme = "README.md"
 requires-python = ">=3.10"

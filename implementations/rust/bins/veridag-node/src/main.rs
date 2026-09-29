@@ -24,7 +24,7 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use veridag_checkpoint::{dag_commitment, validator_set_commitment, Checkpoint};
 
 use veridag_codec::Decode;
