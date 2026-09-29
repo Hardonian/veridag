@@ -33,7 +33,7 @@ use veridag_crypto::Keypair;
 use veridag_dag::{Dag, Vertex};
 use veridag_execution::parallel::execute_parallel;
 use veridag_execution::Executor;
-use veridag_metrics::{Label, Observation, PrometheusExporter};
+use veridag_metrics::{Label, Metrics, Observation, PrometheusExporter};
 use veridag_object_state::{Object, ObjectState};
 use veridag_protocol_types::{
     object_type, Address, BatchId, ChainId, CheckpointId, Ed25519PublicKey, Epoch, ObjectId,
@@ -1176,6 +1176,7 @@ mod tests {
             tx_sender: tx_sub,
             committee,
             seed: 1,
+            metrics: Arc::new(PrometheusExporter::new()),
         });
 
         // 1. Health endpoint
