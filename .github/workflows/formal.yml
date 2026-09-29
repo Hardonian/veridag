@@ -18,6 +18,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: cache quint install
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm/_npx
+          key: quint-${{ runner.os }}-${{ hashFiles('formal/quint/*.qnt') }}
+          restore-keys: quint-${{ runner.os }}-
       - run: npm install -g @informalsystems/quint
       - name: typecheck
         run: |
