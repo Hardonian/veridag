@@ -1,6 +1,6 @@
 # Veridag Threat Model
 
-Status: living document. Scope: protocol v0.1 and reference implementation.
+Status: living document. Scope: protocol v1.0.0 and reference implementation.
 
 ## Adversary classes
 
@@ -40,13 +40,14 @@ frame bounds -> basic format -> protocol version -> canonical encoding
 
 Expensive work is never done before cheap rejection when avoidable.
 
-## Explicit non-goals (v0.1)
+## Explicit non-goals (v1.0.0)
 
 * Public token economics / proof-of-stake security.
 * zk proof soundness (proofs are optional and experimental).
 * Protection against a compromise of > f validators.
 * Defense against physical-side-channel attacks on validator hardware.
 * Guaranteed liveness under permanent partition.
+* Automatic key rotation or HSM integration (operator responsibility).
 
 ## Panic policy
 

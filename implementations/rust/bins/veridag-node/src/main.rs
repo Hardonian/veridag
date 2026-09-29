@@ -270,7 +270,7 @@ impl Node {
 }
 
 #[derive(Parser)]
-#[command(name = "veridag-node", about = "Veridag validator node (alpha)")]
+#[command(name = "veridag-node", about = "Veridag validator node v1.0.0")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
