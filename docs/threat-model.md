@@ -13,7 +13,7 @@ Status: living document. Scope: protocol v1.0.0 and reference implementation.
 ## Attacks considered and mitigations
 
 | Attack | Mitigation |
-|--------|-----------|
+| :--- | :--- |
 | Equivocation | Detected; one working vertex per (author, round); safety proved in Quint model. |
 | Censorship | DAG proposals from all validators; withholding only delays own txs. |
 | Ordering manipulation | CanonicalWaveOrder seed bound to committed anchor (spec 10). |
@@ -32,7 +32,7 @@ Status: living document. Scope: protocol v1.0.0 and reference implementation.
 
 ## Validation pipeline (increasing cost)
 
-```
+```text
 frame bounds -> basic format -> protocol version -> canonical encoding
 -> duplicate check -> cheap structural checks -> signature verification
 -> state-dependent validation -> execution -> proof verification (if required)

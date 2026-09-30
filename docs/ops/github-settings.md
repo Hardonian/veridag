@@ -11,7 +11,7 @@ live. Apply all of them before accepting external contributions.
 **Settings → Branches → Add branch protection rule → `main`**
 
 | Setting | Value |
-|---------|-------|
+| :--- | :--- |
 | Require a pull request before merging | ✅ |
 | Required approving reviews | **1** minimum (set to 2 for protocol changes) |
 | Dismiss stale pull request approvals when new commits are pushed | ✅ |
@@ -47,7 +47,7 @@ Maintainers get notified via email when a report is filed.
 Required for the `release-packages.yml` workflow to publish artifacts.
 
 | Secret name | What it is |
-|-------------|-----------|
+| :--- | :--- |
 | `CARGO_REGISTRY_TOKEN` | crates.io API token with `publish-update` scope for the `veridag` org |
 | `NPM_TOKEN` | npm automation token with publish access to `@veridag` org |
 | `PYPI_TOKEN` | PyPI API token for the `veridag` project (use environment token, not account token) |
@@ -66,7 +66,7 @@ Create two environments for progressive deployment gating:
 **Settings → Environments → New environment**
 
 | Environment | Protection rules |
-|-------------|-----------------|
+| :--- | :--- |
 | `staging` | No reviewers required; deploys automatically on tag push |
 | `production` | Required reviewer: `@Hardonian`; 10 min wait before deployment |
 
@@ -74,7 +74,8 @@ Create two environments for progressive deployment gating:
 
 ## 6. Dependabot Alerts
 
-**Settings → Security → Dependabot alerts → Enable**  
+**Settings → Security → Dependabot alerts → Enable**
+
 **Settings → Security → Dependabot security updates → Enable**
 
 Dependabot PRs from `dependabot.yml` will auto-open for Cargo, npm, and pip.
