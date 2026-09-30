@@ -17,5 +17,5 @@ default = []
 wasmtime = ["dep:wasmtime", "dep:anyhow"]
 
 [dev-dependencies]
-veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-crypto = { path = "../crypto" }
 wat = "1"

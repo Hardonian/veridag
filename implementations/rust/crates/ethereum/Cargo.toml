@@ -5,6 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Veridag Ethereum infrastructure: EVM JSON-RPC, L1 Light Client proofs, and cross-chain bridge substrate"
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 veridag-checkpoint = { version = "1.0.0", path = "../checkpoint" }

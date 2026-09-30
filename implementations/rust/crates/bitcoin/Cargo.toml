@@ -5,6 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Veridag Bitcoin Infrastructure Substrate: SPV verification, UTXO bridging, Taproot/SegWit commitments, and cross-chain settlement"
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }

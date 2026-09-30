@@ -5,6 +5,8 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Pluggable zkVM state validity proof adapters for Veridag"
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
 veridag-crypto = { version = "1.0.0", path = "../crypto" }
@@ -21,7 +23,7 @@ sp1 = []
 risc0 = []
 
 [dev-dependencies]
-veridag-transaction = { version = "1.0.0", path = "../transaction" }
+veridag-transaction = { path = "../transaction" }
 
 [lints]
 workspace = true
