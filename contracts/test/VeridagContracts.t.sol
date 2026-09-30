@@ -56,6 +56,14 @@ contract VeridagContractsTest {
         lightClient.commitCheckpoint(1, 0, bytes32(uint256(11)), bytes32(uint256(12)), bytes32(0));
     }
 
+    function testFinalizedCheckpointIdCannotBeReused() public {
+        bytes32 checkpointId = bytes32(uint256(11));
+        lightClient.commitCheckpoint(1, 0, checkpointId, bytes32(uint256(12)), bytes32(0));
+
+        vm.expectRevert(bytes("VeridagLightClient: checkpoint already finalized"));
+        lightClient.commitCheckpoint(2, 0, checkpointId, bytes32(uint256(13)), checkpointId);
+    }
+
     function testWithdrawalFieldsAreBoundToProvenObject() public {
         bytes32 withdrawalId = keccak256("withdrawal-1");
         uint256 amount = 25_000_000;
@@ -66,16 +74,14 @@ contract VeridagContractsTest {
 
         lightClient.commitCheckpoint(1, 0, checkpointId, stateRoot, bytes32(0));
         bridge.finalizeWithdrawal(
-            checkpointId,
-            objectId,
-            objectData,
-            new bytes32[](0),
-            new bool[](0),
-            ALICE,
-            amount,
-            withdrawalId
+            checkpointId, objectId, objectData, new bytes32[](0), new bool[](0), ALICE, amount, withdrawalId
         );
         require(token.balanceOf(ALICE) == amount, "withdrawal was not minted");
+
+        vm.expectRevert(bytes("VeridagBridge: withdrawal already claimed"));
+        bridge.finalizeWithdrawal(
+            checkpointId, objectId, objectData, new bytes32[](0), new bool[](0), ALICE, amount, withdrawalId
+        );
 
         vm.expectRevert(bytes("VeridagBridge: withdrawal fields do not match object data"));
         bridge.finalizeWithdrawal(

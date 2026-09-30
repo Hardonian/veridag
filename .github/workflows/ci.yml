@@ -144,3 +144,26 @@ jobs:
         run: forge fmt --check
       - name: unit, fuzz, and invariant tests
         run: forge test -vvv
+
+  docker-devnet:
+    name: Docker devnet build, agreement, and restart recovery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: validate Compose configuration
+        run: docker compose config --quiet
+      - name: build and start validators
+        run: docker compose up -d --build
+      - name: soak and restart one validator
+        run: python3 scripts/devnet-soak.py --duration 45 --interval 3 --restart-service node4
+      - name: capture validator logs
+        if: always()
+        run: docker compose logs --no-color > docker-devnet.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-devnet-logs
+          path: docker-devnet.log
+      - name: stop validators
+        if: always()
+        run: docker compose down --volumes

@@ -37,12 +37,7 @@ contract VeridagLightClient {
     mapping(bytes32 => uint256) public checkpointApprovals;
     mapping(bytes32 => mapping(address => bool)) public hasApprovedCheckpoint;
 
-    event CheckpointCommitted(
-        uint64 indexed sequence,
-        bytes32 indexed checkpointId,
-        bytes32 stateRoot,
-        uint64 epoch
-    );
+    event CheckpointCommitted(uint64 indexed sequence, bytes32 indexed checkpointId, bytes32 stateRoot, uint64 epoch);
     event ValidatorSetUpdated(bytes32 newCommitment);
     event RelayerUpdated(address indexed relayer, bool status);
     event RelayerThresholdUpdated(uint256 threshold);
@@ -60,11 +55,7 @@ contract VeridagLightClient {
         _;
     }
 
-    constructor(
-        address initialOwner,
-        bytes32 initialValidatorCommitment,
-        bytes32 genesisStateRoot
-    ) {
+    constructor(address initialOwner, bytes32 initialValidatorCommitment, bytes32 genesisStateRoot) {
         require(initialOwner != address(0), "VeridagLightClient: zero owner");
         owner = initialOwner;
         validatorSetCommitment = initialValidatorCommitment;
@@ -91,17 +82,11 @@ contract VeridagLightClient {
         require(sequence == latestSequence + 1, "VeridagLightClient: non-contiguous sequence");
         require(previousCheckpointId == latestCheckpointId, "VeridagLightClient: broken checkpoint chain");
         require(checkpointId != bytes32(0), "VeridagLightClient: zero checkpoint id");
+        require(!isFinalized[checkpointId], "VeridagLightClient: checkpoint already finalized");
         require(stateRoot != bytes32(0), "VeridagLightClient: zero state root");
 
         bytes32 proposalId = keccak256(
-            abi.encode(
-                sequence,
-                epoch,
-                checkpointId,
-                stateRoot,
-                previousCheckpointId,
-                validatorSetCommitment
-            )
+            abi.encode(sequence, epoch, checkpointId, stateRoot, previousCheckpointId, validatorSetCommitment)
         );
         require(!hasApprovedCheckpoint[proposalId][msg.sender], "VeridagLightClient: duplicate approval");
         hasApprovedCheckpoint[proposalId][msg.sender] = true;

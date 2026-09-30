@@ -16,7 +16,7 @@
 //!   - Readiness probe at `/v1/ready`
 //!   - Graceful shutdown on SIGTERM/Ctrl+C
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::net::{IpAddr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -27,7 +27,7 @@ use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use tracing::info;
+use tracing::{info, warn};
 use veridag_checkpoint::{
     dag_commitment, validator_set_commitment, Checkpoint, CHECKPOINT_INTERVAL_WAVES,
 };
@@ -52,6 +52,133 @@ const MAX_HTTP_HEADER_BYTES: usize = 16 * 1024;
 const MAX_HTTP_BODY_BYTES: usize = 1024 * 1024;
 const HTTP_READ_TIMEOUT: Duration = Duration::from_secs(5);
 const DEFAULT_RPC_RATE_LIMIT: u32 = 100;
+const GOSSIP_TAG_VERTEX: u8 = 0;
+const GOSSIP_TAG_TRANSACTION: u8 = 1;
+const GOSSIP_TAG_CHECKPOINT: u8 = 2;
+const GOSSIP_TAG_SYNC_REQUEST: u8 = 3;
+const GOSSIP_TAG_SYNC_RESPONSE: u8 = 4;
+const SYNC_RETRY_INTERVAL: Duration = Duration::from_secs(5);
+const SYNC_RESPONSE_INTERVAL: Duration = Duration::from_secs(1);
+const MAX_SYNC_VERTICES_PER_REQUEST: usize = 4096;
+const MAX_SYNC_ITEMS_PER_RESPONSE: usize = 8192;
+const MAX_SYNC_RESPONSE_BYTES: usize = 256 * 1024;
+
+fn encode_sync_request(round: Round) -> [u8; 8] {
+    round.to_be_bytes()
+}
+
+fn decode_sync_request(payload: &[u8]) -> Option<Round> {
+    let bytes: [u8; 8] = payload.try_into().ok()?;
+    let round = Round::from_be_bytes(bytes);
+    (round > 0).then_some(round)
+}
+
+fn sync_vertices(dag: &Dag, start_round: Round) -> Vec<Vertex> {
+    let Some(frontier) = dag.round_vertices_max() else {
+        return Vec::new();
+    };
+    if start_round > frontier {
+        return Vec::new();
+    }
+
+    let mut vertices = Vec::new();
+    for round in start_round..=frontier {
+        for vertex_id in dag.round_vertices(round) {
+            if let Some(vertex) = dag.get(vertex_id) {
+                vertices.push(vertex.clone());
+                if vertices.len() == MAX_SYNC_VERTICES_PER_REQUEST {
+                    return vertices;
+                }
+            }
+        }
+    }
+    vertices
+}
+
+fn encode_sync_response(
+    vertices: &[Vertex],
+    batches: &BTreeMap<BatchId, Vec<SignedTransaction>>,
+) -> Vec<u8> {
+    // Keep recovery frames comfortably below the transport ceiling. Large
+    // near-limit QUIC streams are vulnerable to platform UDP/window limits,
+    // especially through Docker Desktop's virtual network.
+    let max_payload = MAX_SYNC_RESPONSE_BYTES.min(veridag_net::MAX_FRAME as usize - 1);
+    let mut payload = vec![0u8; 4];
+    let mut item_count = 0u32;
+    let mut included_batches = BTreeSet::new();
+
+    for vertex in vertices {
+        let mut group = Vec::new();
+        let mut complete = true;
+        for batch_id in &vertex.batch_commitments {
+            if included_batches.contains(batch_id) {
+                continue;
+            }
+            let Some(transactions) = batches.get(batch_id) else {
+                complete = false;
+                break;
+            };
+            for transaction in transactions {
+                group.push((
+                    GOSSIP_TAG_TRANSACTION,
+                    veridag_codec::Encode::to_bytes(transaction),
+                ));
+            }
+        }
+        if !complete {
+            break;
+        }
+        group.push((GOSSIP_TAG_VERTEX, veridag_codec::Encode::to_bytes(vertex)));
+
+        let group_size: usize = group.iter().map(|(_, bytes)| 5 + bytes.len()).sum();
+        if payload.len() + group_size > max_payload
+            || item_count as usize + group.len() > MAX_SYNC_ITEMS_PER_RESPONSE
+        {
+            break;
+        }
+
+        for batch_id in &vertex.batch_commitments {
+            included_batches.insert(*batch_id);
+        }
+        for (tag, bytes) in group {
+            payload.push(tag);
+            payload.extend_from_slice(&(bytes.len() as u32).to_be_bytes());
+            payload.extend_from_slice(&bytes);
+            item_count += 1;
+        }
+    }
+
+    payload[..4].copy_from_slice(&item_count.to_be_bytes());
+    payload
+}
+
+fn decode_sync_response(payload: &[u8]) -> Option<Vec<(u8, Vec<u8>)>> {
+    if payload.len() < 4 {
+        return None;
+    }
+    let item_count = u32::from_be_bytes(payload[..4].try_into().ok()?) as usize;
+    if item_count > MAX_SYNC_ITEMS_PER_RESPONSE {
+        return None;
+    }
+
+    let mut cursor = 4usize;
+    let mut items = Vec::with_capacity(item_count);
+    for _ in 0..item_count {
+        let tag = *payload.get(cursor)?;
+        if tag != GOSSIP_TAG_VERTEX && tag != GOSSIP_TAG_TRANSACTION {
+            return None;
+        }
+        cursor += 1;
+        let end_of_length = cursor.checked_add(4)?;
+        let length =
+            u32::from_be_bytes(payload.get(cursor..end_of_length)?.try_into().ok()?) as usize;
+        cursor = end_of_length;
+        let end = cursor.checked_add(length)?;
+        items.push((tag, payload.get(cursor..end)?.to_vec()));
+        cursor = end;
+    }
+    (cursor == payload.len()).then_some(items)
+}
 
 /// A minimal in-process mempool: signature-verified transactions awaiting
 /// inclusion in a vertex batch.
@@ -1191,15 +1318,40 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
     let state = Arc::new(RwLock::new(initial_state));
     let mut recovered_checkpoints = Vec::new();
     if let Some(latest_id) = persistent_store.latest() {
-        let bytes = persistent_store
-            .get_checkpoint(&latest_id)?
-            .ok_or_else(|| anyhow::anyhow!("latest checkpoint record is missing"))?;
-        let mut decoder = veridag_codec::Decoder::new(&bytes);
-        let checkpoint = Checkpoint::decode(&mut decoder).context("decode persisted checkpoint")?;
-        decoder
-            .finish()
-            .context("persisted checkpoint has trailing bytes")?;
-        recovered_checkpoints.push(checkpoint);
+        let mut checkpoint_id = latest_id;
+        let mut seen = BTreeSet::new();
+        loop {
+            if !seen.insert(checkpoint_id) {
+                bail!("persisted checkpoint chain contains a cycle");
+            }
+            let bytes = persistent_store
+                .get_checkpoint(&checkpoint_id)?
+                .ok_or_else(|| {
+                    anyhow::anyhow!("persisted checkpoint {checkpoint_id:?} is missing")
+                })?;
+            let mut decoder = veridag_codec::Decoder::new(&bytes);
+            let checkpoint =
+                Checkpoint::decode(&mut decoder).context("decode persisted checkpoint")?;
+            decoder
+                .finish()
+                .context("persisted checkpoint has trailing bytes")?;
+            if checkpoint.id() != checkpoint_id {
+                bail!("persisted checkpoint id does not match its content");
+            }
+            let previous = checkpoint.previous_checkpoint;
+            recovered_checkpoints.push(checkpoint);
+            if previous == CheckpointId::ZERO {
+                break;
+            }
+            checkpoint_id = previous;
+        }
+        recovered_checkpoints.reverse();
+        for (index, checkpoint) in recovered_checkpoints.iter().enumerate() {
+            let expected_sequence = index as u64 + 1;
+            if checkpoint.sequence != expected_sequence {
+                bail!("persisted checkpoint sequence is not contiguous");
+            }
+        }
     }
     let checkpoints = Arc::new(RwLock::new(recovered_checkpoints));
     let store = Arc::new(tokio::sync::Mutex::new(persistent_store));
@@ -1233,6 +1385,33 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<(u8, Vec<u8>)>(1024);
     let _recv = gossip.spawn_tagged_receiver(tx);
+
+    // A clean restart can occur while the latest round is only partially
+    // propagated. Re-advertise the two most recent persisted rounds so peers
+    // can reconstruct a quorum and advance without waiting for new vertices
+    // whose parents cannot yet be formed.
+    if let Some(frontier) = dag.read().await.round_vertices_max() {
+        let first_round = frontier.saturating_sub(1).max(1);
+        for vertex in recovered_vertices
+            .iter()
+            .filter(|vertex| vertex.round >= first_round)
+        {
+            gossip.broadcast(vertex).await;
+        }
+    }
+
+    let initial_sync_round = dag
+        .read()
+        .await
+        .round_vertices_max()
+        .unwrap_or(0)
+        .saturating_add(1);
+    gossip
+        .broadcast_tagged(
+            GOSSIP_TAG_SYNC_REQUEST,
+            &encode_sync_request(initial_sync_round),
+        )
+        .await;
 
     info!(
         validator_id = %format!("0x{}", hex::encode(id.0)),
@@ -1326,6 +1505,8 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
     let mut pending_checkpoints: BTreeMap<CheckpointId, Checkpoint> = BTreeMap::new();
     let mut checkpoint_txids = Vec::new();
     let mut checkpoint_anchor_ids = Vec::new();
+    let mut last_sync_request_at = Instant::now();
+    let mut last_sync_response_at: Option<Instant> = None;
     loop {
         // Check for graceful shutdown signal.
         tokio::select! {
@@ -1341,12 +1522,19 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
             let tx_bytes = veridag_codec::Encode::to_bytes(&stx);
             let batch_id = BatchId(veridag_crypto::hash("VERIDAG_BATCH_V1", &tx_bytes));
             batches.entry(batch_id).or_insert_with(|| vec![stx]);
-            gossip.broadcast_tagged(1, &tx_bytes).await;
+            gossip
+                .broadcast_tagged(GOSSIP_TAG_TRANSACTION, &tx_bytes)
+                .await;
         }
 
+        let mut requested_sync_round: Option<Round> = None;
+        let mut received_frames = VecDeque::new();
         while let Ok((tag, payload)) = rx.try_recv() {
+            received_frames.push_back((tag, payload));
+        }
+        while let Some((tag, payload)) = received_frames.pop_front() {
             match tag {
-                0 => {
+                GOSSIP_TAG_VERTEX => {
                     let mut d = veridag_codec::Decoder::new(&payload);
                     if let Ok(v) = Vertex::decode(&mut d) {
                         if d.finish().is_ok() {
@@ -1371,7 +1559,7 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
                         }
                     }
                 }
-                1 => {
+                GOSSIP_TAG_TRANSACTION => {
                     let mut d = veridag_codec::Decoder::new(&payload);
                     if let Ok(mstx) = SignedTransaction::decode(&mut d) {
                         if d.finish().is_ok() {
@@ -1383,7 +1571,7 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
                         }
                     }
                 }
-                2 => {
+                GOSSIP_TAG_CHECKPOINT => {
                     let mut decoder = veridag_codec::Decoder::new(&payload);
                     if let Ok(incoming) = Checkpoint::decode(&mut decoder) {
                         let structurally_valid = decoder.finish().is_ok()
@@ -1419,7 +1607,54 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
                         }
                     }
                 }
+                GOSSIP_TAG_SYNC_REQUEST => {
+                    if let Some(round) = decode_sync_request(&payload) {
+                        requested_sync_round =
+                            Some(requested_sync_round.map_or(round, |current| current.min(round)));
+                    }
+                }
+                GOSSIP_TAG_SYNC_RESPONSE => {
+                    if let Some(items) = decode_sync_response(&payload) {
+                        info!(
+                            items = items.len(),
+                            bytes = payload.len(),
+                            "received DAG sync response"
+                        );
+                        received_frames.extend(items);
+                    } else {
+                        warn!(
+                            bytes = payload.len(),
+                            "discarded malformed DAG sync response"
+                        );
+                    }
+                }
                 _ => {}
+            }
+        }
+
+        if let Some(start_round) = requested_sync_round {
+            let may_respond = last_sync_response_at
+                .is_none_or(|last_response| last_response.elapsed() >= SYNC_RESPONSE_INTERVAL);
+            if may_respond {
+                let vertices = {
+                    let d_read = dag.read().await;
+                    sync_vertices(&d_read, start_round)
+                };
+                let response = encode_sync_response(&vertices, &batches);
+                let item_count =
+                    u32::from_be_bytes(response[..4].try_into().expect("response count"));
+                if item_count > 0 {
+                    gossip
+                        .broadcast_tagged(GOSSIP_TAG_SYNC_RESPONSE, &response)
+                        .await;
+                    info!(
+                        start_round,
+                        items = item_count,
+                        bytes = response.len(),
+                        "served DAG sync request"
+                    );
+                }
+                last_sync_response_at = Some(Instant::now());
             }
         }
 
@@ -1579,7 +1814,10 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
                 let checkpoint_id = checkpoint.id();
                 pending_checkpoints.insert(checkpoint_id, checkpoint.clone());
                 gossip
-                    .broadcast_tagged(2, &veridag_codec::Encode::to_bytes(&checkpoint))
+                    .broadcast_tagged(
+                        GOSSIP_TAG_CHECKPOINT,
+                        &veridag_codec::Encode::to_bytes(&checkpoint),
+                    )
                     .await;
             }
             prev_mw = mw;
@@ -1614,7 +1852,7 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
             }
         }
         for bytes in rebroadcast {
-            gossip.broadcast_tagged(2, &bytes).await;
+            gossip.broadcast_tagged(GOSSIP_TAG_CHECKPOINT, &bytes).await;
         }
 
         let finalized_id = pending_checkpoints
@@ -1654,6 +1892,27 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
         // Update gauges
         metrics.observe(Observation::Gauge(Label("highest_wave"), mw as i64));
         metrics.observe(Observation::Gauge(Label("max_round"), frontier as i64));
+
+        let stalled_for_ms = unix_time_millis()
+            .saturating_sub(last_progress_ms.load(std::sync::atomic::Ordering::Relaxed));
+        if stalled_for_ms >= SYNC_RETRY_INTERVAL.as_millis() as u64
+            && last_sync_request_at.elapsed() >= SYNC_RETRY_INTERVAL
+        {
+            let next_round = dag
+                .read()
+                .await
+                .round_vertices_max()
+                .unwrap_or(0)
+                .saturating_add(1);
+            warn!(
+                next_round,
+                stalled_for_ms, "requesting DAG catch-up from committee peers"
+            );
+            gossip
+                .broadcast_tagged(GOSSIP_TAG_SYNC_REQUEST, &encode_sync_request(next_round))
+                .await;
+            last_sync_request_at = Instant::now();
+        }
     }
 
     rpc_task.abort();
@@ -1746,6 +2005,25 @@ async fn main() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn sync_request_codec_rejects_malformed_and_zero_rounds() {
+        assert_eq!(decode_sync_request(&encode_sync_request(42)), Some(42));
+        assert_eq!(decode_sync_request(&encode_sync_request(0)), None);
+        assert_eq!(decode_sync_request(&[0; 7]), None);
+        assert_eq!(decode_sync_request(&[0; 9]), None);
+    }
+
+    #[test]
+    fn sync_response_codec_rejects_malformed_payloads() {
+        assert_eq!(decode_sync_response(&[0, 0, 0, 0]), Some(Vec::new()));
+        assert_eq!(decode_sync_response(&[0, 0, 0]), None);
+        assert_eq!(decode_sync_response(&[0, 0, 0, 1, 99, 0, 0, 0, 0]), None);
+        assert_eq!(
+            decode_sync_response(&[0, 0, 0, 1, GOSSIP_TAG_VERTEX, 0, 0, 0, 2, 1]),
+            None
+        );
+    }
 
     #[tokio::test]
     async fn test_rpc_endpoints_and_tcp_server() {

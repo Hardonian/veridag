@@ -256,10 +256,14 @@ bash scripts/publish-sdks.sh          # Linux / macOS
 # Execution & Demos
 cargo run -p veridag-node -- demo    # Run in-process 4-node consensus demo
 docker compose up -d                 # Spin up 4-node container cluster
+python3 scripts/devnet-soak.py --duration 300 --restart-service node4
 
 # Web Portal & Economics
 just site-build        # Build Next.js documentation, explorer & pricing portal
 ```
+
+See the [release-readiness checklist](docs/release-readiness.md) for the exact
+automated, independent-audit, multi-region, and regulatory promotion evidence.
 
 ---
 

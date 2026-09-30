@@ -121,6 +121,35 @@ done
 docker compose down
 ```
 
+### Agreement and restart soak
+
+The portable soak harness continuously checks every validator's health, state-root
+agreement, and wave progress. It can also restart one Compose service and require
+the full committee to reconverge:
+
+```bash
+python3 scripts/devnet-soak.py \
+  --duration 300 \
+  --restart-service node4 \
+  --output artifacts/devnet-soak.json
+```
+
+For a deployed multi-region committee, supply each regional endpoint explicitly:
+
+```bash
+python3 scripts/devnet-soak.py \
+  --duration 259200 \
+  --endpoint ca-east=https://ca-east.example/vdag \
+  --endpoint us-east=https://us-east.example/vdag \
+  --endpoint eu-west=https://eu-west.example/vdag \
+  --endpoint ap-south=https://ap-south.example/vdag \
+  --output artifacts/multi-region-soak.json
+```
+
+The script is evidence collection, not a claim that a regional deployment has
+occurred. Preserve its JSON output together with deployment manifests, fault
+injection logs, and monitoring exports for the release review.
+
 ---
 
 ## Key Management

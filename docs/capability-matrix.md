@@ -18,10 +18,10 @@ exists.
 | Capability | Level | Evidence and remaining gate |
 | :--- | :--- | :--- |
 | Canonical encoding, signatures, object state | Beta | Golden and malformed vectors pass across the Rust, TypeScript, and Python implementations. External cryptographic review remains. |
-| DAG and baseline BFT consensus | Beta | Simulation, vertical-slice, and four-process QUIC tests pass. Multi-region soak, adversarial networking, and independent review remain. |
+| DAG and baseline BFT consensus | Beta | Simulation, vertical-slice, four-process QUIC tests, and a repeatable container agreement/progress soak pass. True multi-region soak, adversarial networking, and independent review remain. |
 | Parallel deterministic execution | Beta | Checked against sequential execution in property-style tests. Long-running production workload evidence remains. |
-| Validator QUIC transport | Beta | Authenticated committee transport and a four-process test exist. Connection admission, rotation, and chaos evidence remain. |
-| Validator daemon and HTTP API | Beta | Uses persistent Sled state/DAG/checkpoints, permission-checked external key files, committee membership checks, authenticated write RPC, request limits, rate limiting, readiness, and recovery. Multi-region soak, operator drills, and independent review remain. |
+| Validator QUIC transport | Beta | Authenticated committee transport, four-process tests, and automated single-validator restart recovery exist. Connection admission, rotation, regional partition, and sustained chaos evidence remain. |
+| Validator daemon and HTTP API | Beta | Uses persistent Sled state/DAG/checkpoints, permission-checked external key files, committee membership checks, authenticated write RPC, request limits, rate limiting, readiness, recovery, and Docker health/agreement gates. Multi-region soak, operator drills, and independent review remain. |
 | Sled persistence and snapshot primitives | Beta | The daemon restores checked objects, DAG vertices, and finalized checkpoints. Snapshot replacement is atomic per store and verifies payload commitments, duplicate IDs, and the state root before mutation. Power-loss and long-running recovery campaigns remain. |
 | Wasm runtime | Experimental | Deterministic host-call tests exist. Compatibility, fuzzing, and sandbox review remain. |
 | Rust SDK | Beta | Native conformance tests pass. Package/release provenance remains. |
@@ -31,7 +31,7 @@ exists.
 | SP1 and RISC Zero | Interface only | Current adapters produce deterministic test packets, not cryptographic zkVM proofs. |
 | Ethereum JSON-RPC | Interface only | A small compatibility facade exists; it is not an EVM implementation or production sequencer. |
 | Bitcoin SPV | Experimental | Header and proof primitives are tested; production chain synchronization and reorg operations remain. |
-| Solidity contracts and bridge | Experimental | Local unit/fuzz tests and CI static-analysis gates exist, and withdrawal proofs are bound to recipient/amount/ID. Independent audit, invariant campaign, and deployed governance review remain. |
+| Solidity contracts and bridge | Experimental | Unit and fuzz tests, a 16,384-call stateful invariant campaign, replay/ID-reuse checks, and a zero-finding Slither gate exist. Independent audit and deployed governance review remain. |
 | USDV and ISO 20022 | Experimental | Deterministic domain logic exists. It is not a licensed financial product, reserve program, sanctions service, or legal authorization. |
 | Cross-industry evidence packs | Beta | Versioned, bounded adapters cover CloudEvents, GS1 EPCIS, HL7 FHIR, OPC UA, W3C VC, and ISO 20022 routing. Full normative conformance suites and deployment-specific governance remain. |
 | Explorer and faucet | Demonstration | Static product demonstrations; they are not connected to a live network. |

@@ -36,7 +36,8 @@ contract USDV {
     // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)")
     bytes32 public constant PERMIT_TYPEHASH = 0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
     // keccak256("TransferWithAuthorization(address from,address to,uint256 value,uint256 validAfter,uint256 validBefore,bytes32 nonce)")
-    bytes32 public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH = 0x7c7db6fe8d1eadd1d53615cca6107ba0ea0bc1b4869eaa93c0e0e85e347f8ae7;
+    bytes32 public constant TRANSFER_WITH_AUTHORIZATION_TYPEHASH =
+        0x7c7db6fe8d1eadd1d53615cca6107ba0ea0bc1b4869eaa93c0e0e85e347f8ae7;
 
     mapping(address => uint256) public nonces;
     mapping(address => mapping(bytes32 => bool)) public authorizationState;
@@ -54,8 +55,7 @@ contract USDV {
     event AdminTransferStarted(address indexed currentAdmin, address indexed pendingAdmin);
     event AdminTransferred(address indexed previousAdmin, address indexed newAdmin);
 
-    uint256 private constant SECP256K1N_DIV_2 =
-        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    uint256 private constant SECP256K1N_DIV_2 = 0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "USDV: caller not admin");
@@ -118,13 +118,26 @@ contract USDV {
         return true;
     }
 
-    function approve(address spender, uint256 value) external notPaused notFrozen(msg.sender) notFrozen(spender) returns (bool) {
+    function approve(address spender, uint256 value)
+        external
+        notPaused
+        notFrozen(msg.sender)
+        notFrozen(spender)
+        returns (bool)
+    {
         allowance[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
     }
 
-    function transferFrom(address from, address to, uint256 value) external notPaused notFrozen(from) notFrozen(to) notFrozen(msg.sender) returns (bool) {
+    function transferFrom(address from, address to, uint256 value)
+        external
+        notPaused
+        notFrozen(from)
+        notFrozen(to)
+        notFrozen(msg.sender)
+        returns (bool)
+    {
         uint256 allowed = allowance[from][msg.sender];
         if (allowed != type(uint256).max) {
             require(allowed >= value, "USDV: allowance exceeded");
@@ -250,20 +263,16 @@ contract USDV {
 
     // --- ERC-2612 Permit ---
 
-    function permit(
-        address owner,
-        address spender,
-        uint256 value,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external notPaused notFrozen(owner) notFrozen(spender) {
+    function permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)
+        external
+        notPaused
+        notFrozen(owner)
+        notFrozen(spender)
+    {
+        // slither-disable-next-line timestamp -- ERC-2612 deadlines are explicitly time-based.
         require(block.timestamp <= deadline, "USDV: permit expired");
 
-        bytes32 structHash = keccak256(
-            abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline)
-        );
+        bytes32 structHash = keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline));
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
         address recovered = _recoverSigner(digest, v, r, s);
@@ -286,13 +295,14 @@ contract USDV {
         bytes32 r,
         bytes32 s
     ) external notPaused notFrozen(from) notFrozen(to) {
+        // slither-disable-next-line timestamp -- EIP-3009 authorization windows are explicitly time-based.
         require(block.timestamp > validAfter, "USDV: auth not yet valid");
+        // slither-disable-next-line timestamp -- EIP-3009 authorization windows are explicitly time-based.
         require(block.timestamp < validBefore, "USDV: auth expired");
         require(!authorizationState[from][nonce], "USDV: auth already used");
 
-        address recovered = _recoverSigner(
-            _authorizationDigest(from, to, value, validAfter, validBefore, nonce), v, r, s
-        );
+        address recovered =
+            _recoverSigner(_authorizationDigest(from, to, value, validAfter, validBefore, nonce), v, r, s);
         require(recovered != address(0) && recovered == from, "USDV: invalid auth signature");
 
         authorizationState[from][nonce] = true;
@@ -308,15 +318,7 @@ contract USDV {
         bytes32 nonce
     ) internal view returns (bytes32) {
         bytes32 structHash = keccak256(
-            abi.encode(
-                TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
-                from,
-                to,
-                value,
-                validAfter,
-                validBefore,
-                nonce
-            )
+            abi.encode(TRANSFER_WITH_AUTHORIZATION_TYPEHASH, from, to, value, validAfter, validBefore, nonce)
         );
         return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
     }

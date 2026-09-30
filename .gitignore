@@ -12,4 +12,5 @@ contracts/cache/
 *.log
 .coverage
 devnet-data/
+artifacts/
 formal/traces/*.itf.json.tmp

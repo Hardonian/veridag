@@ -64,6 +64,23 @@ docker-up:
 docker-down:
     docker compose down
 
+# Verify health, agreement, progress, and single-validator restart recovery.
+docker-soak duration="300":
+    python3 scripts/devnet-soak.py --duration {{duration}} --restart-service node4 --output artifacts/devnet-soak.json
+
+# Solidity format, unit, fuzz, and invariant campaign.
+solidity:
+    forge fmt --check
+    forge test -vvv
+
+# Solidity static analysis (requires slither-analyzer).
+slither:
+    slither . --config-file slither.config.json
+
+# Validate all versioned industry adapter manifests.
+industry:
+    python3 scripts/validate-industry-packs.py
+
 # Hot-path benchmark suite
 bench:
     cargo bench -p veridag-qa
@@ -88,6 +105,6 @@ ts-test:
 py-test:
     cd sdks/python && uv run python -m unittest discover -s tests
 
-# Full pre-release gate: check + vectors + audit + ts-test + py-test + site-build
-release-gate: check vectors audit ts-test py-test site-build
+# Full local pre-release gate. Docker soak remains explicit because it is long-running.
+release-gate: check vectors audit formal solidity slither industry ts-test py-test site-build
     @echo "release-gate: all checks passed"
