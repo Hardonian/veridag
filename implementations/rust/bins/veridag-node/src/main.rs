@@ -1404,8 +1404,9 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
         .read()
         .await
         .round_vertices_max()
-        .unwrap_or(0)
-        .saturating_add(1);
+        .unwrap_or(1)
+        .saturating_sub(1)
+        .max(1);
     gossip
         .broadcast_tagged(
             GOSSIP_TAG_SYNC_REQUEST,
@@ -1898,18 +1899,22 @@ async fn run_daemon(config: DaemonConfig) -> Result<()> {
         if stalled_for_ms >= SYNC_RETRY_INTERVAL.as_millis() as u64
             && last_sync_request_at.elapsed() >= SYNC_RETRY_INTERVAL
         {
-            let next_round = dag
+            let sync_from_round = dag
                 .read()
                 .await
                 .round_vertices_max()
-                .unwrap_or(0)
-                .saturating_add(1);
+                .unwrap_or(1)
+                .saturating_sub(1)
+                .max(1);
             warn!(
-                next_round,
+                sync_from_round,
                 stalled_for_ms, "requesting DAG catch-up from committee peers"
             );
             gossip
-                .broadcast_tagged(GOSSIP_TAG_SYNC_REQUEST, &encode_sync_request(next_round))
+                .broadcast_tagged(
+                    GOSSIP_TAG_SYNC_REQUEST,
+                    &encode_sync_request(sync_from_round),
+                )
                 .await;
             last_sync_request_at = Instant::now();
         }

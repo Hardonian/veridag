@@ -11,9 +11,10 @@ ordering, execution, state (BMH-1), checkpoints, membership, upgrades.
 
 ## Phase 1 — Formal consensus model (DONE in this tree)
 
-`formal/quint/consensus.qnt` + `invariants.qnt`: validators, rounds, vertices,
-parents, equivocation, quorum commit rule, Agreement/Finality/Integrity
-invariants. Checked with `quint typecheck` and `quint run --invariant`.
+`formal/quint/consensus.qnt`, `instance4.qnt`, and `consensus_test.qnt`:
+validators, rounds, vertices, parents, equivocation, quorum commit rule, and
+Agreement/Finality/Integrity invariants. Checked with `quint typecheck`,
+`quint test`, and `quint run --invariant`.
 
 ## Phase 2 — Protocol vectors (DONE in this tree)
 
