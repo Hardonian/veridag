@@ -183,11 +183,10 @@ ReadyLayer, nlsqlc, mcpwall, and TokenGoblin. Normative spec 22.
 
 ## Release status
 
-`1.0.0` — production go-live release. All 26 phases complete. Reference
-implementation compiles clean (`cargo clippy --workspace --all-targets
---all-features -- -D warnings`), all workspace tests green, release binary
-builds (`panic = "abort"`, `strip = true`) and the demo produces identical
-state roots + checkpoints across 4 validators. Structured logging, Prometheus
-metrics (`/v1/metrics`), readiness probe (`/v1/ready`), and graceful shutdown
-are production-wired. See `docs/quickstart.md` for universal onboarding and
-`docs/architecture.md` for the system design.
+Pre-GA. The numbered phases above record protocol and reference-implementation
+milestones; `DONE in this tree` does not by itself mean production-ready or
+independently audited. The workspace tests and strict Clippy gate pass, and the
+four-validator development network reaches agreement over QUIC. Production
+promotion additionally requires the runtime, security, packaging, recovery,
+benchmark, and external-review gates tracked in
+[`docs/capability-matrix.md`](docs/capability-matrix.md).

@@ -8,6 +8,7 @@ description.workspace = true
 
 [dependencies]
 veridag-codec = { path = "../codec" }
+veridag-crypto = { path = "../crypto" }
 veridag-object-state = { path = "../object-state" }
 veridag-protocol-types = { path = "../protocol-types" }
 thiserror.workspace = true

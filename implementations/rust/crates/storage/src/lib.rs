@@ -19,6 +19,15 @@ pub enum StorageError {
     /// Not found.
     #[error("not found")]
     NotFound,
+    /// Snapshot contents do not match their committed state root.
+    #[error("snapshot state root mismatch")]
+    SnapshotRootMismatch,
+    /// Snapshot contains the same object id more than once.
+    #[error("snapshot contains duplicate object {0:?}")]
+    DuplicateObject(ObjectId),
+    /// An object's payload commitment does not match its payload.
+    #[error("object {0:?} has an invalid payload commitment")]
+    InvalidPayloadCommitment(ObjectId),
     /// Backend I/O failure.
     #[cfg(feature = "persistent")]
     #[error("backend: {0}")]
@@ -35,6 +44,8 @@ pub trait StateStore {
     fn delete_object(&mut self, id: &ObjectId) -> Result<(), StorageError>;
     /// Iterate all objects in canonical (id-sorted) order.
     fn iter_objects(&self) -> Box<dyn Iterator<Item = (ObjectId, Object)> + '_>;
+    /// Atomically replace the complete live object set.
+    fn replace_all_objects(&mut self, objects: &[Object]) -> Result<(), StorageError>;
 }
 
 /// DAG vertex store (bytes; the DAG crate decodes).
@@ -53,6 +64,8 @@ pub trait DagStore {
 pub trait CheckpointStore {
     /// Persist a checkpoint's canonical bytes by id.
     fn put_checkpoint(&mut self, id: CheckpointId, bytes: &[u8]) -> Result<(), StorageError>;
+    /// Fetch a checkpoint's canonical bytes by id.
+    fn get_checkpoint(&self, id: &CheckpointId) -> Result<Option<Vec<u8>>, StorageError>;
     /// Fetch the latest checkpoint id by sequence.
     fn latest(&self) -> Option<CheckpointId>;
     /// Set the latest checkpoint id.
@@ -90,6 +103,11 @@ impl StateStore for MemoryStore {
     fn iter_objects(&self) -> Box<dyn Iterator<Item = (ObjectId, Object)> + '_> {
         Box::new(self.objects.iter().map(|(k, v)| (*k, v.clone())))
     }
+    fn replace_all_objects(&mut self, objects: &[Object]) -> Result<(), StorageError> {
+        let replacement = objects.iter().cloned().map(|o| (o.id, o)).collect();
+        self.objects = replacement;
+        Ok(())
+    }
 }
 
 impl DagStore for MemoryStore {
@@ -112,6 +130,9 @@ impl CheckpointStore for MemoryStore {
     fn put_checkpoint(&mut self, id: CheckpointId, bytes: &[u8]) -> Result<(), StorageError> {
         self.checkpoints.insert(id, bytes.to_vec());
         Ok(())
+    }
+    fn get_checkpoint(&self, id: &CheckpointId) -> Result<Option<Vec<u8>>, StorageError> {
+        Ok(self.checkpoints.get(id).cloned())
     }
     fn latest(&self) -> Option<CheckpointId> {
         self.latest
@@ -178,17 +199,29 @@ pub fn export_snapshot(
     }
 }
 
-/// Import a fast synchronization snapshot into `store`, atomically populating objects.
+/// Import a fast synchronization snapshot into `store`.
+///
+/// The snapshot is fully validated before the store is mutated. Store backends
+/// must implement [`StateStore::replace_all_objects`] as one atomic operation.
 pub fn import_snapshot(
     store: &mut dyn StateStore,
     snapshot: &StateSnapshot,
 ) -> Result<usize, StorageError> {
-    let mut count = 0;
+    let mut state = veridag_object_state::ObjectState::new();
     for obj in &snapshot.objects {
-        store.put_object(obj.clone())?;
-        count += 1;
+        let payload_commit = veridag_crypto::hash("VERIDAG_OBJECT_PAYLOAD_V1", &obj.payload);
+        if obj.payload_commit != payload_commit {
+            return Err(StorageError::InvalidPayloadCommitment(obj.id));
+        }
+        state
+            .create(obj.clone())
+            .map_err(|_| StorageError::DuplicateObject(obj.id))?;
     }
-    Ok(count)
+    if state.state_root() != snapshot.state_root {
+        return Err(StorageError::SnapshotRootMismatch);
+    }
+    store.replace_all_objects(&snapshot.objects)?;
+    Ok(snapshot.objects.len())
 }
 
 #[cfg(test)]
@@ -229,12 +262,15 @@ mod tests {
     #[test]
     fn test_snapshot_export_and_import() {
         let mut store1 = MemoryStore::new();
-        store1.put_object(obj(10)).unwrap();
-        store1.put_object(obj(20)).unwrap();
-        store1.put_object(obj(30)).unwrap();
+        let objects = [obj(10), obj(20), obj(30)];
+        let mut state = veridag_object_state::ObjectState::new();
+        for object in objects {
+            store1.put_object(object.clone()).unwrap();
+            state.create(object).unwrap();
+        }
 
         let checkpoint_id = CheckpointId([0x99; 32]);
-        let state_root = [0x77; 32];
+        let state_root = state.state_root();
         let snapshot = export_snapshot(&store1, checkpoint_id, 42, state_root);
 
         assert_eq!(snapshot.object_count(), 3);
@@ -257,6 +293,44 @@ mod tests {
             store2.get_object(&ObjectId([30; 32])).unwrap(),
             Some(obj(30))
         );
+    }
+
+    #[test]
+    fn snapshot_root_mismatch_does_not_mutate_store() {
+        let mut destination = MemoryStore::new();
+        destination.put_object(obj(1)).unwrap();
+        let snapshot = StateSnapshot {
+            checkpoint_id: CheckpointId([9; 32]),
+            sequence: 1,
+            state_root: [0xff; 32],
+            objects: vec![obj(2)],
+        };
+
+        assert_eq!(
+            import_snapshot(&mut destination, &snapshot),
+            Err(StorageError::SnapshotRootMismatch)
+        );
+        assert_eq!(destination.get_object(&ObjectId([1; 32])).unwrap(), Some(obj(1)));
+        assert_eq!(destination.get_object(&ObjectId([2; 32])).unwrap(), None);
+    }
+
+    #[test]
+    fn snapshot_rejects_invalid_payload_commitment() {
+        let mut destination = MemoryStore::new();
+        let mut corrupt = obj(2);
+        corrupt.payload.push(99);
+        let snapshot = StateSnapshot {
+            checkpoint_id: CheckpointId([9; 32]),
+            sequence: 1,
+            state_root: [0; 32],
+            objects: vec![corrupt],
+        };
+
+        assert!(matches!(
+            import_snapshot(&mut destination, &snapshot),
+            Err(StorageError::InvalidPayloadCommitment(_))
+        ));
+        assert_eq!(destination.iter_objects().count(), 0);
     }
 
     #[test]
@@ -317,6 +391,25 @@ impl SledStore {
             .map_err(|e| StorageError::Backend(e.to_string()))?;
         Ok(())
     }
+
+    /// Load every object while surfacing corruption instead of silently
+    /// skipping malformed records.
+    pub fn load_objects_checked(&self) -> Result<Vec<Object>, StorageError> {
+        use veridag_codec::{Decode, Decoder};
+        let mut objects = Vec::new();
+        for entry in &self.objects {
+            let (_, bytes) = entry.map_err(|e| StorageError::Backend(e.to_string()))?;
+            let mut decoder = Decoder::new(&bytes);
+            let object = Object::decode(&mut decoder)
+                .map_err(|e| StorageError::Corruption(e.to_string()))?;
+            decoder
+                .finish()
+                .map_err(|e| StorageError::Corruption(e.to_string()))?;
+            objects.push(object);
+        }
+        objects.sort_by_key(|object| object.id);
+        Ok(objects)
+    }
 }
 
 #[cfg(feature = "persistent")]
@@ -364,6 +457,21 @@ impl StateStore for SledStore {
             Some((ObjectId(id), obj))
         }))
     }
+    fn replace_all_objects(&mut self, objects: &[Object]) -> Result<(), StorageError> {
+        use veridag_codec::Encode;
+        let mut batch = sled::Batch::default();
+        for entry in &self.objects {
+            let (key, _) = entry.map_err(|e| StorageError::Backend(e.to_string()))?;
+            batch.remove(key);
+        }
+        for obj in objects {
+            batch.insert(obj.id.as_bytes(), obj.to_bytes());
+        }
+        self.objects
+            .apply_batch(batch)
+            .map_err(|e| StorageError::Backend(e.to_string()))?;
+        Ok(())
+    }
 }
 
 #[cfg(feature = "persistent")]
@@ -400,6 +508,12 @@ impl CheckpointStore for SledStore {
             .insert(id.as_bytes(), bytes)
             .map_err(|e| StorageError::Backend(e.to_string()))?;
         Ok(())
+    }
+    fn get_checkpoint(&self, id: &CheckpointId) -> Result<Option<Vec<u8>>, StorageError> {
+        self.checkpoints
+            .get(id.as_bytes())
+            .map(|value| value.map(|bytes| bytes.to_vec()))
+            .map_err(|e| StorageError::Backend(e.to_string()))
     }
     fn latest(&self) -> Option<CheckpointId> {
         let raw = self.latest.get(b"latest").ok()??;

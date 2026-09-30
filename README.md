@@ -1,8 +1,8 @@
 # ⚡ Veridag
 
-## The Deterministic Distributed Trust Fabric for AI Agents, Edge Swarms, and Enterprise State
+## Deterministic shared state for multi-party systems
 
-[![Version](https://img.shields.io/badge/version-1.0.0-emerald?style=for-the-badge&logo=rust)](https://github.com/Hardonian/veridag/releases)
+[![Status](https://img.shields.io/badge/status-pre--GA-orange?style=for-the-badge)](docs/capability-matrix.md)
 [![Rust](https://img.shields.io/badge/Rust-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
 [![Safety](https://img.shields.io/badge/unsafe-FORBIDDEN-blueviolet?style=for-the-badge&logo=shield)](implementations/rust/Cargo.toml)
 [![Formal Verification](https://img.shields.io/badge/Formal%20Model-Quint%20Verified-cyan?style=for-the-badge&logo=probot)](formal/quint/)
@@ -17,7 +17,12 @@
 
 ## What is Veridag?
 
-**Veridag** is an implementation-independent protocol and ultra-lightweight Rust engine for **deterministic, Byzantine-resilient, capability-secured distributed computation**.
+**Veridag** is an implementation-independent protocol and Rust reference engine for **deterministic, Byzantine-resilient, capability-secured distributed computation**.
+
+> **Release status:** pre-GA. The protocol core and conformance suites are
+> functional; several integrations remain experimental or interface-only. See
+> the [capability matrix](docs/capability-matrix.md) before evaluating or
+> deploying the software.
 
 It gives mutually distrustful parties—autonomous AI agents, organizations, microservices, cloud nodes, and edge devices—a shared, tamper-proof state machine that guarantees exact mathematical agreement without centralized coordinators.
 

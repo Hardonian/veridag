@@ -31,6 +31,9 @@ pub enum CryptoError {
     /// Key material had the wrong length.
     #[error("invalid key length")]
     InvalidKeyLength,
+    /// A configured signer provider has no active implementation.
+    #[error("signer provider is not implemented: {0}")]
+    UnsupportedSigner(String),
 }
 
 /// Global metrics backend handle (optional, feature `metrics`).
@@ -233,8 +236,10 @@ impl KeySigner for RemoteKmsSigner {
     }
 
     fn sign(&self, _domain: &str, _payload: &[u8]) -> Result<Ed25519Signature, CryptoError> {
-        // In production, delegates over authenticated TLS to KMS RPC endpoint.
-        Ok([0u8; 64])
+        // Fail closed until a provider-specific driver performs a real remote
+        // signature and verifies it against `public_key`. Returning a dummy
+        // signature here would make an interface look like a security control.
+        Err(CryptoError::UnsupportedSigner(self.key_uri.clone()))
     }
 }
 
@@ -311,5 +316,9 @@ mod tests {
         );
         assert_eq!(kms_signer.public_key(), local_signer.public_key());
         assert_eq!(kms_signer.address(), local_signer.address());
+        assert!(matches!(
+            kms_signer.sign("VERIDAG_TX_V1", b"payload"),
+            Err(CryptoError::UnsupportedSigner(_))
+        ));
     }
 }

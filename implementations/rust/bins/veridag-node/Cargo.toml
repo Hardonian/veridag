@@ -21,6 +21,7 @@ veridag-metrics = { path = "../../crates/metrics" }
 veridag-net = { path = "../../crates/net" }
 veridag-object-state = { path = "../../crates/object-state" }
 veridag-protocol-types = { path = "../../crates/protocol-types" }
+veridag-storage = { path = "../../crates/storage", features = ["persistent"] }
 veridag-transaction = { path = "../../crates/transaction" }
 clap.workspace = true
 anyhow.workspace = true

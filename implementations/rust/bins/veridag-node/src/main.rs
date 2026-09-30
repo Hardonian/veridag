@@ -17,10 +17,13 @@
 //!   - Graceful shutdown on SIGTERM/Ctrl+C
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::net::{IpAddr, SocketAddr};
+use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use anyhow::Result;
+use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
@@ -29,7 +32,7 @@ use veridag_checkpoint::{dag_commitment, validator_set_commitment, Checkpoint};
 
 use veridag_codec::Decode;
 use veridag_consensus::{commit, highest_complete_wave, StaticCommittee, WAVE};
-use veridag_crypto::Keypair;
+use veridag_crypto::{address_of, Keypair};
 use veridag_dag::{Dag, Vertex};
 use veridag_execution::parallel::execute_parallel;
 use veridag_execution::Executor;
@@ -39,9 +42,14 @@ use veridag_protocol_types::{
     object_type, Address, BatchId, ChainId, CheckpointId, Ed25519PublicKey, Epoch, ObjectId,
     ObjectRef, Ownership, ResourceBudget, Round, ValidatorId, VertexId, CURRENT_PROTOCOL_VERSION,
 };
+use veridag_storage::{CheckpointStore, DagStore, SledStore, StateStore};
 use veridag_transaction::{Operation, SignedTransaction, Transaction};
 
 const CHAIN: ChainId = 1;
+const MAX_HTTP_HEADER_BYTES: usize = 16 * 1024;
+const MAX_HTTP_BODY_BYTES: usize = 1024 * 1024;
+const HTTP_READ_TIMEOUT: Duration = Duration::from_secs(5);
+const DEFAULT_RPC_RATE_LIMIT: u32 = 100;
 
 /// A minimal in-process mempool: signature-verified transactions awaiting
 /// inclusion in a vertex batch.
@@ -292,9 +300,17 @@ enum Cmd {
     },
     /// Run as a networked validator daemon over QUIC.
     Daemon {
-        /// The validator seed (1-4 for testing)
-        #[arg(long)]
-        seed: u8,
+        /// Deterministic validator seed (1-4, development networks only).
+        #[arg(long, conflicts_with = "key_file", required_unless_present = "key_file")]
+        seed: Option<u8>,
+        /// File containing a 32-byte hex validator secret, or JSON with a
+        /// `secret_seed` field. Required for non-development deployments.
+        #[arg(long, conflicts_with = "seed")]
+        key_file: Option<PathBuf>,
+        /// Comma-separated Ed25519 committee public keys. Required with
+        /// `--key-file`; development seeds derive the four-node dev committee.
+        #[arg(long, value_delimiter = ',')]
+        committee_pubkeys: Vec<String>,
         /// Comma-separated list of peer IP:PORT strings
         #[arg(long, value_delimiter = ',')]
         peers: Vec<String>,
@@ -304,11 +320,91 @@ enum Cmd {
         /// HTTP/JSON RPC bind address (e.g. 0.0.0.0:8080)
         #[arg(long, default_value = "0.0.0.0:8080")]
         rpc: String,
+        /// Persistent validator database directory. Defaults to
+        /// `VERIDAG_DATA_DIR` or `./data`.
+        #[arg(long)]
+        data_dir: Option<PathBuf>,
+        /// Create the deterministic Alice/Bob development balances when an
+        /// empty database is opened.
+        #[arg(long)]
+        dev_genesis: bool,
+        /// Permit unauthenticated transaction submission on a non-loopback
+        /// RPC address. Development networks only.
+        #[arg(long)]
+        insecure_rpc: bool,
     },
 }
 
 fn seed(n: u8) -> Keypair {
     Keypair::from_seed(&[n; 32])
+}
+
+fn parse_fixed_hex<const N: usize>(value: &str, label: &str) -> Result<[u8; N]> {
+    let bytes = hex::decode(value.trim().trim_start_matches("0x"))
+        .with_context(|| format!("{label} must be hexadecimal"))?;
+    bytes
+        .try_into()
+        .map_err(|_| anyhow::anyhow!("{label} must be exactly {N} bytes"))
+}
+
+fn load_validator_key(path: &Path) -> Result<Keypair> {
+    let metadata = std::fs::metadata(path)
+        .with_context(|| format!("read validator key metadata at {}", path.display()))?;
+    if !metadata.is_file() {
+        bail!("validator key path is not a regular file: {}", path.display());
+    }
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        if metadata.permissions().mode() & 0o077 != 0 {
+            bail!(
+                "validator key file {} is accessible by group or others; require mode 0600",
+                path.display()
+            );
+        }
+    }
+
+    let contents = std::fs::read_to_string(path)
+        .with_context(|| format!("read validator key at {}", path.display()))?;
+    let secret = if contents.trim_start().starts_with('{') {
+        let value: serde_json::Value = serde_json::from_str(&contents)
+            .with_context(|| format!("parse validator key JSON at {}", path.display()))?;
+        value
+            .get("secret_seed")
+            .and_then(serde_json::Value::as_str)
+            .context("validator key JSON must contain string field `secret_seed`")?
+            .to_owned()
+    } else {
+        contents.trim().to_owned()
+    };
+    Ok(Keypair::from_seed(&parse_fixed_hex::<32>(
+        &secret,
+        "validator secret seed",
+    )?))
+}
+
+fn parse_committee_pubkeys(values: &[String]) -> Result<BTreeSet<ValidatorId>> {
+    let validators: BTreeSet<_> = values
+        .iter()
+        .map(|value| {
+            parse_fixed_hex::<32>(value, "committee public key")
+                .map(|public_key| ValidatorId(address_of(&public_key)))
+        })
+        .collect::<Result<_>>()?;
+    if validators.len() < 4 {
+        bail!("committee requires at least four distinct validator public keys");
+    }
+    Ok(validators)
+}
+
+fn unix_time_millis() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
 }
 
 fn run_demo(n_validators: usize, quiet: bool) -> Result<Vec<Node>> {
@@ -524,8 +620,55 @@ struct RpcContext {
     checkpoints: Arc<RwLock<Vec<Checkpoint>>>,
     tx_sender: tokio::sync::mpsc::Sender<SignedTransaction>,
     committee: StaticCommittee,
-    seed: u8,
+    validator_id: ValidatorId,
     metrics: Arc<PrometheusExporter>,
+    rpc_token: Option<String>,
+    allowed_origin: String,
+    rate_limiter: RpcRateLimiter,
+    last_progress_ms: Arc<std::sync::atomic::AtomicU64>,
+    persistent: bool,
+}
+
+#[derive(Debug)]
+struct ClientRateWindow {
+    started: Instant,
+    requests: u32,
+}
+
+#[derive(Debug)]
+struct RpcRateLimiter {
+    requests_per_second: u32,
+    clients: Mutex<BTreeMap<IpAddr, ClientRateWindow>>,
+}
+
+impl RpcRateLimiter {
+    fn new(requests_per_second: u32) -> Self {
+        Self {
+            requests_per_second,
+            clients: Mutex::new(BTreeMap::new()),
+        }
+    }
+
+    fn allow(&self, client: IpAddr) -> bool {
+        let now = Instant::now();
+        let mut clients = self.clients.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        if clients.len() > 10_000 {
+            clients.retain(|_, window| now.duration_since(window.started) < Duration::from_secs(2));
+        }
+        let window = clients.entry(client).or_insert(ClientRateWindow {
+            started: now,
+            requests: 0,
+        });
+        if now.duration_since(window.started) >= Duration::from_secs(1) {
+            window.started = now;
+            window.requests = 0;
+        }
+        if window.requests >= self.requests_per_second {
+            return false;
+        }
+        window.requests += 1;
+        true
+    }
 }
 
 async fn handle_http_request(
@@ -540,20 +683,29 @@ async fn handle_http_request(
         let ckpts = ctx.checkpoints.read().await;
         let mw = highest_complete_wave(&dag);
         let max_r = dag.round_vertices_max().unwrap_or(0);
+        let last_progress_ms = ctx
+            .last_progress_ms
+            .load(std::sync::atomic::Ordering::Relaxed);
+        let stalled_for_ms = unix_time_millis().saturating_sub(last_progress_ms);
+        let progressing = stalled_for_ms < 30_000;
+        let status = if progressing { "healthy" } else { "degraded" };
         return (
-            200,
+            if progressing { 200 } else { 503 },
             serde_json::json!({
-                "status": "healthy",
+                "status": status,
                 "version": env!("CARGO_PKG_VERSION"),
                 "protocol_version": CURRENT_PROTOCOL_VERSION,
                 "chain_id": CHAIN,
-                "validator_seed": ctx.seed,
+                "validator_id": format!("0x{}", hex::encode(ctx.validator_id.0)),
                 "committee_n": ctx.committee.n(),
                 "committee_quorum": ctx.committee.quorum(),
                 "max_round": max_r,
                 "highest_wave": mw,
                 "state_root": format!("0x{}", hex::encode(state.state_root())),
                 "checkpoints_count": ckpts.len(),
+                "last_progress_ms": last_progress_ms,
+                "stalled_for_ms": stalled_for_ms,
+                "persistent": ctx.persistent,
             }),
         );
     }
@@ -622,14 +774,20 @@ async fn handle_http_request(
     if method == "GET" && (path == "/v1/ready" || path == "/ready") {
         let dag = ctx.dag.read().await;
         let mw = highest_complete_wave(&dag);
-        let ready = mw > 0;
+        let stalled_for_ms = unix_time_millis().saturating_sub(
+            ctx.last_progress_ms
+                .load(std::sync::atomic::Ordering::Relaxed),
+        );
+        let ready = mw > 0 && stalled_for_ms < 30_000 && ctx.persistent;
         let code = if ready { 200 } else { 503 };
         return (
             code,
             serde_json::json!({
                 "ready": ready,
                 "highest_wave": mw,
-                "validator_seed": ctx.seed,
+                "validator_id": format!("0x{}", hex::encode(ctx.validator_id.0)),
+                "stalled_for_ms": stalled_for_ms,
+                "persistent": ctx.persistent,
             }),
         );
     }
@@ -674,15 +832,24 @@ async fn handle_http_request(
                         if verified {
                             let tx_id = stx.id();
                             let sender = stx.tx.sender;
-                            let _ = ctx.tx_sender.send(stx).await;
-                            return (
-                                200,
-                                serde_json::json!({
-                                    "status": "admitted",
-                                    "tx_id": format!("0x{}", hex::encode(tx_id.0)),
-                                    "sender": format!("0x{}", hex::encode(sender)),
-                                }),
-                            );
+                            return match ctx.tx_sender.try_send(stx) {
+                                Ok(()) => (
+                                    202,
+                                    serde_json::json!({
+                                        "status": "admitted",
+                                        "tx_id": format!("0x{}", hex::encode(tx_id.0)),
+                                        "sender": format!("0x{}", hex::encode(sender)),
+                                    }),
+                                ),
+                                Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => (
+                                    429,
+                                    serde_json::json!({ "error": "transaction admission queue is full" }),
+                                ),
+                                Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => (
+                                    503,
+                                    serde_json::json!({ "error": "transaction admission is unavailable" }),
+                                ),
+                            };
                         } else {
                             return (
                                 400,
@@ -705,13 +872,56 @@ async fn handle_http_request(
 async fn serve_http_connection(
     mut stream: tokio::net::TcpStream,
     ctx: Arc<RpcContext>,
+    peer_ip: IpAddr,
 ) -> Result<()> {
-    let mut buf = vec![0u8; 65536];
+    async fn respond(
+        stream: &mut tokio::net::TcpStream,
+        status_code: u16,
+        content_type: &str,
+        body: &str,
+        allowed_origin: &str,
+    ) -> Result<()> {
+        let status_text = match status_code {
+            200 => "OK",
+            202 => "Accepted",
+            204 => "No Content",
+            400 => "Bad Request",
+            401 => "Unauthorized",
+            404 => "Not Found",
+            413 => "Payload Too Large",
+            429 => "Too Many Requests",
+            431 => "Request Header Fields Too Large",
+            503 => "Service Unavailable",
+            _ => "Internal Server Error",
+        };
+        let response = format!(
+            "HTTP/1.1 {status_code} {status_text}\r\nContent-Type: {content_type}\r\nAccess-Control-Allow-Origin: {allowed_origin}\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type, Authorization\r\nVary: Origin\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+            body.len()
+        );
+        stream.write_all(response.as_bytes()).await?;
+        stream.flush().await?;
+        Ok(())
+    }
+
+    if !ctx.rate_limiter.allow(peer_ip) {
+        return respond(
+            &mut stream,
+            429,
+            "application/json",
+            r#"{"error":"rate limit exceeded"}"#,
+            &ctx.allowed_origin,
+        )
+        .await;
+    }
+
+    let mut buf = vec![0u8; MAX_HTTP_HEADER_BYTES];
     let mut total_read = 0;
     let mut header_end = None;
 
     while total_read < buf.len() {
-        let n = stream.read(&mut buf[total_read..]).await?;
+        let n = tokio::time::timeout(HTTP_READ_TIMEOUT, stream.read(&mut buf[total_read..]))
+            .await
+            .context("HTTP header read timed out")??;
         if n == 0 {
             break;
         }
@@ -723,7 +933,14 @@ async fn serve_http_connection(
     }
 
     let Some(header_pos) = header_end else {
-        return Ok(());
+        return respond(
+            &mut stream,
+            431,
+            "application/json",
+            r#"{"error":"request headers too large or incomplete"}"#,
+            &ctx.allowed_origin,
+        )
+        .await;
     };
 
     let header_str = String::from_utf8_lossy(&buf[..header_pos]);
@@ -736,19 +953,56 @@ async fn serve_http_connection(
     let method = parts.next().unwrap_or("GET");
     let path = parts.next().unwrap_or("/");
 
-    if method == "OPTIONS" {
-        let resp = "HTTP/1.1 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nConnection: close\r\n\r\n";
-        stream.write_all(resp.as_bytes()).await?;
-        return Ok(());
-    }
-
     let mut content_length: usize = 0;
+    let mut authorization = None;
     for line in lines {
-        if let Some(val) = line.to_lowercase().strip_prefix("content-length:") {
+        let lowercase = line.to_ascii_lowercase();
+        if let Some(val) = lowercase.strip_prefix("content-length:") {
             if let Ok(len) = val.trim().parse::<usize>() {
                 content_length = len;
             }
         }
+        if lowercase.starts_with("authorization:") {
+            authorization = line.split_once(':').map(|(_, value)| value.trim().to_owned());
+        }
+    }
+
+    if method == "OPTIONS" {
+        return respond(
+            &mut stream,
+            204,
+            "text/plain",
+            "",
+            &ctx.allowed_origin,
+        )
+        .await;
+    }
+
+    if method == "POST" {
+        if let Some(expected) = &ctx.rpc_token {
+            let supplied = authorization.as_deref().and_then(|value| value.strip_prefix("Bearer "));
+            if supplied != Some(expected.as_str()) {
+                return respond(
+                    &mut stream,
+                    401,
+                    "application/json",
+                    r#"{"error":"missing or invalid bearer token"}"#,
+                    &ctx.allowed_origin,
+                )
+                .await;
+            }
+        }
+    }
+
+    if content_length > MAX_HTTP_BODY_BYTES {
+        return respond(
+            &mut stream,
+            413,
+            "application/json",
+            r#"{"error":"request body exceeds 1 MiB limit"}"#,
+            &ctx.allowed_origin,
+        )
+        .await;
     }
 
     let body_start = header_pos + 4;
@@ -762,7 +1016,9 @@ async fn serve_http_connection(
     while body.len() < content_length {
         let needed = content_length - body.len();
         let mut temp = vec![0u8; needed.min(8192)];
-        let n = stream.read(&mut temp).await?;
+        let n = tokio::time::timeout(HTTP_READ_TIMEOUT, stream.read(&mut temp))
+            .await
+            .context("HTTP body read timed out")??;
         if n == 0 {
             break;
         }
@@ -770,96 +1026,216 @@ async fn serve_http_connection(
     }
 
     let (status_code, resp_json) = handle_http_request(&ctx, method, path, &body).await;
-    let body_str = serde_json::to_string(&resp_json).unwrap_or_else(|_| "{}".to_string());
-    let status_text = match status_code {
-        200 => "OK",
-        400 => "Bad Request",
-        404 => "Not Found",
-        _ => "Internal Server Error",
+    let (content_type, body_string) = if path == "/v1/metrics" || path == "/metrics" {
+        (
+            "text/plain; version=0.0.4; charset=utf-8",
+            resp_json
+                .get("body")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default()
+                .to_owned(),
+        )
+    } else {
+        (
+            "application/json",
+            serde_json::to_string(&resp_json).unwrap_or_else(|_| "{}".to_owned()),
+        )
     };
 
-    let response = format!(
-        "HTTP/1.1 {} {}\r\nContent-Type: application/json\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Methods: GET, POST, OPTIONS\r\nAccess-Control-Allow-Headers: Content-Type\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+    respond(
+        &mut stream,
         status_code,
-        status_text,
-        body_str.len(),
-        body_str
-    );
-
-    stream.write_all(response.as_bytes()).await?;
-    stream.flush().await?;
-    Ok(())
+        content_type,
+        &body_string,
+        &ctx.allowed_origin,
+    )
+    .await
 }
 
-async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> Result<()> {
-    let keys: Vec<Keypair> = (1..=4u8).map(|s| Keypair::from_seed(&[s; 32])).collect();
-    let validators: BTreeSet<ValidatorId> = keys.iter().map(|k| ValidatorId(k.address())).collect();
-    let committee = StaticCommittee::new(validators.iter().copied().collect(), 1);
-
-    let key = Keypair::from_seed(&[seed; 32]);
+async fn run_daemon(
+    dev_seed: Option<u8>,
+    key_file: Option<PathBuf>,
+    committee_pubkeys: Vec<String>,
+    peers: Vec<String>,
+    bind: String,
+    rpc: String,
+    data_dir: Option<PathBuf>,
+    dev_genesis: bool,
+    insecure_rpc: bool,
+) -> Result<()> {
+    let key = match (dev_seed, key_file.as_deref()) {
+        (Some(value), None) if (1..=4).contains(&value) => seed(value),
+        (Some(_), None) => bail!("development seed must be between 1 and 4"),
+        (None, Some(path)) => load_validator_key(path)?,
+        _ => bail!("provide exactly one of --seed or --key-file"),
+    };
+    let validators: BTreeSet<ValidatorId> = if committee_pubkeys.is_empty() {
+        if dev_seed.is_none() {
+            bail!("--committee-pubkeys is required with --key-file");
+        }
+        (1..=4u8)
+            .map(|value| ValidatorId(seed(value).address()))
+            .collect()
+    } else {
+        parse_committee_pubkeys(&committee_pubkeys)?
+    };
     let id = ValidatorId(key.address());
+    if !validators.contains(&id) {
+        bail!("validator key is not a member of the configured committee");
+    }
+    let committee = StaticCommittee::new(
+        validators.iter().copied().collect(),
+        (validators.len().saturating_sub(1)) / 3,
+    );
     let is_val = |v: &ValidatorId| validators.contains(v);
 
-    let dag = Arc::new(RwLock::new(Dag::new()));
-    let mut batches: BTreeMap<BatchId, Vec<SignedTransaction>> = BTreeMap::new();
-    let mut proposed: BTreeSet<Round> = BTreeSet::new();
+    let data_dir = data_dir
+        .or_else(|| std::env::var_os("VERIDAG_DATA_DIR").map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from("data"));
+    let mut persistent_store = SledStore::open(&data_dir)
+        .with_context(|| format!("open validator database at {}", data_dir.display()))?;
 
-    let alice = Keypair::from_seed(&[100; 32]);
-    let bob = Keypair::from_seed(&[101; 32]);
+    let mut recovered_dag = Dag::new();
+    let mut recovered_vertices = Vec::new();
+    for vertex_id in persistent_store.iter_vertex_ids() {
+        let bytes = persistent_store
+            .get_vertex(&vertex_id)?
+            .ok_or_else(|| anyhow::anyhow!("persisted vertex {vertex_id:?} disappeared"))?;
+        let mut decoder = veridag_codec::Decoder::new(&bytes);
+        let vertex = Vertex::decode(&mut decoder).context("decode persisted vertex")?;
+        decoder.finish().context("persisted vertex has trailing bytes")?;
+        recovered_vertices.push(vertex);
+    }
+    recovered_vertices.sort_by_key(|vertex| (vertex.round, vertex.author));
+    for vertex in &recovered_vertices {
+        recovered_dag
+            .add(
+                vertex.clone(),
+                CURRENT_PROTOCOL_VERSION,
+                CHAIN,
+                0,
+                is_val,
+                committee.quorum(),
+                &[],
+            )
+            .context("rebuild DAG from persistent store")?;
+    }
+    let mut proposed: BTreeSet<Round> = recovered_vertices
+        .iter()
+        .filter(|vertex| vertex.author == id)
+        .map(|vertex| vertex.round)
+        .collect();
+    let dag = Arc::new(RwLock::new(recovered_dag));
+    let mut batches: BTreeMap<BatchId, Vec<SignedTransaction>> = BTreeMap::new();
+
     let mut initial_state = ObjectState::new();
-    initial_state
-        .create(Object::new(
+    let stored_objects = persistent_store.load_objects_checked()?;
+    if stored_objects.is_empty() && dev_genesis {
+        let alice = seed(100);
+        let bob = seed(101);
+        initial_state.create(Object::new(
             Object::derive_id(&alice.address(), 0),
             object_type::BALANCE,
             Ownership::Address(alice.address()),
             100u64.to_be_bytes().to_vec(),
             vec![],
-        ))
-        .unwrap();
-    initial_state
-        .create(Object::new(
+        ))?;
+        initial_state.create(Object::new(
             Object::derive_id(&bob.address(), 0),
             object_type::BALANCE,
             Ownership::Address(bob.address()),
             0u64.to_be_bytes().to_vec(),
             vec![],
-        ))
-        .unwrap();
+        ))?;
+        let objects: Vec<_> = initial_state.iter().map(|(_, object)| object.clone()).collect();
+        persistent_store.replace_all_objects(&objects)?;
+        persistent_store.flush()?;
+    } else {
+        for object in stored_objects {
+            initial_state.create(object).context("load persisted object state")?;
+        }
+    }
     let state = Arc::new(RwLock::new(initial_state));
-    let checkpoints = Arc::new(RwLock::new(Vec::new()));
+    let mut recovered_checkpoints = Vec::new();
+    if let Some(latest_id) = persistent_store.latest() {
+        let bytes = persistent_store
+            .get_checkpoint(&latest_id)?
+            .ok_or_else(|| anyhow::anyhow!("latest checkpoint record is missing"))?;
+        let mut decoder = veridag_codec::Decoder::new(&bytes);
+        let checkpoint = Checkpoint::decode(&mut decoder).context("decode persisted checkpoint")?;
+        decoder
+            .finish()
+            .context("persisted checkpoint has trailing bytes")?;
+        recovered_checkpoints.push(checkpoint);
+    }
+    let checkpoints = Arc::new(RwLock::new(recovered_checkpoints));
+    let store = Arc::new(tokio::sync::Mutex::new(persistent_store));
     let (rpc_tx_sub, mut rpc_rx_sub) = tokio::sync::mpsc::channel::<SignedTransaction>(1024);
 
     let executor = Executor::new(0);
 
-    let identity = veridag_net::Identity::from_keypair(&key).unwrap();
+    let identity = veridag_net::Identity::from_keypair(&key)
+        .context("create authenticated validator transport identity")?;
 
     // Resolve peers from hostnames (required for docker-compose)
     let mut peer_addrs = Vec::new();
     for p in &peers {
-        if let Ok(addrs) = tokio::net::lookup_host(&p).await {
-            if let Some(addr) = addrs.into_iter().next() {
-                peer_addrs.push(addr);
-            }
-        }
+        let mut addrs = tokio::net::lookup_host(p)
+            .await
+            .with_context(|| format!("resolve configured peer {p}"))?;
+        peer_addrs.push(
+            addrs
+                .next()
+                .ok_or_else(|| anyhow::anyhow!("configured peer {p} resolved to no addresses"))?,
+        );
     }
 
-    let bind_addr = bind.parse().unwrap();
+    let bind_addr = bind
+        .parse()
+        .with_context(|| format!("parse validator bind address {bind}"))?;
     let gossip = Arc::new(
         veridag_net::gossip::Gossip::bind(bind_addr, identity, validators.clone(), peer_addrs)
-            .unwrap(),
+            .context("bind validator QUIC transport")?,
     );
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<(u8, Vec<u8>)>(1024);
     let _recv = gossip.spawn_tagged_receiver(tx);
 
     info!(
-        seed = seed,
+        validator_id = %format!("0x{}", hex::encode(id.0)),
         bind = %bind,
+        data_dir = %data_dir.display(),
         peers = peers.len(),
         "veridag-node daemon started"
     );
 
     let metrics = Arc::new(PrometheusExporter::new());
+    let rpc_addr: SocketAddr = rpc
+        .parse()
+        .with_context(|| format!("parse RPC bind address {rpc}"))?;
+    let rpc_token = std::env::var("VERIDAG_RPC_TOKEN")
+        .ok()
+        .filter(|value| !value.trim().is_empty());
+    if !rpc_addr.ip().is_loopback() && rpc_token.is_none() && !insecure_rpc {
+        bail!(
+            "refusing unauthenticated RPC on {rpc_addr}; set VERIDAG_RPC_TOKEN or pass --insecure-rpc for a development network"
+        );
+    }
+    let allowed_origin = std::env::var("VERIDAG_RPC_ALLOWED_ORIGIN")
+        .unwrap_or_else(|_| "http://localhost".to_owned());
+    if allowed_origin == "*" && !insecure_rpc {
+        bail!("wildcard RPC CORS requires --insecure-rpc");
+    }
+    let rpc_rate_limit = std::env::var("VERIDAG_RPC_RATE_LIMIT")
+        .ok()
+        .map(|value| value.parse::<u32>())
+        .transpose()
+        .context("VERIDAG_RPC_RATE_LIMIT must be a positive integer")?
+        .unwrap_or(DEFAULT_RPC_RATE_LIMIT);
+    if rpc_rate_limit == 0 {
+        bail!("VERIDAG_RPC_RATE_LIMIT must be greater than zero");
+    }
+    let last_progress_ms = Arc::new(std::sync::atomic::AtomicU64::new(unix_time_millis()));
 
     // Spawn HTTP RPC server
     let rpc_ctx = Arc::new(RpcContext {
@@ -868,36 +1244,41 @@ async fn run_daemon(seed: u8, peers: Vec<String>, bind: String, rpc: String) -> 
         checkpoints: checkpoints.clone(),
         tx_sender: rpc_tx_sub,
         committee: committee.clone(),
-        seed,
+        validator_id: id,
         metrics: metrics.clone(),
+        rpc_token,
+        allowed_origin,
+        rate_limiter: RpcRateLimiter::new(rpc_rate_limit),
+        last_progress_ms: last_progress_ms.clone(),
+        persistent: true,
     });
 
-    let rpc_addr = rpc.clone();
-    tokio::spawn(async move {
-        if let Ok(listener) = TcpListener::bind(&rpc_addr).await {
-            info!(addr = %rpc_addr, "RPC server listening");
-            loop {
-                if let Ok((socket, _)) = listener.accept().await {
+    let rpc_listener = TcpListener::bind(rpc_addr)
+        .await
+        .with_context(|| format!("bind RPC server at {rpc_addr}"))?;
+    let rpc_task = tokio::spawn(async move {
+        info!(addr = %rpc_addr, "RPC server listening");
+        loop {
+            match rpc_listener.accept().await {
+                Ok((socket, peer)) => {
                     let ctx_clone = rpc_ctx.clone();
                     tokio::spawn(async move {
-                        let _ = serve_http_connection(socket, ctx_clone).await;
+                        if let Err(error) = serve_http_connection(socket, ctx_clone, peer.ip()).await {
+                            tracing::warn!(%error, client = %peer, "RPC connection failed");
+                        }
                     });
                 }
+                Err(error) => {
+                    tracing::warn!(%error, "RPC accept failed");
+                }
             }
-        } else {
-            error!(addr = %rpc_addr, "failed to bind RPC server");
         }
     });
 
-    if seed == 1 {
-        let stx = signed_transfer(&alice, 0, bob.address(), 40);
-        let tx_bytes = veridag_codec::Encode::to_bytes(&stx);
-        let batch_id = BatchId(veridag_crypto::hash("VERIDAG_BATCH_V1", &tx_bytes));
-        batches.insert(batch_id, vec![stx.clone()]);
-        gossip.broadcast_tagged(1, &tx_bytes).await;
-    }
-
-    let mut prev_mw = 0;
+    let mut prev_mw = {
+        let recovered = dag.read().await;
+        highest_complete_wave(&recovered)
+    };
     loop {
         // Check for graceful shutdown signal.
         tokio::select! {
