@@ -14,15 +14,17 @@ production operating history, or a regulator/operator authorization.
 | Formal model | `just formal` | Quint typecheck/tests and Agreement, Finality, and Integrity runs pass. |
 | Solidity | `just solidity` | Format, unit, 1,000-run fuzz, and stateful invariant campaigns pass. |
 | Solidity static analysis | `just slither` | Slither completes with zero unsuppressed findings. |
+| Decoder fuzzing | `just fuzz 60` and `.github/workflows/fuzz.yml` | Nightly libFuzzer/ASan campaign completes without a crash or timeout artifact. |
 | Container devnet | `docker compose up -d --build` | Four validators report healthy and agree on a state root. |
 | Restart/soak | `just docker-soak 300` | JSON evidence shows health, agreement, progress, and restart recovery. |
 | SDK/package checks | `scripts/publish-sdks.*` and release workflows | Built artifacts, package inspection, checksums, SBOM, and provenance. |
 | Industry adapters | `just industry` | Every versioned manifest and bounded adapter validates. |
 
-`just release-gate` runs every non-Docker local gate. The Docker gate is kept
-explicit because its duration and resource requirements are operator-selected.
-CI runs a bounded Docker build, agreement check, and validator restart on every
-change.
+`just release-gate` runs the bounded, non-Docker checks. The Docker soak and
+nightly fuzz campaign are explicit because their duration and resource
+requirements are operator-selected. CI runs a bounded Docker build, agreement
+check, and validator restart on every change; decoder fuzzing runs on relevant
+pull requests, on demand, and on a daily schedule.
 
 ## Independent security gate
 

@@ -12,14 +12,25 @@ software version (see `protocol/specification/17-upgrades.md`).
   Quint model, industry manifests, SDKs, and the production site build.
 - An explicit release-readiness checklist separating executable software gates
   from independent audit, multi-region operations, and regulatory approvals.
+- A seeded canonical-decoder libFuzzer corpus and a memory-bounded Docker fuzz
+  command matching the nightly CI campaign.
 
 ### Changed
 - Container builds now use a bounded build context, cached Rust compilation,
   and a single build job to remain reliable under Docker Desktop resource caps.
 - Validator recovery re-advertises its persisted frontier and performs bounded,
   overlapping DAG catch-up after restart.
+- The real-QUIC devnet test now waits for a target-round quorum instead of the
+  first target-round vertex, eliminating a timing-dependent checkpoint race.
 - Solidity bridge and checkpoint paths use reentrancy protection, checked token
   results, replay protection, and checks-effects-interactions ordering.
+- Rust workspace packages now publish in dependency order without requiring
+  unpublished internal dev-dependencies. Release bundles retain SHA-256
+  manifests, SPDX SBOMs, and tag-bound provenance attestations.
+- `just` recipes now run through native PowerShell on Windows and Bash on Unix,
+  including the containerized fuzz and complete release-gate entry points.
+- Formal verification now uses a repository-pinned Quint npm toolchain in both
+  local release gates and CI instead of an implicit global installation.
 
 ### Status
 - Repository-local gates are green. Veridag remains pre-GA; no repository

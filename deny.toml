@@ -10,6 +10,10 @@ allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "BSD-2-Clause", 
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+# Path-only internal dev-dependencies are intentionally omitted from published
+# crates, preventing circular/unpublished dev edges from blocking workspace
+# publication. Wildcards remain denied for normal and build dependencies.
+allow-wildcard-paths = true
 
 [sources]
 unknown-registry = "deny"
