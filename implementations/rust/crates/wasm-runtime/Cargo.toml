@@ -5,9 +5,9 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-veridag-protocol-types = { path = "../protocol-types" }
-veridag-capabilities = { path = "../capabilities" }
-veridag-codec = { path = "../codec" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
+veridag-capabilities = { version = "1.0.0", path = "../capabilities" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
 thiserror.workspace = true
 anyhow = { version = "1", optional = true }
 wasmtime = { version = "48", optional = true, default-features = false, features = ["cranelift", "runtime", "gc", "gc-drc"] }

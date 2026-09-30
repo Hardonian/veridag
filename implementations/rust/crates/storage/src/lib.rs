@@ -310,7 +310,10 @@ mod tests {
             import_snapshot(&mut destination, &snapshot),
             Err(StorageError::SnapshotRootMismatch)
         );
-        assert_eq!(destination.get_object(&ObjectId([1; 32])).unwrap(), Some(obj(1)));
+        assert_eq!(
+            destination.get_object(&ObjectId([1; 32])).unwrap(),
+            Some(obj(1))
+        );
         assert_eq!(destination.get_object(&ObjectId([2; 32])).unwrap(), None);
     }
 

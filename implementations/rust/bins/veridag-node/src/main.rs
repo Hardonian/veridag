@@ -27,8 +27,10 @@ use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::sync::RwLock;
-use tracing::{error, info};
-use veridag_checkpoint::{dag_commitment, validator_set_commitment, Checkpoint};
+use tracing::info;
+use veridag_checkpoint::{
+    dag_commitment, validator_set_commitment, Checkpoint, CHECKPOINT_INTERVAL_WAVES,
+};
 
 use veridag_codec::Decode;
 use veridag_consensus::{commit, highest_complete_wave, StaticCommittee, WAVE};
@@ -301,7 +303,11 @@ enum Cmd {
     /// Run as a networked validator daemon over QUIC.
     Daemon {
         /// Deterministic validator seed (1-4, development networks only).
-        #[arg(long, conflicts_with = "key_file", required_unless_present = "key_file")]
+        #[arg(
+            long,
+            conflicts_with = "key_file",
+            required_unless_present = "key_file"
+        )]
         seed: Option<u8>,
         /// File containing a 32-byte hex validator secret, or JSON with a
         /// `secret_seed` field. Required for non-development deployments.
@@ -335,6 +341,18 @@ enum Cmd {
     },
 }
 
+struct DaemonConfig {
+    dev_seed: Option<u8>,
+    key_file: Option<PathBuf>,
+    committee_pubkeys: Vec<String>,
+    peers: Vec<String>,
+    bind: String,
+    rpc: String,
+    data_dir: Option<PathBuf>,
+    dev_genesis: bool,
+    insecure_rpc: bool,
+}
+
 fn seed(n: u8) -> Keypair {
     Keypair::from_seed(&[n; 32])
 }
@@ -351,7 +369,10 @@ fn load_validator_key(path: &Path) -> Result<Keypair> {
     let metadata = std::fs::metadata(path)
         .with_context(|| format!("read validator key metadata at {}", path.display()))?;
     if !metadata.is_file() {
-        bail!("validator key path is not a regular file: {}", path.display());
+        bail!(
+            "validator key path is not a regular file: {}",
+            path.display()
+        );
     }
 
     #[cfg(unix)]
@@ -384,12 +405,12 @@ fn load_validator_key(path: &Path) -> Result<Keypair> {
     )?))
 }
 
-fn parse_committee_pubkeys(values: &[String]) -> Result<BTreeSet<ValidatorId>> {
-    let validators: BTreeSet<_> = values
+fn parse_committee_pubkeys(values: &[String]) -> Result<BTreeMap<ValidatorId, Ed25519PublicKey>> {
+    let validators: BTreeMap<_, _> = values
         .iter()
         .map(|value| {
             parse_fixed_hex::<32>(value, "committee public key")
-                .map(|public_key| ValidatorId(address_of(&public_key)))
+                .map(|public_key| (ValidatorId(address_of(&public_key)), public_key))
         })
         .collect::<Result<_>>()?;
     if validators.len() < 4 {
@@ -651,7 +672,10 @@ impl RpcRateLimiter {
 
     fn allow(&self, client: IpAddr) -> bool {
         let now = Instant::now();
-        let mut clients = self.clients.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut clients = self
+            .clients
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         if clients.len() > 10_000 {
             clients.retain(|_, window| now.duration_since(window.started) < Duration::from_secs(2));
         }
@@ -963,24 +987,21 @@ async fn serve_http_connection(
             }
         }
         if lowercase.starts_with("authorization:") {
-            authorization = line.split_once(':').map(|(_, value)| value.trim().to_owned());
+            authorization = line
+                .split_once(':')
+                .map(|(_, value)| value.trim().to_owned());
         }
     }
 
     if method == "OPTIONS" {
-        return respond(
-            &mut stream,
-            204,
-            "text/plain",
-            "",
-            &ctx.allowed_origin,
-        )
-        .await;
+        return respond(&mut stream, 204, "text/plain", "", &ctx.allowed_origin).await;
     }
 
     if method == "POST" {
         if let Some(expected) = &ctx.rpc_token {
-            let supplied = authorization.as_deref().and_then(|value| value.strip_prefix("Bearer "));
+            let supplied = authorization
+                .as_deref()
+                .and_then(|value| value.strip_prefix("Bearer "));
             if supplied != Some(expected.as_str()) {
                 return respond(
                     &mut stream,
@@ -1052,33 +1073,38 @@ async fn serve_http_connection(
     .await
 }
 
-async fn run_daemon(
-    dev_seed: Option<u8>,
-    key_file: Option<PathBuf>,
-    committee_pubkeys: Vec<String>,
-    peers: Vec<String>,
-    bind: String,
-    rpc: String,
-    data_dir: Option<PathBuf>,
-    dev_genesis: bool,
-    insecure_rpc: bool,
-) -> Result<()> {
+async fn run_daemon(config: DaemonConfig) -> Result<()> {
+    let DaemonConfig {
+        dev_seed,
+        key_file,
+        committee_pubkeys,
+        peers,
+        bind,
+        rpc,
+        data_dir,
+        dev_genesis,
+        insecure_rpc,
+    } = config;
     let key = match (dev_seed, key_file.as_deref()) {
         (Some(value), None) if (1..=4).contains(&value) => seed(value),
         (Some(_), None) => bail!("development seed must be between 1 and 4"),
         (None, Some(path)) => load_validator_key(path)?,
         _ => bail!("provide exactly one of --seed or --key-file"),
     };
-    let validators: BTreeSet<ValidatorId> = if committee_pubkeys.is_empty() {
+    let committee_keys: BTreeMap<ValidatorId, Ed25519PublicKey> = if committee_pubkeys.is_empty() {
         if dev_seed.is_none() {
             bail!("--committee-pubkeys is required with --key-file");
         }
         (1..=4u8)
-            .map(|value| ValidatorId(seed(value).address()))
+            .map(|value| {
+                let key = seed(value);
+                (ValidatorId(key.address()), key.public())
+            })
             .collect()
     } else {
         parse_committee_pubkeys(&committee_pubkeys)?
     };
+    let validators: BTreeSet<ValidatorId> = committee_keys.keys().copied().collect();
     let id = ValidatorId(key.address());
     if !validators.contains(&id) {
         bail!("validator key is not a member of the configured committee");
@@ -1103,7 +1129,9 @@ async fn run_daemon(
             .ok_or_else(|| anyhow::anyhow!("persisted vertex {vertex_id:?} disappeared"))?;
         let mut decoder = veridag_codec::Decoder::new(&bytes);
         let vertex = Vertex::decode(&mut decoder).context("decode persisted vertex")?;
-        decoder.finish().context("persisted vertex has trailing bytes")?;
+        decoder
+            .finish()
+            .context("persisted vertex has trailing bytes")?;
         recovered_vertices.push(vertex);
     }
     recovered_vertices.sort_by_key(|vertex| (vertex.round, vertex.author));
@@ -1147,12 +1175,17 @@ async fn run_daemon(
             0u64.to_be_bytes().to_vec(),
             vec![],
         ))?;
-        let objects: Vec<_> = initial_state.iter().map(|(_, object)| object.clone()).collect();
+        let objects: Vec<_> = initial_state
+            .iter()
+            .map(|(_, object)| object.clone())
+            .collect();
         persistent_store.replace_all_objects(&objects)?;
         persistent_store.flush()?;
     } else {
         for object in stored_objects {
-            initial_state.create(object).context("load persisted object state")?;
+            initial_state
+                .create(object)
+                .context("load persisted object state")?;
         }
     }
     let state = Arc::new(RwLock::new(initial_state));
@@ -1263,7 +1296,9 @@ async fn run_daemon(
                 Ok((socket, peer)) => {
                     let ctx_clone = rpc_ctx.clone();
                     tokio::spawn(async move {
-                        if let Err(error) = serve_http_connection(socket, ctx_clone, peer.ip()).await {
+                        if let Err(error) =
+                            serve_http_connection(socket, ctx_clone, peer.ip()).await
+                        {
                             tracing::warn!(%error, client = %peer, "RPC connection failed");
                         }
                     });
@@ -1279,6 +1314,18 @@ async fn run_daemon(
         let recovered = dag.read().await;
         highest_complete_wave(&recovered)
     };
+    let mut executed_vertices = BTreeSet::new();
+    let mut executed_anchors = BTreeSet::new();
+    if prev_mw > 0 {
+        let recovered = dag.read().await;
+        for committed in commit(&recovered, &committee, prev_mw).committed {
+            executed_anchors.insert(committed.anchor);
+            executed_vertices.extend(committed.ordered);
+        }
+    }
+    let mut pending_checkpoints: BTreeMap<CheckpointId, Checkpoint> = BTreeMap::new();
+    let mut checkpoint_txids = Vec::new();
+    let mut checkpoint_anchor_ids = Vec::new();
     loop {
         // Check for graceful shutdown signal.
         tokio::select! {
@@ -1303,8 +1350,10 @@ async fn run_daemon(
                     let mut d = veridag_codec::Decoder::new(&payload);
                     if let Ok(v) = Vertex::decode(&mut d) {
                         if d.finish().is_ok() {
+                            let vertex_id = v.id();
+                            let vertex_bytes = veridag_codec::Encode::to_bytes(&v);
                             let mut d_write = dag.write().await;
-                            let _ = d_write.add(
+                            let accepted = d_write.add(
                                 v,
                                 CURRENT_PROTOCOL_VERSION,
                                 CHAIN,
@@ -1313,6 +1362,12 @@ async fn run_daemon(
                                 committee.quorum(),
                                 &[],
                             );
+                            drop(d_write);
+                            if accepted.is_ok() {
+                                let mut persistent = store.lock().await;
+                                persistent.put_vertex(vertex_id, &vertex_bytes)?;
+                                persistent.flush()?;
+                            }
                         }
                     }
                 }
@@ -1325,6 +1380,42 @@ async fn run_daemon(
                                 &veridag_codec::Encode::to_bytes(&mstx),
                             ));
                             batches.entry(mb).or_insert_with(|| vec![mstx]);
+                        }
+                    }
+                }
+                2 => {
+                    let mut decoder = veridag_codec::Decoder::new(&payload);
+                    if let Ok(incoming) = Checkpoint::decode(&mut decoder) {
+                        let structurally_valid = decoder.finish().is_ok()
+                            && incoming.protocol_version == CURRENT_PROTOCOL_VERSION
+                            && incoming.chain_id == CHAIN
+                            && incoming.epoch == 0
+                            && incoming.validator_set_commitment
+                                == validator_set_commitment(
+                                    &validators.iter().copied().collect::<Vec<_>>(),
+                                )
+                            && incoming
+                                .verify_votes(|validator| committee_keys.get(validator).copied())
+                                .is_ok();
+                        if structurally_valid {
+                            let checkpoint_id = incoming.id();
+                            let pending =
+                                pending_checkpoints.entry(checkpoint_id).or_insert_with(|| {
+                                    let mut body = incoming.clone();
+                                    body.finality_proof.votes.clear();
+                                    body
+                                });
+                            let mut voters: BTreeSet<_> = pending
+                                .finality_proof
+                                .votes
+                                .iter()
+                                .map(|(validator, _)| *validator)
+                                .collect();
+                            for vote in incoming.finality_proof.votes {
+                                if voters.insert(vote.0) {
+                                    pending.add_vote(vote);
+                                }
+                            }
                         }
                     }
                 }
@@ -1356,13 +1447,7 @@ async fn run_daemon(
                 break;
             }
 
-            let vbatches = if r == 2 && seed == 1 {
-                let stx = signed_transfer(&alice, 0, bob.address(), 40);
-                let tx_bytes = veridag_codec::Encode::to_bytes(&stx);
-                vec![BatchId(veridag_crypto::hash("VERIDAG_BATCH_V1", &tx_bytes))]
-            } else {
-                batches.keys().copied().take(8).collect()
-            };
+            let vbatches = batches.keys().copied().take(8).collect();
 
             if let Ok(v) = Vertex::new_signed(
                 CURRENT_PROTOCOL_VERSION,
@@ -1388,7 +1473,15 @@ async fn run_daemon(
                     )
                     .is_ok()
                 {
+                    let vertex_id = v.id();
+                    let vertex_bytes = veridag_codec::Encode::to_bytes(&v);
                     proposed.insert(r);
+                    drop(d_write);
+                    {
+                        let mut persistent = store.lock().await;
+                        persistent.put_vertex(vertex_id, &vertex_bytes)?;
+                        persistent.flush()?;
+                    }
                     gossip.broadcast(&v).await;
                     metrics.observe(Observation::Counter(Label("vertices_proposed"), 1));
                 }
@@ -1401,13 +1494,20 @@ async fn run_daemon(
         };
 
         if mw > prev_mw {
-            let d_read = dag.read().await;
-            let seq = commit(&d_read, &committee, mw);
-            if !seq.committed.is_empty() {
+            let (txs, anchor_ids) = {
+                let d_read = dag.read().await;
+                let seq = commit(&d_read, &committee, mw);
                 let mut txs = Vec::new();
+                let mut anchor_ids = Vec::new();
                 for a in &seq.committed {
+                    if executed_anchors.insert(a.anchor) {
+                        anchor_ids.push(a.anchor);
+                    }
                     for vid in &a.ordered {
-                        if let Some(v) = d_read.get(vid) {
+                        if executed_vertices.insert(*vid) {
+                            let Some(v) = d_read.get(vid) else {
+                                continue;
+                            };
                             for b in &v.batch_commitments {
                                 if let Some(bt) = batches.get(b) {
                                     txs.extend(bt.iter().cloned());
@@ -1416,41 +1516,139 @@ async fn run_daemon(
                         }
                     }
                 }
-                if !txs.is_empty() {
-                    let mut s_write = state.write().await;
-                    let result = execute_parallel(&executor, &mut s_write, &txs);
-                    info!(
-                        wave = mw,
-                        state_root = %format!("0x{}", hex::encode(result.state_root)),
-                        txs = txs.len(),
-                        "wave committed"
-                    );
-                    metrics.observe(Observation::Counter(Label("waves_committed"), 1));
-                    metrics.observe(Observation::Counter(Label("txs_executed"), txs.len() as u64));
-                    let mut ckpts = checkpoints.write().await;
-                    let last_ckpt_id = ckpts.last().map(|c| c.id()).unwrap_or(CheckpointId::ZERO);
-                    let validators_list: Vec<ValidatorId> = validators.iter().copied().collect();
-                    let txids: Vec<_> = txs.iter().map(|t| t.id()).collect();
-                    let anchor_ids: Vec<VertexId> =
-                        seq.committed.iter().map(|c| c.anchor).collect();
-                    let mut ckpt = Checkpoint::new(
-                        CURRENT_PROTOCOL_VERSION,
-                        CHAIN,
-                        0,
-                        ckpts.len() as u64 + 1,
-                        last_ckpt_id,
-                        result.state_root,
-                        veridag_execution::transaction_root(&txids),
-                        dag_commitment(&anchor_ids),
-                        validator_set_commitment(&validators_list),
-                    );
-                    let vote = ckpt.sign_vote(&key);
-                    ckpt.add_vote(vote);
-                    ckpts.push(ckpt);
-                    metrics.observe(Observation::Counter(Label("checkpoints_produced"), 1));
-                }
+                (txs, anchor_ids)
+            };
+
+            let state_root = if txs.is_empty() {
+                state.read().await.state_root()
+            } else {
+                let mut s_write = state.write().await;
+                let result = execute_parallel(&executor, &mut s_write, &txs);
+                result.state_root
+            };
+            let objects: Vec<_> = state
+                .read()
+                .await
+                .iter()
+                .map(|(_, object)| object.clone())
+                .collect();
+            {
+                let mut persistent = store.lock().await;
+                persistent.replace_all_objects(&objects)?;
+                persistent.flush()?;
+            }
+            last_progress_ms.store(unix_time_millis(), std::sync::atomic::Ordering::Relaxed);
+            info!(
+                wave = mw,
+                state_root = %format!("0x{}", hex::encode(state_root)),
+                txs = txs.len(),
+                "wave committed"
+            );
+            metrics.observe(Observation::Counter(Label("waves_committed"), 1));
+            metrics.observe(Observation::Counter(
+                Label("txs_executed"),
+                txs.len() as u64,
+            ));
+            checkpoint_txids.extend(txs.iter().map(SignedTransaction::id));
+            checkpoint_anchor_ids.extend(anchor_ids);
+
+            if mw % CHECKPOINT_INTERVAL_WAVES == 0 {
+                let (sequence, previous_checkpoint) = {
+                    let finalized = checkpoints.read().await;
+                    (
+                        finalized.len() as u64 + 1,
+                        finalized
+                            .last()
+                            .map(Checkpoint::id)
+                            .unwrap_or(CheckpointId::ZERO),
+                    )
+                };
+                let validators_list: Vec<ValidatorId> = validators.iter().copied().collect();
+                let mut checkpoint = Checkpoint::new(
+                    CURRENT_PROTOCOL_VERSION,
+                    CHAIN,
+                    0,
+                    sequence,
+                    previous_checkpoint,
+                    state_root,
+                    veridag_execution::transaction_root(&checkpoint_txids),
+                    dag_commitment(&checkpoint_anchor_ids),
+                    validator_set_commitment(&validators_list),
+                );
+                checkpoint.add_vote(checkpoint.sign_vote(&key));
+                let checkpoint_id = checkpoint.id();
+                pending_checkpoints.insert(checkpoint_id, checkpoint.clone());
+                gossip
+                    .broadcast_tagged(2, &veridag_codec::Encode::to_bytes(&checkpoint))
+                    .await;
             }
             prev_mw = mw;
+        }
+
+        // Sign matching checkpoint candidates and publish only checkpoints
+        // that carry a cryptographically verified committee quorum.
+        let current_root = state.read().await.state_root();
+        let (next_sequence, previous_checkpoint) = {
+            let finalized = checkpoints.read().await;
+            (
+                finalized.len() as u64 + 1,
+                finalized
+                    .last()
+                    .map(Checkpoint::id)
+                    .unwrap_or(CheckpointId::ZERO),
+            )
+        };
+        let mut rebroadcast = Vec::new();
+        for checkpoint in pending_checkpoints.values_mut() {
+            let matches_local = checkpoint.sequence == next_sequence
+                && checkpoint.previous_checkpoint == previous_checkpoint
+                && checkpoint.state_root == current_root;
+            let already_voted = checkpoint
+                .finality_proof
+                .votes
+                .iter()
+                .any(|(validator, _)| *validator == id);
+            if matches_local && !already_voted {
+                checkpoint.add_vote(checkpoint.sign_vote(&key));
+                rebroadcast.push(veridag_codec::Encode::to_bytes(checkpoint));
+            }
+        }
+        for bytes in rebroadcast {
+            gossip.broadcast_tagged(2, &bytes).await;
+        }
+
+        let finalized_id = pending_checkpoints
+            .iter()
+            .find_map(|(checkpoint_id, checkpoint)| {
+                let valid = checkpoint.sequence == next_sequence
+                    && checkpoint.previous_checkpoint == previous_checkpoint
+                    && checkpoint.state_root == current_root
+                    && checkpoint
+                        .verify_votes(|validator| committee_keys.get(validator).copied())
+                        .is_ok()
+                    && checkpoint
+                        .verify_finality(
+                            |validator| validators.contains(validator),
+                            committee.quorum(),
+                        )
+                        .is_ok();
+                valid.then_some(*checkpoint_id)
+            });
+        if let Some(checkpoint_id) = finalized_id {
+            if let Some(checkpoint) = pending_checkpoints.remove(&checkpoint_id) {
+                let checkpoint_bytes = veridag_codec::Encode::to_bytes(&checkpoint);
+                {
+                    let mut persistent = store.lock().await;
+                    persistent.put_checkpoint(checkpoint_id, &checkpoint_bytes)?;
+                    persistent.set_latest(checkpoint_id);
+                    persistent.flush()?;
+                }
+                checkpoints.write().await.push(checkpoint);
+                checkpoint_txids.clear();
+                checkpoint_anchor_ids.clear();
+                pending_checkpoints.retain(|_, candidate| candidate.sequence > next_sequence);
+                metrics.observe(Observation::Counter(Label("checkpoints_produced"), 1));
+            }
         }
 
         // Update gauges
@@ -1458,6 +1656,11 @@ async fn run_daemon(
         metrics.observe(Observation::Gauge(Label("max_round"), frontier as i64));
     }
 
+    rpc_task.abort();
+    {
+        let persistent = store.lock().await;
+        persistent.flush()?;
+    }
     info!("shutdown complete");
     Ok(())
 }
@@ -1465,8 +1668,7 @@ async fn run_daemon(
 fn init_tracing() {
     use tracing_subscriber::{fmt, EnvFilter};
 
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
     let use_json = std::env::var("VERIDAG_LOG_JSON").is_ok();
 
@@ -1478,10 +1680,7 @@ fn init_tracing() {
             .with_thread_ids(true)
             .init();
     } else {
-        fmt()
-            .with_env_filter(filter)
-            .with_target(true)
-            .init();
+        fmt().with_env_filter(filter).with_target(true).init();
     }
 }
 
@@ -1519,10 +1718,28 @@ async fn main() -> Result<()> {
         Cmd::Health { json } => run_health(json),
         Cmd::Daemon {
             seed,
+            key_file,
+            committee_pubkeys,
             peers,
             bind,
             rpc,
-        } => run_daemon(seed, peers, bind, rpc).await,
+            data_dir,
+            dev_genesis,
+            insecure_rpc,
+        } => {
+            run_daemon(DaemonConfig {
+                dev_seed: seed,
+                key_file,
+                committee_pubkeys,
+                peers,
+                bind,
+                rpc,
+                data_dir,
+                dev_genesis,
+                insecure_rpc,
+            })
+            .await
+        }
     }
 }
 
@@ -1547,6 +1764,7 @@ mod tests {
         let val_keys: Vec<Keypair> = (1..=4u8).map(|s| Keypair::from_seed(&[s; 32])).collect();
         let validators: Vec<ValidatorId> =
             val_keys.iter().map(|k| ValidatorId(k.address())).collect();
+        let validator_id = validators[0];
         let committee = StaticCommittee::new(validators, 1);
 
         let (tx_sub, mut rx_sub) = tokio::sync::mpsc::channel(10);
@@ -1556,8 +1774,13 @@ mod tests {
             checkpoints: Arc::new(RwLock::new(Vec::new())),
             tx_sender: tx_sub,
             committee,
-            seed: 1,
+            validator_id,
             metrics: Arc::new(PrometheusExporter::new()),
+            rpc_token: None,
+            allowed_origin: "http://localhost".to_owned(),
+            rate_limiter: RpcRateLimiter::new(100),
+            last_progress_ms: Arc::new(std::sync::atomic::AtomicU64::new(unix_time_millis())),
+            persistent: true,
         });
 
         // 1. Health endpoint
@@ -1596,7 +1819,7 @@ mod tests {
 
         let (code, submit_json) =
             handle_http_request(&rpc_ctx, "POST", "/v1/tx/submit", &submit_body).await;
-        assert_eq!(code, 200);
+        assert_eq!(code, 202);
         assert_eq!(submit_json["status"], "admitted");
         assert!(rx_sub.recv().await.is_some());
 
@@ -1606,8 +1829,8 @@ mod tests {
         let ctx_srv = rpc_ctx.clone();
 
         tokio::spawn(async move {
-            if let Ok((socket, _)) = listener.accept().await {
-                let _ = serve_http_connection(socket, ctx_srv).await;
+            if let Ok((socket, peer)) = listener.accept().await {
+                let _ = serve_http_connection(socket, ctx_srv, peer.ip()).await;
             }
         });
 

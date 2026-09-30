@@ -9,7 +9,7 @@ the same crates (Phase 5 / Phase 9) but this alpha ships the consensus-critical
 path in-process so the whole pipeline is exercisable end-to-end.
 
 ## Prerequisites
-- Rust 1.85+ (workspace `rust-version`).
+- Rust 1.95+ (workspace `rust-version`).
 - No external services required for the alpha: everything is local/in-process.
 - Heavy optional backends (libp2p, risc0, wasmtime) are feature-gated and NOT
   compiled in the default build. Do NOT enable them unless you have network

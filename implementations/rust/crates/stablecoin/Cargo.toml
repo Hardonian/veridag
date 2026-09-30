@@ -7,12 +7,12 @@ authors.workspace = true
 description = "Veridag institutional US Stablecoin (USDV) ledger, Proof of Reserves, and compliance engine"
 
 [dependencies]
-veridag-capabilities = { path = "../capabilities" }
-veridag-codec = { path = "../codec" }
-veridag-crypto = { path = "../crypto" }
-veridag-merkle = { path = "../merkle" }
-veridag-object-state = { path = "../object-state" }
-veridag-protocol-types = { path = "../protocol-types" }
+veridag-capabilities = { version = "1.0.0", path = "../capabilities" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-merkle = { version = "1.0.0", path = "../merkle" }
+veridag-object-state = { version = "1.0.0", path = "../object-state" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
 thiserror.workspace = true
 
 [dev-dependencies]

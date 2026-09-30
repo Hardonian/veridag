@@ -15,6 +15,9 @@ All are optional — defaults are production-safe for a local devnet.
 | `RUST_LOG` | `info` | Log level / filter. E.g. `RUST_LOG=veridag=debug,info` |
 | `VERIDAG_LOG_JSON` | *(unset)* | Set to `1` to emit logs as newline-delimited JSON (for log shippers) |
 | `VERIDAG_DATA_DIR` | `./data` | Path to the persistent sled storage directory |
+| `VERIDAG_RPC_TOKEN` | *(unset)* | Bearer token required for transaction submission. Required when RPC binds to a non-loopback address unless `--insecure-rpc` is explicitly used. |
+| `VERIDAG_RPC_ALLOWED_ORIGIN` | `http://localhost` | Exact browser origin returned by CORS. `*` is accepted only with `--insecure-rpc`. |
+| `VERIDAG_RPC_RATE_LIMIT` | `100` | Maximum HTTP requests per client IP per second. |
 
 ### Example: systemd unit
 
@@ -29,8 +32,11 @@ User=veridag
 WorkingDirectory=/opt/veridag
 Environment=RUST_LOG=info
 Environment=VERIDAG_LOG_JSON=1
+EnvironmentFile=/home/veridag/.local/etc/veridag.env
 ExecStart=/opt/veridag/veridag-node daemon \
-    --seed 1 \
+    --key-file /home/veridag/.local/etc/validator-key.json \
+    --committee-pubkeys PUBKEY_1,PUBKEY_2,PUBKEY_3,PUBKEY_4 \
+    --data-dir /var/lib/veridag \
     --peers 10.0.0.2:8000,10.0.0.3:8000,10.0.0.4:8000 \
     --bind 0.0.0.0:8000 \
     --rpc 0.0.0.0:8080
@@ -53,7 +59,7 @@ WantedBy=multi-user.target
 | `/v1/state/root` | GET | Current state root and highest wave |
 | `/v1/checkpoints/latest` | GET | Latest checkpoint details |
 | `/v1/state/account/{addr}` | GET | Account balance and object for address |
-| `/v1/submit` | POST | Submit a signed transaction |
+| `/v1/tx/submit` | POST | Submit a signed transaction; returns `202 Accepted` after bounded-queue admission |
 
 ### Health check example
 
@@ -119,19 +125,30 @@ docker compose down
 
 ## Key Management
 
-The `--seed` argument in the daemon command derives a deterministic keypair
-from a fixed byte pattern (`[seed; 32]`). This is appropriate for
-devnet/testnet validators only.
+The `--seed` argument derives a deterministic keypair from a fixed byte pattern
+and is restricted to development validators 1–4. Production nodes use
+`--key-file`; the file is either a raw 32-byte hexadecimal seed or JSON:
+
+```json
+{ "secret_seed": "64 hexadecimal characters" }
+```
+
+On Unix the node rejects key files accessible by group or other users. The
+key's public identity must be present in `--committee-pubkeys`.
 
 For production deployments, validator keys should be:
 
-* Generated externally and injected via an environment variable or file
-* Stored in an HSM or secret manager (e.g. HashiCorp Vault, AWS Secrets Manager)
+* Generated externally and injected through a mode-0600 file
+* Staged by a secret manager into that file without committing it to the repository
 * Rotated through the protocol's validator-set membership mechanism (spec 16)
 
 > [!CAUTION]
 > Never use seed-derived keys (e.g. `--seed 1`) for mainnet validators.
 > Anyone who knows the seed value can forge your validator's signatures.
+
+The `KeySigner` HSM/KMS boundary currently fails closed and is not yet a cloud
+provider implementation. Do not claim HSM-backed signing until a provider
+driver and its integration tests are enabled.
 
 ---
 

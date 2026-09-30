@@ -8,22 +8,41 @@ import urllib.request
 import urllib.error
 from typing import Any, Dict, Optional, Union
 from .codec import encode_signed_transaction
+from .crypto import hash_domain
 from .types import SignedTransaction
 
 
 class VeridagClient:
     """Client for querying Veridag RPC nodes and submitting signed transactions."""
 
-    def __init__(self, rpc_url: str = "http://127.0.0.1:8080"):
+    def __init__(
+        self,
+        rpc_url: str = "http://127.0.0.1:8080",
+        *,
+        token: Optional[str] = None,
+        timeout: float = 10.0,
+    ):
         self.rpc_url = rpc_url.rstrip("/")
+        self.token = token
+        self.timeout = timeout
 
-    def _request(self, method: str, path: str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _request(
+        self,
+        method: str,
+        path: str,
+        body: Optional[Dict[str, Any]] = None,
+        extra_headers: Optional[Dict[str, str]] = None,
+    ) -> Dict[str, Any]:
         url = f"{self.rpc_url}{path}"
         data = json.dumps(body).encode("utf-8") if body is not None else None
         headers = {"Content-Type": "application/json"} if body is not None else {}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        if extra_headers:
+            headers.update(extra_headers)
         req = urllib.request.Request(url, data=data, headers=headers, method=method)
         try:
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
                 resp_bytes = resp.read()
                 return json.loads(resp_bytes.decode("utf-8"))
         except urllib.error.HTTPError as e:
@@ -65,4 +84,9 @@ class VeridagClient:
         }
         if sender_public_key is not None:
             body["public_key"] = sender_public_key.hex()
-        return self._request("POST", "/v1/tx/submit", body)
+        return self._request(
+            "POST",
+            "/v1/tx/submit",
+            body,
+            {"Idempotency-Key": hash_domain("VERIDAG_TX_V1", tx_bytes).hex()},
+        )

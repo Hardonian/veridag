@@ -13,7 +13,7 @@ This guide takes you from zero to a running 4-validator consensus demo, launchin
 ### Linux & macOS
 
 ```bash
-# 1. Install Rust via official installer (requires Rust >= 1.85, edition 2021)
+# 1. Install Rust via official installer (requires Rust >= 1.95, edition 2021)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 source "$HOME/.cargo/env"
 rustup default stable
@@ -80,11 +80,11 @@ bob balance: 40 (expected 40)
 
 ## 4. Launching the HTTP / JSON-RPC Node Daemon
 
-Start the production validator node daemon with the built-in HTTP RPC server listening on port `8080`:
+Start a local development validator with the built-in HTTP RPC server listening on port `8080`:
 
 ```bash
-# Launch validator node daemon with HTTP RPC enabled
-cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080
+# Launch a local validator with persistent state
+cargo run -p veridag-node -- daemon --seed 1 --dev-genesis --rpc 127.0.0.1:8080 --data-dir ./data/node-1
 
 # In another terminal, query node health & state root
 curl http://127.0.0.1:8080/v1/health
@@ -191,7 +191,7 @@ cargo test -p veridag-stablecoin iso20022
 | `cargo clippy --workspace --all-targets --all-features -- -D warnings` | `just check` | Enforce zero-warning lint gate and `forbid(unsafe_code)` |
 | `cargo test --workspace --all-features` | `just check` | Execute full test suite across all crates |
 | `cargo deny check && cargo audit` | `just audit` | Security advisory, license, and banned-deps scan |
-| `cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080` | `just daemon` | Launch local dev node with HTTP RPC |
+| `cargo run -p veridag-node -- daemon --seed 1 --dev-genesis --rpc 127.0.0.1:8080 --data-dir ./data/node-1` | `just daemon` | Launch a persistent local development node |
 | `cargo bench -p veridag-qa` | `just bench` | Run hot-path criterion benchmarks |
 | `pwsh -File scripts/publish-sdks.ps1` | `bash scripts/publish-sdks.sh` | Conformance runner testing Rust, TS, and Python SDKs |
 | `cargo build --release` | `cargo build --release` | Produce stripped, `panic=abort` optimized release binary |

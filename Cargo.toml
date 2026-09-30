@@ -8,7 +8,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.95"
 license = "Apache-2.0 OR MIT"
 version = "1.0.0"
 authors = ["Veridag Protocol Contributors"]

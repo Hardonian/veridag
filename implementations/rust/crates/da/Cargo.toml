@@ -7,10 +7,10 @@ authors.workspace = true
 description.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../codec" }
-veridag-crypto = { path = "../crypto" }
-veridag-protocol-types = { path = "../protocol-types" }
-veridag-metrics = { path = "../metrics", optional = true }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
+veridag-metrics = { version = "1.0.0", path = "../metrics", optional = true }
 thiserror = { workspace = true }
 
 [features]

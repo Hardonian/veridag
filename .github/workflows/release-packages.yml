@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
       - name: verify conformance
         run: |
           cargo test -p veridag-sdk
@@ -21,13 +21,10 @@ jobs:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || '' }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
-            cargo publish -p veridag-protocol-types --no-verify || true
-            cargo publish -p veridag-codec --no-verify || true
-            cargo publish -p veridag-crypto --no-verify || true
-            cargo publish -p veridag-sdk
+            cargo publish --workspace --locked
           else
             echo "CARGO_REGISTRY_TOKEN not configured; dry-run mode"
-            cargo publish -p veridag-sdk --dry-run
+            cargo publish --workspace --locked --dry-run
           fi
 
   npm:
@@ -42,8 +39,11 @@ jobs:
       - name: run conformance test
         working-directory: sdks/typescript
         run: |
-          npm ci || npm install
+          npm ci
           npm test
+          npm run build
+          npm run verify-package
+          npm pack --dry-run
       - name: publish to npm
         working-directory: sdks/typescript
         env:

@@ -7,9 +7,9 @@ authors.workspace = true
 description.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../codec" }
-veridag-crypto = { path = "../crypto" }
-veridag-protocol-types = { path = "../protocol-types" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
 thiserror.workspace = true
 
 [lints]

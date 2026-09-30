@@ -3,8 +3,11 @@
 Cargo.lock.bak
 *.pyc
 __pycache__/
+*.egg-info/
 node_modules/
 dist/
+contracts/out/
+contracts/cache/
 .DS_Store
 *.log
 .coverage

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "events.cloudevents",
+  "name": "CloudEvents Interoperability",
+  "standard": "CloudEvents 1.0",
+  "normative_url": "https://github.com/cloudevents/spec/blob/v1.0.2/cloudevents/spec.md",
+  "profile": "CloudEvents",
+  "media_types": ["application/cloudevents+json", "application/json"],
+  "rust_adapter": "veridag_industry::IndustryProfile::CloudEvents",
+  "data_policy": "anchor-digest-only",
+  "status": "experimental"
+}

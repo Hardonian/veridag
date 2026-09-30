@@ -3,9 +3,11 @@ pragma solidity 0.8.28;
 
 /**
  * @title VeridagLightClient
- * @notice Trustless Ethereum L1 Light Client for the Veridag DAG-BFT consensus substrate.
- * @dev Ingests and validates Veridag Quorum Checkpoints and verifies BMH-1 Merkle inclusion proofs
- *      directly on Ethereum L1 without centralized bridge intermediaries.
+ * @notice Threshold-relayed Ethereum checkpoint registry for Veridag.
+ * @dev Ethereum does not natively verify the Ed25519 quorum proof used by
+ *      Veridag. This contract therefore requires an independently governed
+ *      threshold of relayers. It must not be described as trustless until a
+ *      cryptographic quorum-proof verifier replaces this relay boundary.
  */
 contract VeridagLightClient {
     // Domain separators matching Level 1 protocol specifications
@@ -14,11 +16,14 @@ contract VeridagLightClient {
     bytes32 public constant BMH_NODE_DOMAIN = keccak256("VERIDAG_BMH_NODE_V1");
 
     address public owner;
+    address public pendingOwner;
     uint64 public latestSequence;
     bytes32 public latestCheckpointId;
     bytes32 public latestStateRoot;
     uint64 public latestEpoch;
     bytes32 public validatorSetCommitment;
+    uint256 public relayerThreshold = 1;
+    uint256 public relayerCount;
 
     // Checkpoint records: checkpointId => isFinalized
     mapping(bytes32 => bool) public isFinalized;
@@ -29,6 +34,8 @@ contract VeridagLightClient {
 
     // Authorized committee relayer addresses (multi-sig or threshold proof verifier)
     mapping(address => bool) public isAuthorizedRelayer;
+    mapping(bytes32 => uint256) public checkpointApprovals;
+    mapping(bytes32 => mapping(address => bool)) public hasApprovedCheckpoint;
 
     event CheckpointCommitted(
         uint64 indexed sequence,
@@ -38,6 +45,10 @@ contract VeridagLightClient {
     );
     event ValidatorSetUpdated(bytes32 newCommitment);
     event RelayerUpdated(address indexed relayer, bool status);
+    event RelayerThresholdUpdated(uint256 threshold);
+    event CheckpointApproved(bytes32 indexed proposalId, address indexed relayer, uint256 approvals);
+    event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "VeridagLightClient: not owner");
@@ -59,11 +70,12 @@ contract VeridagLightClient {
         validatorSetCommitment = initialValidatorCommitment;
         latestStateRoot = genesisStateRoot;
         isAuthorizedRelayer[initialOwner] = true;
+        relayerCount = 1;
     }
 
     /**
-     * @notice Commit a new finalized Veridag checkpoint to Ethereum L1.
-     * @param sequence Monotonic checkpoint sequence number (must be > latestSequence).
+     * @notice Approve a checkpoint proposal and finalize it at the configured threshold.
+     * @param sequence Monotonic checkpoint sequence number (must be latestSequence + 1).
      * @param epoch Epoch of the checkpoint.
      * @param checkpointId Canonical hash of the checkpoint body.
      * @param stateRoot BMH-1 Merkle state root after executing the checkpoint wave.
@@ -76,10 +88,27 @@ contract VeridagLightClient {
         bytes32 stateRoot,
         bytes32 previousCheckpointId
     ) external onlyRelayer {
-        require(sequence > latestSequence, "VeridagLightClient: sequence must increase");
-        if (latestSequence > 0) {
-            require(previousCheckpointId == latestCheckpointId, "VeridagLightClient: broken checkpoint chain");
-        }
+        require(sequence == latestSequence + 1, "VeridagLightClient: non-contiguous sequence");
+        require(previousCheckpointId == latestCheckpointId, "VeridagLightClient: broken checkpoint chain");
+        require(checkpointId != bytes32(0), "VeridagLightClient: zero checkpoint id");
+        require(stateRoot != bytes32(0), "VeridagLightClient: zero state root");
+
+        bytes32 proposalId = keccak256(
+            abi.encode(
+                sequence,
+                epoch,
+                checkpointId,
+                stateRoot,
+                previousCheckpointId,
+                validatorSetCommitment
+            )
+        );
+        require(!hasApprovedCheckpoint[proposalId][msg.sender], "VeridagLightClient: duplicate approval");
+        hasApprovedCheckpoint[proposalId][msg.sender] = true;
+        uint256 approvals = ++checkpointApprovals[proposalId];
+        emit CheckpointApproved(proposalId, msg.sender, approvals);
+
+        if (approvals < relayerThreshold) return;
 
         latestSequence = sequence;
         latestEpoch = epoch;
@@ -136,12 +165,41 @@ contract VeridagLightClient {
     }
 
     function setRelayer(address relayer, bool status) external onlyOwner {
+        require(relayer != address(0), "VeridagLightClient: zero relayer");
+        require(isAuthorizedRelayer[relayer] != status, "VeridagLightClient: unchanged relayer");
+        if (status) {
+            relayerCount++;
+        } else {
+            require(relayerCount - 1 >= relayerThreshold, "VeridagLightClient: threshold exceeds relayers");
+            relayerCount--;
+        }
         isAuthorizedRelayer[relayer] = status;
         emit RelayerUpdated(relayer, status);
     }
 
+    function setRelayerThreshold(uint256 threshold) external onlyOwner {
+        require(threshold > 0 && threshold <= relayerCount, "VeridagLightClient: invalid threshold");
+        relayerThreshold = threshold;
+        emit RelayerThresholdUpdated(threshold);
+    }
+
     function updateValidatorSet(bytes32 newCommitment) external onlyOwner {
+        require(newCommitment != bytes32(0), "VeridagLightClient: zero validator commitment");
         validatorSetCommitment = newCommitment;
         emit ValidatorSetUpdated(newCommitment);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "VeridagLightClient: zero owner");
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "VeridagLightClient: caller not pending owner");
+        address previous = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previous, msg.sender);
     }
 }

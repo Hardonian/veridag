@@ -1,0 +1,211 @@
+openapi: 3.1.0
+info:
+  title: Veridag Validator API
+  version: 1.0.0-pre-ga
+  description: Development API for health, finalized checkpoints, object state, and bounded transaction admission.
+servers:
+  - url: http://127.0.0.1:8080
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      responses:
+        "200":
+          description: Node is progressing.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+        "503":
+          description: Node has not progressed within the health window.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+  /v1/ready:
+    get:
+      operationId: getReadiness
+      responses:
+        "200":
+          description: Persistent node has completed at least one wave and is progressing.
+        "503":
+          description: Node is not ready.
+  /v1/metrics:
+    get:
+      operationId: getMetrics
+      responses:
+        "200":
+          description: Prometheus text exposition.
+          content:
+            text/plain:
+              schema:
+                type: string
+  /v1/state/root:
+    get:
+      operationId: getStateRoot
+      responses:
+        "200":
+          description: Current local state root.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [state_root, highest_wave]
+                properties:
+                  state_root:
+                    $ref: "#/components/schemas/Hash"
+                  highest_wave:
+                    type: integer
+                    format: uint64
+  /v1/state/account/{address}:
+    get:
+      operationId: getAccount
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/Hash"
+      responses:
+        "200":
+          description: Balance object lookup.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+  /v1/checkpoints/latest:
+    get:
+      operationId: getLatestFinalizedCheckpoint
+      responses:
+        "200":
+          description: Latest checkpoint carrying a verified committee quorum.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Checkpoint"
+        "404":
+          description: No finalized checkpoint exists.
+  /v1/tx/submit:
+    post:
+      operationId: submitTransaction
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [raw_tx_hex, public_key]
+              properties:
+                raw_tx_hex:
+                  type: string
+                  pattern: "^(0x)?[0-9a-fA-F]+$"
+                public_key:
+                  $ref: "#/components/schemas/Hash"
+      responses:
+        "202":
+          description: Signature verified and admitted to the bounded transaction queue.
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          description: Missing or invalid bearer token.
+        "429":
+          description: Rate limit or admission queue capacity exceeded.
+        "503":
+          description: Transaction admission unavailable.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  responses:
+    BadRequest:
+      description: Invalid request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Hash:
+      type: string
+      pattern: "^0x[0-9a-f]{64}$"
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+    Health:
+      type: object
+      required:
+        - status
+        - version
+        - protocol_version
+        - chain_id
+        - validator_id
+        - committee_n
+        - committee_quorum
+        - max_round
+        - highest_wave
+        - state_root
+        - checkpoints_count
+        - stalled_for_ms
+        - persistent
+      properties:
+        status:
+          enum: [healthy, degraded]
+        version:
+          type: string
+        protocol_version:
+          type: integer
+        chain_id:
+          type: integer
+        validator_id:
+          $ref: "#/components/schemas/Hash"
+        committee_n:
+          type: integer
+        committee_quorum:
+          type: integer
+        max_round:
+          type: integer
+        highest_wave:
+          type: integer
+        state_root:
+          $ref: "#/components/schemas/Hash"
+        checkpoints_count:
+          type: integer
+        last_progress_ms:
+          type: integer
+        stalled_for_ms:
+          type: integer
+        persistent:
+          type: boolean
+    Checkpoint:
+      type: object
+      required:
+        - id
+        - sequence
+        - epoch
+        - state_root
+        - transaction_root
+        - dag_commitment
+        - validator_set_commitment
+        - votes_count
+      properties:
+        id:
+          $ref: "#/components/schemas/Hash"
+        sequence:
+          type: integer
+        epoch:
+          type: integer
+        state_root:
+          $ref: "#/components/schemas/Hash"
+        transaction_root:
+          $ref: "#/components/schemas/Hash"
+        dag_commitment:
+          $ref: "#/components/schemas/Hash"
+        validator_set_commitment:
+          $ref: "#/components/schemas/Hash"
+        votes_count:
+          type: integer
+          minimum: 1

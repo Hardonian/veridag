@@ -4316,6 +4316,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "veridag-industry"
+version = "1.0.0"
+dependencies = [
+ "serde_json",
+ "thiserror 2.0.20",
+ "veridag-codec",
+ "veridag-crypto",
+ "veridag-protocol-types",
+]
+
+[[package]]
 name = "veridag-light-client"
 version = "1.0.0"
 dependencies = [

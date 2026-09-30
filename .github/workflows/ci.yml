@@ -20,7 +20,7 @@ jobs:
         working-directory: implementations/rust
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
         with:
           components: rustfmt, clippy, rust-src
       - uses: Swatinem/rust-cache@v2
@@ -57,7 +57,7 @@ jobs:
         working-directory: implementations/rust
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
         with:
           targets: aarch64-unknown-linux-gnu
       - uses: Swatinem/rust-cache@v2
@@ -82,8 +82,10 @@ jobs:
           node-version: 22
       - name: install & test
         run: |
-          npm ci || npm install
+          npm ci
           npm test
+          npm run build
+          npm run verify-package
 
   # Python SDK conformance on every PR.
   sdk-python:
@@ -103,6 +105,20 @@ jobs:
           export PATH="$HOME/.local/bin:$PATH"
           uv run python -m unittest discover -s tests
 
+  industry-packs:
+    name: Industry pack manifests and adapters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@1.95
+      - name: validate manifests
+        run: python scripts/validate-industry-packs.py
+      - name: test adapters
+        run: cargo test -p veridag-industry
+
   # Verify the Next.js site builds without errors.
   site:
     name: site build verification
@@ -119,3 +135,16 @@ jobs:
         run: |
           npm ci || npm install
           npm run build
+
+  solidity:
+    name: Solidity tests and fuzzing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: format
+        run: forge fmt --check
+      - name: unit, fuzz, and invariant tests
+        run: forge test -vvv

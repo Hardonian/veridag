@@ -1,0 +1,59 @@
+name: release-binaries
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@1.95
+      - uses: Swatinem/rust-cache@v2
+      - name: verify
+        run: cargo test --workspace --all-features
+      - name: build release binaries
+        run: |
+          cargo build --release --locked -p veridag-node -p veridag-cli -p veridag-genesis
+          mkdir -p release/veridag-linux-x86_64
+          cp target/release/veridag-node release/veridag-linux-x86_64/
+          cp target/release/veridag-cli release/veridag-linux-x86_64/
+          cp target/release/veridag-genesis release/veridag-linux-x86_64/
+          cp README.md LICENSE-APACHE LICENSE-MIT SECURITY.md release/veridag-linux-x86_64/
+          tar -C release -czf release/veridag-linux-x86_64.tar.gz veridag-linux-x86_64
+          sha256sum release/veridag-linux-x86_64.tar.gz > release/veridag-linux-x86_64.tar.gz.sha256
+      - name: generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: release/veridag-linux-x86_64
+          format: cyclonedx-json
+          output-file: release/veridag-linux-x86_64.sbom.json
+      - name: attest binary archive
+        uses: actions/attest@v4
+        with:
+          subject-path: release/veridag-linux-x86_64.tar.gz
+      - name: attest SBOM
+        uses: actions/attest@v4
+        with:
+          subject-path: release/veridag-linux-x86_64.tar.gz
+          sbom-path: release/veridag-linux-x86_64.sbom.json
+      - name: upload release assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            release/veridag-linux-x86_64.tar.gz
+            release/veridag-linux-x86_64.tar.gz.sha256
+            release/veridag-linux-x86_64.sbom.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: veridag-linux-x86_64
+          path: release/*
+

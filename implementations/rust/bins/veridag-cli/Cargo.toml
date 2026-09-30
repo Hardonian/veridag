@@ -7,18 +7,18 @@ authors.workspace = true
 description.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../../crates/codec" }
-veridag-crypto = { path = "../../crates/crypto" }
-veridag-capabilities = { path = "../../crates/capabilities" }
-veridag-checkpoint = { path = "../../crates/checkpoint" }
-veridag-execution = { path = "../../crates/execution" }
-veridag-object-state = { path = "../../crates/object-state" }
-veridag-protocol-types = { path = "../../crates/protocol-types" }
-veridag-transaction = { path = "../../crates/transaction" }
-veridag-stablecoin = { path = "../../crates/stablecoin" }
-veridag-ethereum = { path = "../../crates/ethereum" }
-veridag-bitcoin = { path = "../../crates/bitcoin" }
-veridag-metrics = { path = "../../crates/metrics" }
+veridag-codec = { version = "1.0.0", path = "../../crates/codec" }
+veridag-crypto = { version = "1.0.0", path = "../../crates/crypto" }
+veridag-capabilities = { version = "1.0.0", path = "../../crates/capabilities" }
+veridag-checkpoint = { version = "1.0.0", path = "../../crates/checkpoint" }
+veridag-execution = { version = "1.0.0", path = "../../crates/execution" }
+veridag-object-state = { version = "1.0.0", path = "../../crates/object-state" }
+veridag-protocol-types = { version = "1.0.0", path = "../../crates/protocol-types" }
+veridag-transaction = { version = "1.0.0", path = "../../crates/transaction" }
+veridag-stablecoin = { version = "1.0.0", path = "../../crates/stablecoin" }
+veridag-ethereum = { version = "1.0.0", path = "../../crates/ethereum" }
+veridag-bitcoin = { version = "1.0.0", path = "../../crates/bitcoin" }
+veridag-metrics = { version = "1.0.0", path = "../../crates/metrics" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true

@@ -3,15 +3,14 @@
 ## Deterministic shared state for multi-party systems
 
 [![Status](https://img.shields.io/badge/status-pre--GA-orange?style=for-the-badge)](docs/capability-matrix.md)
-[![Rust](https://img.shields.io/badge/Rust-1.85%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
+[![Rust](https://img.shields.io/badge/Rust-1.95%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
 [![Safety](https://img.shields.io/badge/unsafe-FORBIDDEN-blueviolet?style=for-the-badge&logo=shield)](implementations/rust/Cargo.toml)
 [![Formal Verification](https://img.shields.io/badge/Formal%20Model-Quint%20Verified-cyan?style=for-the-badge&logo=probot)](formal/quint/)
 [![License](https://img.shields.io/badge/License-Apache_2.0_|_MIT-blue?style=for-the-badge)](LICENSE-APACHE)
 [![Transport](https://img.shields.io/badge/Transport-QUIC_%2B_TLS_1.3-informational?style=for-the-badge)](implementations/rust/crates/net)
 [![Storage](https://img.shields.io/badge/Storage-Embedded_Sled-success?style=for-the-badge)](implementations/rust/crates/storage)
-[![Footprint](https://img.shields.io/badge/Binary_Footprint-%3C_10MB_Static-lightgrey?style=for-the-badge)](#why-veridag)
 
-[Quickstart](#quickstart-in-under-3-minutes) • [Why Veridag](#why-veridag) • [Enterprise APIs](#enterprise-infrastructure--apis) • [SDKs](#multi-language-sdks) • [ISO 20022](#iso-20022-banking-bridge) • [SOC-2 & Security](#soc-2-type-ii--security) • [Crate Map](#crate-ecosystem) • [Docs](https://github.com/Hardonian/veridag/tree/main/docs)
+[Quickstart](#quickstart-in-under-3-minutes) • [Why Veridag](#why-veridag) • [Capability Matrix](docs/capability-matrix.md) • [Enterprise APIs](#enterprise-infrastructure--apis) • [SDKs](#multi-language-sdks) • [Industry Packs](industry-packs/) • [Security](#security-and-control-mapping) • [Crate Map](#crate-ecosystem) • [Docs](docs/)
 
 ---
 
@@ -52,11 +51,11 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 - ❌ **Not a bloated blockchain clone** — No 500GB ledger bloat, no complex node mining rigs.
 - ❌ **Not a fragile cloud framework** — Zero runtime dependencies; no Kubernetes, Postgres, Redis, or Kafka sidecars needed.
 
-### Flagship Institutional Capabilities
+### Flagship integration targets
 
-- 🏛️ **USDV (Veridag Dollar): USMCA & G8 Multilateral Settlement Substrate** — Engineered for USMCA cross-border trade corridors and G8 economic forum multilateral treasury settlement with strict US Treasury alignment. 100% reserve-backed (US Treasuries $\le 90$d, overnight reverse repo, FDIC cash deposits), cryptographically verified Proof of Reserves (PoR) in state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions screening.
-- ⛓️ **Iron-Clad Ethereum Infrastructure** — Zero-reorg high-throughput L2 DAG sequencer, native EVM JSON-RPC (`eth_*`), trustless L1 Light Client verification ([`VeridagLightClient.sol`](contracts/VeridagLightClient.sol)), and two-way bridge portal ([`VeridagBridge.sol`](contracts/VeridagBridge.sol)).
-- ⚡ **ISO 20022 Financial Messaging Mainframe** — Direct ingestion of institutional `pacs.008.001.08` XML wire transfers, automated 1 bps clearing surcharge distribution, and signed `pacs.002.001.10` status reports with cryptographic state root commitments.
+- 🏛️ **Regulated settlement pilots** — USDV object types, reserve-attestation commitments, capability-gated mint/burn/pause controls, and ISO 20022 parsing are implemented as experimental building blocks. Issuance, custody, sanctions screening, and regulatory operation require an authorized operator and independent review.
+- ⛓️ **Ethereum interoperability** — Solidity contracts, BMH-1 inclusion proofs, and an EVM JSON-RPC compatibility facade are available for testing. The light client is threshold-relayed, not trustless, and the contracts have not completed an external audit.
+- 🌐 **Cross-industry evidence anchoring** — Versioned adapters for CloudEvents, GS1 EPCIS, HL7 FHIR, OPC UA, W3C Verifiable Credentials, and ISO 20022 validate bounded envelopes and commit hashes without placing source records on-chain.
 
 ---
 
@@ -68,7 +67,7 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 | **Zero-Unsafe Core** | The entire consensus, execution, and state engine enforces `#![forbid(unsafe_code)]`. Memory safety vulnerabilities cannot corrupt state. |
 | **Object-Centric Capabilities** | Fine-grained object capabilities replace blunt permissions. Access is scoped, verifiable, and strictly sandboxed. |
 | **Instant Crash Recovery** | Append-friendly embedded `sled` storage. If a node crashes mid-commit, it reboots, replays durable bytes, and recovers byte-identical state. |
-| **Sub-10MB Edge Footprint** | Statically linked binary with low energy and memory consumption. Runs identically on a developer laptop, cloud VM, or Raspberry Pi. |
+| **Self-Contained Deployment** | A validator uses embedded storage and does not require a database sidecar. Release workflows publish checksums, SBOMs, and build provenance. Measure binary size and platform performance for each release artifact. |
 | **Authenticated QUIC Fast Path** | Low-latency 1-RTT gossip over authenticated QUIC with self-signed Ed25519 TLS certificates and domain-separated preimages. |
 
 ---
@@ -77,7 +76,7 @@ It gives mutually distrustful parties—autonomous AI agents, organizations, mic
 
 ### 1. Prerequisites
 
-Veridag requires standard **Rust 1.85+** (edition 2021):
+Veridag requires standard **Rust 1.95+** (edition 2021):
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -118,11 +117,11 @@ bob balance: 40 (expected 40)
 
 ### Built-in HTTP / JSON-RPC Daemon
 
-Launch the production validator node daemon with the embedded HTTP server:
+Launch a local development validator with explicit development credentials and genesis state:
 
 ```bash
 # Launch validator node daemon with HTTP RPC enabled
-cargo run -p veridag-node -- daemon --seed 1 --rpc 0.0.0.0:8080
+cargo run -p veridag-node -- daemon --seed 1 --dev-genesis --rpc 127.0.0.1:8080 --data-dir ./data/node-1
 
 # Query node health
 curl http://127.0.0.1:8080/v1/health
@@ -193,9 +192,9 @@ cargo test -p veridag-stablecoin iso20022
 
 ---
 
-## SOC-2 Type II & Security
+## Security and control mapping
 
-Veridag maps strictly to **AICPA Trust Services Criteria** across:
+The repository includes an engineering control mapping to selected **AICPA Trust Services Criteria**. This is not a SOC 2 audit, report, or certification.
 
 - **CC6 Logical Access**: Ed25519 asymmetric signatures, domain separation tags, consortium multi-tenancy.
 - **CC7 Operations**: Causal DAG audit log, SMT inclusion proofs, automated `/v1/health` monitoring.
@@ -203,7 +202,7 @@ Veridag maps strictly to **AICPA Trust Services Criteria** across:
 - **PI1 Processing Integrity**: Canonical VCE-1 non-malleable encoding, metered WebAssembly runtime.
 - **C1 Confidentiality**: TLS 1.3 / Noise transport encryption, zero hardcoded credentials.
 
-For details, review [`compliance/SOC2_TYPE2_CONTROLS.md`](compliance/SOC2_TYPE2_CONTROLS.md) and the interactive 12-vector threat matrix at [`site/app/security/`](site/app/security/).
+For details, review [`compliance/SOC2_TYPE2_CONTROLS.md`](compliance/SOC2_TYPE2_CONTROLS.md), [`docs/threat-model.md`](docs/threat-model.md), and the [capability matrix](docs/capability-matrix.md).
 
 ---
 
@@ -228,16 +227,17 @@ implementations/rust/
     ├── execution/          # Conflict-aware parallel scheduler
     ├── checkpoint/         # Quorum finality proofs (2f+1)
     ├── wasm-runtime/       # Metered Wasmtime smart contract sandbox
-    ├── zkvm/               # SP1 & RiscZero zero-knowledge adapters
+    ├── zkvm/               # Experimental proof-system adapter interfaces
     ├── da/                 # 2D Reed-Solomon data availability
-    ├── light-client/       # Trustless light client verification
+    ├── light-client/       # Quorum-checkpoint and inclusion verification
     ├── bitcoin/            # Bitcoin native SPV header & PoW client
-    ├── ethereum/           # Ethereum L1 light client proofs & EVM JSON-RPC
+    ├── ethereum/           # Experimental Ethereum proof/RPC compatibility types
     ├── stablecoin/         # USDV sovereign dollar, ISO 20022 engine & PoR
-    ├── storage/            # Sled & redb durable persistence backends
+    ├── storage/            # Sled durable persistence and snapshot validation
     ├── net/                # Authenticated QUIC + TLS 1.3 mesh transport
     ├── sdk/                # Native Rust client SDK
     ├── metrics/            # Zero-overhead Prometheus probes
+    ├── industry/           # Versioned cross-industry evidence adapters
     └── testkit/            # Golden vectors & cross-language harness
 ```
 

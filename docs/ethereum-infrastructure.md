@@ -1,6 +1,9 @@
-# Veridag: Iron-Clad Infrastructure for Ethereum
+# Veridag Ethereum Interoperability (Experimental)
 
-Veridag functions as an **ultra-high-performance execution, sequencing, and settlement substrate for Ethereum**, delivering zero-reorg finality, EVM JSON-RPC compatibility, and trustless L1 checkpoint verification.
+This package is an experimental interoperability surface: an EVM JSON-RPC
+compatibility facade, threshold-relayed checkpoint contract, BMH-1 proof
+verification, and bridge prototypes. It is not an EVM implementation, a
+trustless Ethereum light client, or an audited production bridge.
 
 ---
 
@@ -30,7 +33,7 @@ Veridag functions as an **ultra-high-performance execution, sequencing, and sett
 ┌───────────────────────────────▼─────────────────────────────┐
 │                VERIDAG DAG-BFT SUBSTRATE (L2)               │
 │                                                             │
-│  • Sub-100ms Wave Commit (Zero-Reorg Finality)              │
+│  • Deterministic wave commit (benchmark per deployment)     │
 │  • Pure-Function BaselineDagBft Consensus                   │
 │  • Native EVM JSON-RPC Gateway (`eth_*`)                    │
 │  • BMH-1 State Root & Quorum Checkpoints                    │
@@ -43,20 +46,20 @@ Veridag functions as an **ultra-high-performance execution, sequencing, and sett
 
 ### 2.1 L1 Smart Contracts (`contracts/`)
 
-- [`USDV.sol`](../contracts/USDV.sol): Production-grade ERC-20, ERC-2612 (`permit`), and EIP-3009 stablecoin contract with institutional compliance roles (`MINTER_ROLE`, `BURNER_ROLE`, `COMPLIANCE_ROLE`, `PAUSER_ROLE`).
-- [`VeridagLightClient.sol`](../contracts/VeridagLightClient.sol): Trustless Ethereum L1 light client verifying Veridag Quorum Checkpoints ($2f+1$ validator signatures) and evaluating BMH-1 Merkle inclusion proofs in EVM bytecode.
+- [`USDV.sol`](../contracts/USDV.sol): Pre-audit ERC-20, ERC-2612 (`permit`), and EIP-3009 contract with configurable compliance roles (`MINTER_ROLE`, `BURNER_ROLE`, `COMPLIANCE_ROLE`, `PAUSER_ROLE`).
+- [`VeridagLightClient.sol`](../contracts/VeridagLightClient.sol): Federated relay contract that accepts sequential checkpoints after a configurable threshold of authorized relayer approvals and evaluates BMH-1 proofs.
 - [`VeridagBridge.sol`](../contracts/VeridagBridge.sol): Cross-chain bridge gateway enforcing the Global Conservation Invariant:
   $$\text{TotalSupply}_{\text{L1}} + \text{TotalSupply}_{\text{Veridag}} = \text{TotalAttestedReserves}$$
 
 ### 2.2 EVM JSON-RPC Layer
 
-The `veridag-ethereum` crate provides standard Ethereum RPC compatibility:
+The `veridag-ethereum` crate models a limited Ethereum RPC compatibility facade:
 
 - `eth_chainId`: Returns configured EVM chain ID (`0x5645`).
 - `eth_blockNumber`: Maps to the latest committed DAG wave or checkpoint sequence.
 - `eth_getBalance`: Queries account balance directly from the BMH-1 state root.
-- `eth_sendRawTransaction`: Ingests EVM transactions into the DAG mempool.
-- `web3_clientVersion`: Identifies the client as `Veridag/v0.1.0-ironclad/rust1.85`.
+- `eth_sendRawTransaction`: Admits opaque transaction bytes to the compatibility layer; it does not execute EVM bytecode.
+- `web3_clientVersion`: Identifies the compatibility facade as `Veridag/v1.0.0-pre-ga/rust`.
 
 ---
 

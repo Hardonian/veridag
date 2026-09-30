@@ -7,7 +7,7 @@ authors.workspace = true
 description.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../codec" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
 
 [lints]
 workspace = true

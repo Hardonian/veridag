@@ -6,15 +6,17 @@ import "./VeridagLightClient.sol";
 
 /**
  * @title VeridagBridge
- * @notice Trustless two-way cross-chain portal connecting Ethereum L1 and the Veridag DAG substrate.
+ * @notice Two-way cross-chain portal connecting Ethereum L1 and Veridag.
  * @dev Enforces the Bridge Conservation Invariant:
  *      TotalSupply(L1) + TotalSupply(Veridag) == TotalAttestedReserves.
- *      Relies purely on cryptographic light client proofs without centralized multisig custody.
+ *      Withdrawal safety inherits the checkpoint registry's configured relayer threshold.
  */
 contract VeridagBridge {
     USDV public immutable usdv;
     VeridagLightClient public immutable lightClient;
     address public owner;
+    address public pendingOwner;
+    bool public paused;
 
     uint64 public depositSequence;
     mapping(bytes32 => bool) public isClaimedWithdrawal;
@@ -32,9 +34,17 @@ contract VeridagBridge {
         bytes32 indexed withdrawalId,
         bytes32 checkpointId
     );
+    event PauseUpdated(bool paused);
+    event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "VeridagBridge: caller not owner");
+        _;
+    }
+
+    modifier notPaused() {
+        require(!paused, "VeridagBridge: paused");
         _;
     }
 
@@ -50,7 +60,7 @@ contract VeridagBridge {
      * @param veridagRecipient 32-byte Veridag recipient address.
      * @param amount Amount of USDV (micro-units, 6 decimals).
      */
-    function depositUSDV(bytes32 veridagRecipient, uint256 amount) external returns (uint64 seq) {
+    function depositUSDV(bytes32 veridagRecipient, uint256 amount) external notPaused returns (uint64 seq) {
         require(amount > 0, "VeridagBridge: zero amount");
         require(veridagRecipient != bytes32(0), "VeridagBridge: zero recipient");
 
@@ -83,10 +93,14 @@ contract VeridagBridge {
         address recipient,
         uint256 amount,
         bytes32 withdrawalId
-    ) external {
+    ) external notPaused {
         require(!isClaimedWithdrawal[withdrawalId], "VeridagBridge: withdrawal already claimed");
         require(recipient != address(0), "VeridagBridge: zero recipient");
         require(amount > 0, "VeridagBridge: zero amount");
+        require(
+            keccak256(objectData) == keccak256(abi.encode(withdrawalId, recipient, amount)),
+            "VeridagBridge: withdrawal fields do not match object data"
+        );
 
         // 1. Verify Checkpoint is finalized
         (bool finalized, bytes32 stateRoot) = lightClient.getStateRoot(checkpointId);
@@ -109,5 +123,24 @@ contract VeridagBridge {
         usdv.mint(recipient, amount);
 
         emit WithdrawalFinalized(recipient, amount, withdrawalId, checkpointId);
+    }
+
+    function setPaused(bool value) external onlyOwner {
+        paused = value;
+        emit PauseUpdated(value);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        require(newOwner != address(0), "VeridagBridge: zero owner");
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        require(msg.sender == pendingOwner, "VeridagBridge: caller not pending owner");
+        address previous = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previous, msg.sender);
     }
 }

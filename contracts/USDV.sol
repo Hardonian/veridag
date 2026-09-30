@@ -20,6 +20,7 @@ contract USDV {
 
     // --- Institutional Capability Roles ---
     address public admin;
+    address public pendingAdmin;
     mapping(address => bool) public isMinter;
     mapping(address => bool) public isBurner;
     mapping(address => bool) public isCompliance;
@@ -49,6 +50,11 @@ contract USDV {
     event Unpaused(address indexed caller);
     event RoleGranted(string role, address indexed account);
     event RoleRevoked(string role, address indexed account);
+    event AdminTransferStarted(address indexed currentAdmin, address indexed pendingAdmin);
+    event AdminTransferred(address indexed previousAdmin, address indexed newAdmin);
+
+    uint256 private constant SECP256K1N_DIV_2 =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
     modifier onlyAdmin() {
         require(msg.sender == admin, "USDV: caller not admin");
@@ -177,6 +183,7 @@ contract USDV {
     function seizeFrozenFunds(address target, address escrow) external onlyCompliance {
         require(isFrozen[target], "USDV: account not frozen");
         require(escrow != address(0), "USDV: zero escrow address");
+        require(!isFrozen[escrow], "USDV: escrow account frozen");
 
         uint256 amount = balanceOf[target];
         require(amount > 0, "USDV: zero frozen balance");
@@ -201,6 +208,20 @@ contract USDV {
     }
 
     // --- Role Management ---
+
+    function transferAdmin(address newAdmin) external onlyAdmin {
+        require(newAdmin != address(0), "USDV: zero admin address");
+        pendingAdmin = newAdmin;
+        emit AdminTransferStarted(admin, newAdmin);
+    }
+
+    function acceptAdmin() external {
+        require(msg.sender == pendingAdmin, "USDV: caller not pending admin");
+        address previous = admin;
+        admin = msg.sender;
+        pendingAdmin = address(0);
+        emit AdminTransferred(previous, msg.sender);
+    }
 
     function setMinter(address account, bool enabled) external onlyAdmin {
         isMinter[account] = enabled;
@@ -244,7 +265,7 @@ contract USDV {
         );
 
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
-        address recovered = ecrecover(digest, v, r, s);
+        address recovered = _recoverSigner(digest, v, r, s);
         require(recovered != address(0) && recovered == owner, "USDV: invalid permit signature");
 
         allowance[owner][spender] = value;
@@ -268,6 +289,23 @@ contract USDV {
         require(block.timestamp < validBefore, "USDV: auth expired");
         require(!authorizationState[from][nonce], "USDV: auth already used");
 
+        address recovered = _recoverSigner(
+            _authorizationDigest(from, to, value, validAfter, validBefore, nonce), v, r, s
+        );
+        require(recovered != address(0) && recovered == from, "USDV: invalid auth signature");
+
+        authorizationState[from][nonce] = true;
+        _transfer(from, to, value);
+    }
+
+    function _authorizationDigest(
+        address from,
+        address to,
+        uint256 value,
+        uint256 validAfter,
+        uint256 validBefore,
+        bytes32 nonce
+    ) internal view returns (bytes32) {
         bytes32 structHash = keccak256(
             abi.encode(
                 TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
@@ -279,12 +317,12 @@ contract USDV {
                 nonce
             )
         );
+        return keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
+    }
 
-        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", DOMAIN_SEPARATOR, structHash));
-        address recovered = ecrecover(digest, v, r, s);
-        require(recovered != address(0) && recovered == from, "USDV: invalid auth signature");
-
-        authorizationState[from][nonce] = true;
-        _transfer(from, to, value);
+    function _recoverSigner(bytes32 digest, uint8 v, bytes32 r, bytes32 s) internal pure returns (address) {
+        require(v == 27 || v == 28, "USDV: invalid signature v");
+        require(uint256(s) <= SECP256K1N_DIV_2, "USDV: non-canonical signature s");
+        return ecrecover(digest, v, r, s);
     }
 }

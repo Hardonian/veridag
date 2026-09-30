@@ -7,9 +7,9 @@ authors.workspace = true
 description = "Pluggable zkVM state validity proof adapters for Veridag"
 
 [dependencies]
-veridag-crypto = { path = "../crypto" }
-veridag-codec = { path = "../codec" }
-veridag-protocol-types = { path = "../protocol-types" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
 thiserror.workspace = true
 serde.workspace = true
 hex.workspace = true

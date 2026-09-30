@@ -1,0 +1,7 @@
+{
+  "filter_paths": "contracts/test",
+  "solc_remaps": [],
+  "exclude_informational": true,
+  "exclude_low": false
+}
+

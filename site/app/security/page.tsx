@@ -175,15 +175,15 @@ export default function SecurityPage() {
         </h1>
         <p className="hero-tagline">
           Pure-function consensus, mathematical Quint invariants, and `#![forbid(unsafe_code)]`
-          guarantee deterministic execution across adversarial enterprise environments.
+          support deterministic execution across adversarial environments. Production assurance still requires independent review and operational evidence.
         </p>
       </div>
 
       {/* Assurance Stat Cards */}
       <div className="card-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "16px", marginBottom: "40px" }}>
         <div className="card" style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--accent-emerald-bright)" }}>12 / 12</div>
-          <div className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>Attack Vectors Mitigated</div>
+          <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--accent-emerald-bright)" }}>12</div>
+          <div className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>Threat Scenarios Documented</div>
         </div>
         <div className="card" style={{ textAlign: "center" }}>
           <div style={{ fontSize: "32px", fontWeight: 800, color: "var(--accent-cyan-bright)" }}>100%</div>
@@ -194,8 +194,8 @@ export default function SecurityPage() {
           <div className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>Byzantine Fault Tolerance</div>
         </div>
         <div className="card" style={{ textAlign: "center" }}>
-          <div style={{ fontSize: "32px", fontWeight: 800, color: "#38bdf8" }}>SOC-2 II</div>
-          <div className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>Trust Criteria Certified</div>
+          <div style={{ fontSize: "32px", fontWeight: 800, color: "#38bdf8" }}>TSC</div>
+          <div className="muted" style={{ fontSize: "13px", marginTop: "4px" }}>Control Mapping, Not Certification</div>
         </div>
       </div>
 

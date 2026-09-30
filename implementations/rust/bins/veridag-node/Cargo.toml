@@ -11,18 +11,18 @@ name = "veridag-node"
 path = "src/main.rs"
 
 [dependencies]
-veridag-checkpoint = { path = "../../crates/checkpoint" }
-veridag-codec = { path = "../../crates/codec" }
-veridag-consensus = { path = "../../crates/consensus" }
-veridag-crypto = { path = "../../crates/crypto" }
-veridag-dag = { path = "../../crates/dag" }
-veridag-execution = { path = "../../crates/execution" }
-veridag-metrics = { path = "../../crates/metrics" }
-veridag-net = { path = "../../crates/net" }
-veridag-object-state = { path = "../../crates/object-state" }
-veridag-protocol-types = { path = "../../crates/protocol-types" }
-veridag-storage = { path = "../../crates/storage", features = ["persistent"] }
-veridag-transaction = { path = "../../crates/transaction" }
+veridag-checkpoint = { version = "1.0.0", path = "../../crates/checkpoint" }
+veridag-codec = { version = "1.0.0", path = "../../crates/codec" }
+veridag-consensus = { version = "1.0.0", path = "../../crates/consensus" }
+veridag-crypto = { version = "1.0.0", path = "../../crates/crypto" }
+veridag-dag = { version = "1.0.0", path = "../../crates/dag" }
+veridag-execution = { version = "1.0.0", path = "../../crates/execution" }
+veridag-metrics = { version = "1.0.0", path = "../../crates/metrics" }
+veridag-net = { version = "1.0.0", path = "../../crates/net" }
+veridag-object-state = { version = "1.0.0", path = "../../crates/object-state" }
+veridag-protocol-types = { version = "1.0.0", path = "../../crates/protocol-types" }
+veridag-storage = { version = "1.0.0", path = "../../crates/storage", features = ["persistent"] }
+veridag-transaction = { version = "1.0.0", path = "../../crates/transaction" }
 clap.workspace = true
 anyhow.workspace = true
 hex.workspace = true
