@@ -103,7 +103,9 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          uv run python -m unittest discover -s tests
+          uv sync --extra dev --locked
+          uv run pytest -q
+          uv build
 
   industry-packs:
     name: Industry pack manifests and adapters
@@ -133,7 +135,7 @@ jobs:
           node-version: 22
       - name: install & build
         run: |
-          npm ci || npm install
+          npm ci
           npm run build
 
   solidity:
