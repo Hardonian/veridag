@@ -6,10 +6,11 @@ import "./VeridagLightClient.sol";
 
 /**
  * @title VeridagBridge
- * @notice Two-way cross-chain portal connecting Ethereum L1 and Veridag.
- * @dev Enforces the Bridge Conservation Invariant:
- *      TotalSupply(L1) + TotalSupply(Veridag) == TotalAttestedReserves.
- *      Withdrawal safety inherits the checkpoint registry's configured relayer threshold.
+ * @notice Pre-audit bridge prototype connecting Ethereum L1 and Veridag.
+ * @dev Burns deposits and mints withdrawals proven against a threshold-relayed
+ *      checkpoint. Global supply conservation additionally depends on the
+ *      Veridag-side adapter and operator governance; this contract cannot
+ *      independently observe or enforce reserve backing or remote supply.
  */
 contract VeridagBridge {
     USDV public immutable usdv;

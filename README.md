@@ -23,7 +23,7 @@
 > the [capability matrix](docs/capability-matrix.md) before evaluating or
 > deploying the software.
 
-It gives mutually distrustful parties—autonomous AI agents, organizations, microservices, cloud nodes, and edge devices—a shared, tamper-proof state machine that guarantees exact mathematical agreement without centralized coordinators.
+Within its documented committee and fault assumptions, it gives mutually distrustful parties—autonomous AI agents, organizations, microservices, cloud nodes, and edge devices—a shared state machine with deterministic agreement and cryptographic auditability.
 
 ```text
 ┌────────────────┐     ┌────────────────┐     ┌────────────────┐

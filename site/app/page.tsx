@@ -248,24 +248,21 @@ export default function Home() {
             <span className="card-icon">🏛️</span>
             <h3>USMCA &amp; G8 Sovereign Settlement (USDV)</h3>
             <p>
-              Institutional digital dollar collateralized 1:1 by short-term US Treasuries and Fed RRP,
-              eliminating foreign exchange settlement risk across multilateral trade corridors.
+              Experimental asset controls and reserve-evidence commitments for operator-managed regulated settlement pilots.
             </p>
           </div>
           <div className="card">
             <span className="card-icon">🤝</span>
             <h3>Settler Reconciliation &amp; Audit OS</h3>
             <p>
-              Native on-chain anchor and payout substrate for the Settler reconciliation engine, ensuring
-              enterprise proofpack integrity with mathematical zero-variance guarantee.
+              Evidence anchors and deterministic payout adapters for Settler reconciliation runs, with source records retained off-chain.
             </p>
           </div>
           <div className="card">
             <span className="card-icon">🌐</span>
             <h3>Universal Multi-Chain Rails</h3>
             <p>
-              Trustless cross-chain SPV header tracking, UTXO proof verification, zero-reorg L2 sequencing,
-              and native EVM JSON-RPC connectivity across Bitcoin, Ethereum, and major crypto networks.
+              Experimental Bitcoin header/proof primitives and a limited Ethereum JSON-RPC compatibility layer, with production chain operations still gated.
             </p>
           </div>
           <div className="card">

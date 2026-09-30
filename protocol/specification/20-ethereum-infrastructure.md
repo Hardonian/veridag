@@ -1,6 +1,6 @@
 # 20 — Normative Specification: Ethereum Infrastructure Substrate
 
-**Status:** Normative  
+**Status:** Experimental interoperability profile  
 **Version:** 1.0  
 **Scope:** Veridag as Ethereum L2 / High-Throughput Execution Substrate, EVM Interoperability, and L1 Settlement  
 
@@ -8,14 +8,14 @@
 
 ## 1. Overview
 
-Veridag functions as an **iron-clad, high-performance execution, sequencing, and settlement substrate for the Ethereum ecosystem**.
+This profile defines experimental Ethereum interoperability surfaces. The reference implementation is not an EVM, a trustless Ethereum light client, or an audited production bridge.
 
-By combining Veridag's pure-function DAG-BFT consensus with Ethereum's global liquidity and settlement guarantees, this architecture delivers:
+The intended architecture includes:
 
-1. **Zero-Reorg Finality:** Veridag wave commits eliminate transaction reorganizations, MEV re-ordering, and front-running on Ethereum L2 applications.
-2. **Trustless L1 Light Client:** Ethereum mainnet smart contracts verify Veridag Quorum Checkpoints ($2f+1$ Ed25519 signatures over `VERIDAG_CHECKPOINT_V1`) and BMH-1 Merkle inclusion proofs directly in Solidity.
-3. **Native EVM JSON-RPC Layer:** Standard Ethereum wallets (MetaMask), development frameworks (Foundry, Hardhat), and libraries (ethers.js, alloy, viem) interact seamlessly with Veridag through standard `eth_*` RPC endpoints.
-4. **Two-Way Cross-Chain Bridge:** Cryptographically secured lock/mint and burn/unlock primitives for USDV and Ethereum assets with monotonic message sequence nonces.
+1. **Veridag finality:** Wave commits have deterministic ordering within the documented committee fault model.
+2. **Threshold-relayed L1 registry:** Authorized relayers approve sequential checkpoints; Solidity verifies BMH-1 inclusion against finalized roots.
+3. **Limited JSON-RPC facade:** A subset of `eth_*` request and response types supports integration experiments but does not execute EVM bytecode.
+4. **Bridge prototype:** Burn/mint flows use replay protection and proofs bound to withdrawal recipient, amount, and identifier.
 
 ---
 
@@ -114,4 +114,4 @@ The Veridag EVM interface translates standard Ethereum JSON-RPC calls into deter
 1. **Bridge Conservation Invariant:**
    $$\text{TotalSupply}_{\text{L1}} + \text{TotalSupply}_{\text{Veridag}} = \text{TotalAttestedReserves}$$
 2. **Replay Freedom:** Every cross-chain message specifies `(source_chain, dest_chain, sequence, nonce)`. A message can be executed at most once on either chain.
-3. **No Rollback:** A checkpoint accepted by `VeridagLightClient.sol` cannot be overridden or reorganized, guaranteeing instant finality for L1 bridge withdrawals.
+3. **Monotonic registry:** A finalized checkpoint record is immutable in the current contract, while safety still depends on relayer and owner governance.

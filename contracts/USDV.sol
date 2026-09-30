@@ -3,10 +3,11 @@ pragma solidity 0.8.28;
 
 /**
  * @title USDV (Veridag Dollar)
- * @notice Canonical USMCA & G8 institutional sovereign digital dollar contract on Ethereum L1, aligned with US Treasury collateral.
- * @dev Fully compliant ERC-20, ERC-2612 (Permit), EIP-3009 (Transfer with Authorization)
- *      with institutional capability-based governance (Mint, Burn, Freeze, Pause).
- *      Fixed 6-decimal precision matching US Dollar micro-cents and native Veridag state.
+ * @notice Pre-audit stable-value token prototype for Veridag interoperability tests.
+ * @dev Implements ERC-20-style transfers, ERC-2612 permit, EIP-3009 transfer
+ *      authorization, and configurable mint, burn, freeze, and pause roles.
+ *      Reserve backing, regulatory status, and standards conformance are
+ *      external operational responsibilities and are not asserted by this contract.
  */
 contract USDV {
     // --- ERC-20 Metadata ---
@@ -26,7 +27,7 @@ contract USDV {
     mapping(address => bool) public isCompliance;
     mapping(address => bool) public isPauser;
 
-    // --- Compliance & Sanctions State ---
+    // --- Operator-controlled policy state ---
     mapping(address => bool) public isFrozen;
     bool public paused;
 

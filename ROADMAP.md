@@ -125,7 +125,7 @@ multiplication, and C/Zig foreign acceleration hooks under strict `#![forbid(uns
 `veridag-stablecoin`: US-aligned sovereign digital dollar for USMCA trade corridor clearing
 and G8 economic forum multilateral treasury settlement. 100% reserve-backed (US Treasuries,
 FDIC cash deposits, Reverse Repo), cryptographically verified Proof-of-Reserves (PoR) in
-state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions
+state roots, capability-gated mint/burn/pause, and hooks for operator-supplied sanctions
 screening. Normative spec 19. Mathematical conservation-of-value invariant checked across
 all transitions.
 

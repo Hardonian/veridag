@@ -1,6 +1,6 @@
 # 21 — Normative Specification: Bitcoin Infrastructure Substrate
 
-**Status:** Normative  
+**Status:** Experimental interoperability profile  
 **Version:** 1.0  
 **Scope:** Veridag as Bitcoin Execution, UTXO Settlement, and SPV Substrate  
 
@@ -8,14 +8,14 @@
 
 ## 1. Overview
 
-Veridag extends its sovereign DAG-BFT consensus substrate to provide **iron-clad, zero-reorg, trustless interoperability and settlement for the Bitcoin network**.
+This profile defines Bitcoin header, proof, and bridge data primitives. The reference implementation does not yet operate a production header-synchronization service, manage reorgs end to end, or provide a trustless bridge.
 
-By pairing Veridag's sub-100ms deterministic wave commits with Bitcoin's global PoW store-of-value liquidity, this architecture delivers:
+The implemented and planned surfaces are:
 
-1. **Lightweight On-Chain SPV Verification:** Continuous verification of canonical 80-byte Bitcoin block headers, compact difficulty target expansion (`nBits`), and Proof-of-Work validation without trusted third-party oracles.
+1. **SPV primitives:** Parsing canonical 80-byte Bitcoin block headers, compact difficulty target expansion (`nBits`), and Proof-of-Work validation.
 2. **Deterministic Transaction Inclusion Proofs:** Cryptographic verification of partial Merkle tree branches (`txid` inclusion in block `merkle_root`) via Double-SHA256 (`hash256`).
 3. **Two-Way UTXO Bridge Primitives:** Cryptographically locked Bitcoin deposits mapped to native Veridag tokens and deterministic consensus-verified withdrawal authorization requests.
-4. **Native Bitcoin JSON-RPC Compatibility:** Direct emulation of Bitcoin core RPC interfaces (`getblockcount`, `getblockhash`, `getblockheader`) allowing existing Bitcoin enterprise tooling, custody vaults, and indexers to interface directly with Veridag.
+4. **JSON-RPC compatibility types:** A limited facade for integration tests; it is not a Bitcoin Core replacement.
 
 ---
 
