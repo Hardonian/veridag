@@ -16,6 +16,8 @@ jobs:
       - name: verify conformance
         run: |
           cargo test -p veridag-sdk
+      - name: verify publishable workspace
+        run: cargo publish --workspace --locked --dry-run
       - name: publish to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || '' }}
@@ -23,8 +25,7 @@ jobs:
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
             cargo publish --workspace --locked
           else
-            echo "CARGO_REGISTRY_TOKEN not configured; dry-run mode"
-            cargo publish --workspace --locked --dry-run
+            echo "CARGO_REGISTRY_TOKEN not configured; verified dry-run only"
           fi
 
   npm:
@@ -44,6 +45,7 @@ jobs:
           npm run build
           npm run verify-package
           npm pack --dry-run
+          npm audit --omit=dev
       - name: publish to npm
         working-directory: sdks/typescript
         env:
