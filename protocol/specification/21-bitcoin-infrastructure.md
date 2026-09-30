@@ -1,6 +1,6 @@
 # 21 — Normative Specification: Bitcoin Infrastructure Substrate
 
-**Status:** Experimental interoperability profile  
+**Status:** Experimental interoperability profile
 **Version:** 1.0  
 **Scope:** Veridag as Bitcoin Execution, UTXO Settlement, and SPV Substrate  
 

@@ -1,6 +1,6 @@
 # 19 — Normative Specification: USMCA & G8 Multilateral Sovereign Settlement (USDV)
 
-**Status:** Experimental application profile  
+**Status:** Experimental application profile
 **Version:** 1.0  
 **Scope:** Veridag Native Sovereign Digital Dollar, US Treasury Alignment, USMCA Trade Corridor Clearing, Proof of Reserves (PoR), and Compliance Engine  
 

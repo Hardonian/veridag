@@ -1,6 +1,6 @@
 # 20 — Normative Specification: Ethereum Infrastructure Substrate
 
-**Status:** Experimental interoperability profile  
+**Status:** Experimental interoperability profile
 **Version:** 1.0  
 **Scope:** Veridag as Ethereum L2 / High-Throughput Execution Substrate, EVM Interoperability, and L1 Settlement  
 
