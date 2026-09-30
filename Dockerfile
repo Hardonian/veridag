@@ -3,7 +3,7 @@ FROM rust:1.95-bookworm AS builder
 WORKDIR /usr/src/veridag
 COPY . .
 
-RUN cd implementations/rust && cargo build --release --bin veridag-node -p veridag-node
+RUN cargo build --release --locked --bin veridag-node -p veridag-node
 
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y ca-certificates curl \
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y ca-certificates curl \
     && mkdir -p /var/lib/veridag \
     && chown veridag:veridag /var/lib/veridag \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=builder --chown=veridag:veridag /usr/src/veridag/implementations/rust/target/release/veridag-node /usr/local/bin/veridag-node
+COPY --from=builder --chown=veridag:veridag /usr/src/veridag/target/release/veridag-node /usr/local/bin/veridag-node
 
 USER veridag
 WORKDIR /var/lib/veridag

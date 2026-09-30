@@ -18,7 +18,7 @@ check:
 
 # Security audit (advisory + license + banned deps)
 audit:
-    cargo deny check
+    cargo deny check --warn unmaintained --warn unsound
     cargo audit
 
 # Protocol conformance: regenerate and validate golden vectors

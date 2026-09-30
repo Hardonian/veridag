@@ -4,7 +4,7 @@
 
 [![Status](https://img.shields.io/badge/status-pre--GA-orange?style=for-the-badge)](docs/capability-matrix.md)
 [![Rust](https://img.shields.io/badge/Rust-1.95%2B-orange?style=for-the-badge&logo=rust)](https://www.rust-lang.org)
-[![Safety](https://img.shields.io/badge/unsafe-FORBIDDEN-blueviolet?style=for-the-badge&logo=shield)](implementations/rust/Cargo.toml)
+[![Safety](https://img.shields.io/badge/unsafe-FORBIDDEN-blueviolet?style=for-the-badge&logo=shield)](Cargo.toml)
 [![Formal Verification](https://img.shields.io/badge/Formal%20Model-Quint%20Verified-cyan?style=for-the-badge&logo=probot)](formal/quint/)
 [![License](https://img.shields.io/badge/License-Apache_2.0_|_MIT-blue?style=for-the-badge)](LICENSE-APACHE)
 [![Transport](https://img.shields.io/badge/Transport-QUIC_%2B_TLS_1.3-informational?style=for-the-badge)](implementations/rust/crates/net)

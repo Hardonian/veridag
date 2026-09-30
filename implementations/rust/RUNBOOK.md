@@ -1,38 +1,37 @@
-# Veridag go-live runbook (v0.2.0)
+# Veridag pre-GA runbook (v1.0.0)
 
 ## What this is
 A deterministic, Byzantine-resilient, capability-secured DAG-BFT execution
 substrate. One binary (`veridag-node`) runs the full vertical slice in-process:
 mempool → proposal → DAG → BaselineDagBft commit → parallel executor →
 checkpoint. Multi-process P2P and persistent crash recovery are wired behind
-the same crates (Phase 5 / Phase 9) but this alpha ships the consensus-critical
-path in-process so the whole pipeline is exercisable end-to-end.
+the same crates (Phase 5 / Phase 9), while the in-process mode keeps the whole
+pipeline directly exercisable for smoke tests.
 
 ## Prerequisites
 - Rust 1.95+ (workspace `rust-version`).
-- No external services required for the alpha: everything is local/in-process.
-- Heavy optional backends (libp2p, risc0, wasmtime) are feature-gated and NOT
-  compiled in the default build. Do NOT enable them unless you have network
-  access and want the optional feature; they are excluded from CI on purpose.
+- No external services are required for the local in-process demo.
+- Heavy optional backends (libp2p, RISC Zero, and Wasmtime) are feature-gated;
+  the strict CI gate compiles and tests all features.
 
 ## Build
 ```bash
-cd implementations/rust
+cd veridag
 cargo build --release
 ```
 Release profile: opt-level 3, thin LTO, codegen-units 1, panic=abort, strip.
-Binaries: `target/release/veridag-{node,cli,genesis}`.
+Binaries: `target/release/veridag-{node,cli,genesis}`. The repository-root
+`Cargo.toml` and `Cargo.lock` are the canonical workspace inputs used by local,
+CI, container, and release builds.
 
 ## Quality gate (run before any release)
 ```bash
 cargo fmt --all -- --check
-cargo clippy --workspace --all-targets -- -D warnings   # default features
-cargo test --workspace
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo test --workspace --all-features
 ```
-These pass for the default-feature build. The three optional heavy backends
-(libp2p/wasmtime/risc0) are feature-gated and intentionally excluded from the
-default CI job; each has its own documented feature-gated build path and is
-verified only when its dependency is available.
+These commands match the primary Rust CI gate, including the optional
+libp2p/Wasmtime/zkVM adapter paths.
 
 ## Health probe (go-live)
 ```bash

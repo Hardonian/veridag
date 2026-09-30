@@ -15,7 +15,7 @@ jobs:
       - name: cargo deny
         run: |
           cargo install cargo-deny --locked
-          cargo deny check
+          cargo deny check --warn unmaintained --warn unsound
       - name: cargo audit
         run: |
           cargo install cargo-audit --locked

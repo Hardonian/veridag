@@ -14,10 +14,10 @@ blake3.workspace = true
 thiserror.workspace = true
 
 [dev-dependencies]
-veridag-codec = { path = "../codec" }
-veridag-execution = { path = "../execution" }
-veridag-object-state = { path = "../object-state" }
-veridag-transaction = { path = "../transaction" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-execution = { version = "1.0.0", path = "../execution" }
+veridag-object-state = { version = "1.0.0", path = "../object-state" }
+veridag-transaction = { version = "1.0.0", path = "../transaction" }
 
 [lints]
 workspace = true

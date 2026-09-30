@@ -15,7 +15,7 @@ veridag-checkpoint = { version = "1.0.0", path = "../checkpoint" }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-veridag-object-state = { path = "../object-state" }
+veridag-object-state = { version = "1.0.0", path = "../object-state" }
 
 [features]
 default = []

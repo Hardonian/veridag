@@ -10,12 +10,12 @@ veridag-capabilities = { version = "1.0.0", path = "../capabilities" }
 veridag-codec = { version = "1.0.0", path = "../codec" }
 thiserror.workspace = true
 anyhow = { version = "1", optional = true }
-wasmtime = { version = "48", optional = true, default-features = false, features = ["cranelift", "runtime", "gc", "gc-drc"] }
+wasmtime = { version = "49.0.1", optional = true, default-features = false, features = ["cranelift", "runtime", "gc", "gc-drc"] }
 
 [features]
 default = []
 wasmtime = ["dep:wasmtime", "dep:anyhow"]
 
 [dev-dependencies]
-veridag-crypto = { path = "../crypto" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
 wat = "1"

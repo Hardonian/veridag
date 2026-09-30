@@ -21,7 +21,7 @@ sp1 = []
 risc0 = []
 
 [dev-dependencies]
-veridag-transaction = { path = "../transaction" }
+veridag-transaction = { version = "1.0.0", path = "../transaction" }
 
 [lints]
 workspace = true

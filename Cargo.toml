@@ -1,6 +1,6 @@
-# Veridag workspace (root is a virtual manifest; the Rust implementation lives
-# in implementations/rust). This file exists so repo-root tooling has a single
-# entry point. The working build manifest is implementations/rust/Cargo.toml.
+# Canonical Veridag Rust workspace manifest. Keep a single workspace and lockfile
+# at the repository root so local, CI, Docker, and release builds resolve the
+# same dependency graph.
 
 [workspace]
 members = ["implementations/rust/crates/*", "implementations/rust/bins/*"]

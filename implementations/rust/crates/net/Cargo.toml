@@ -19,18 +19,18 @@ rustls.workspace = true
 futures.workspace = true
 tracing.workspace = true
 async-trait.workspace = true
-libp2p = { version = "0.56", optional = true, default-features = false, features = ["tokio", "floodsub", "tcp", "noise", "yamux", "macros"] }
+libp2p = { version = "0.57", optional = true, default-features = false, features = ["tokio", "floodsub", "tcp", "noise", "yamux", "macros"] }
 
 [features]
 default = []
 libp2p = ["dep:libp2p"]
 
 [dev-dependencies]
-veridag-checkpoint = { path = "../checkpoint" }
-veridag-consensus = { path = "../consensus" }
-veridag-execution = { path = "../execution" }
-veridag-object-state = { path = "../object-state" }
-veridag-transaction = { path = "../transaction" }
+veridag-checkpoint = { version = "1.0.0", path = "../checkpoint" }
+veridag-consensus = { version = "1.0.0", path = "../consensus" }
+veridag-execution = { version = "1.0.0", path = "../execution" }
+veridag-object-state = { version = "1.0.0", path = "../object-state" }
+veridag-transaction = { version = "1.0.0", path = "../transaction" }
 hex.workspace = true
 
 [lints]
