@@ -6,7 +6,7 @@ export default function Home() {
       {/* Hero Section */}
       <section className="hero">
         <div className="hero-eyebrow">
-          <span>⚡ Protocol v1.0.0 Released</span>
+          <span>⚡ Pre-GA Reference Implementation</span>
           <span style={{ opacity: 0.5 }}>•</span>
           <span>🏛️ Sovereign Multilateral USDV</span>
           <span style={{ opacity: 0.5 }}>•</span>
@@ -20,7 +20,7 @@ export default function Home() {
           <span className="hero-gradient">Sovereign Finance, Cross-Chain Crypto &amp; Autonomous AI</span>
         </h1>
         <p className="hero-tagline">
-          Veridag is the high-throughput DAG-BFT consensus and execution fabric engineered for <strong>USDV</strong> sovereign multilateral dollar liquidity, native monetary clearing for the <strong>Settler</strong> reconciliation engine and <strong>Hardonian Sovereign AI Stack</strong>, and cryptographic verification across <strong>Bitcoin, Ethereum, and major crypto networks</strong>.
+          Veridag is a pre-GA DAG-BFT protocol and Rust reference engine for deterministic shared state, capability-secured execution, and privacy-preserving evidence anchoring across regulated and industrial systems.
         </p>
         <div className="hero-actions">
           <Link href="/quickstart" className="btn-primary">
@@ -49,23 +49,21 @@ export default function Home() {
               <span style={{ fontSize: "28px" }}>🏛️</span>
               <div>
                 <h3 style={{ margin: 0, color: "var(--accent-emerald-bright)" }}>USMCA &amp; G8 Multilateral Dollar (USDV)</h3>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>100% US Treasury Backed • Trade Settlement</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Experimental controls • Operator-managed reserves</span>
               </div>
             </div>
             <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", marginBottom: "16px" }}>
-              Engineered for USMCA cross-border trade clearing and G8 economic forum standards.
-              Collateralized 1:1 by short-term US Treasury bills, overnight reverse repo, and FDIC cash deposits.
-              Features mathematical Proof of Reserves (PoR) in state roots and capability-enforced OFAC compliance.
+              Experimental settlement objects, reserve-attestation commitments, and capability-gated controls for regulated pilot programs. Veridag does not itself issue, custody, or certify backing for any asset.
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "8px" }}>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> US Strategic Alignment: 100% backed by short-term US Treasuries &amp; Fed RRP
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Reserve evidence can be committed without publishing source records
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> USMCA Trade Corridors: Sub-100ms wave settlement eliminating FX settlement risk
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> ISO 20022 validation and deterministic settlement adapters
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> G8 Economic Governance: Real-time OFAC &amp; FATF capability compliance
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Policy hooks for operator-provided compliance decisions
               </li>
             </ul>
           </div>
@@ -130,23 +128,21 @@ export default function Home() {
               <span style={{ fontSize: "28px" }}>⛓️</span>
               <div>
                 <h3 style={{ margin: 0, color: "var(--accent-cyan-bright)" }}>Ethereum &amp; EVM Infrastructure</h3>
-                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>L2 Sequencer &amp; Trustless L1 Bridge</span>
+                <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>Experimental RPC facade &amp; federated relay</span>
               </div>
             </div>
             <p style={{ fontSize: "14px", lineHeight: "1.6", color: "var(--text-main)", marginBottom: "16px" }}>
-              High-throughput DAG-BFT sequencing and settlement for Ethereum and EVM ecosystems. Delivers zero-reorg finality,
-              native EVM JSON-RPC provider (<code>eth_*</code>), trustless on-chain checkpoint verification in Solidity
-              (<code>VeridagLightClient.sol</code>), and two-way cross-chain portals.
+              Experimental Ethereum compatibility types, BMH-1 proof verification, and pre-audit Solidity contracts. The current relay uses an authorized threshold and does not execute EVM bytecode.
             </p>
             <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "13px", color: "var(--text-muted)", display: "flex", flexDirection: "column", gap: "8px" }}>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> L1 Light Client: 2f+1 quorum verification in Solidity
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> Sequential checkpoint approval by configurable relayer threshold
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> BMH-1 Merkle inclusion proofs for trustless bridge withdrawals
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> BMH-1 inclusion verification bound to withdrawal data
               </li>
               <li style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> Native EVM JSON-RPC provider (Chain ID 0x5645)
+                <span style={{ color: "var(--accent-cyan-bright)" }}>✓</span> Limited EVM JSON-RPC compatibility facade (Chain ID 0x5645)
               </li>
             </ul>
           </div>
@@ -163,7 +159,7 @@ export default function Home() {
               <span className="terminal-dot dot-green"></span>
             </div>
             <span className="terminal-title">veridag-cli — Sovereign USDV, Hardonian Settler, Bitcoin SPV &amp; EVM rails</span>
-            <span style={{ fontSize: "11px", color: "var(--accent-emerald-bright)" }}>● 100% VERIFIED</span>
+            <span style={{ fontSize: "11px", color: "var(--accent-emerald-bright)" }}>● DEMONSTRATION OUTPUT</span>
           </div>
           <div className="terminal-body">
             <div><span className="terminal-prompt">$ </span>veridag-cli usdv attest-reserves --tbills 80000000 --cash 15000000 --repo 5000000</div>
@@ -227,10 +223,10 @@ export default function Home() {
           </div>
           <div className="card">
             <span className="card-icon">🚀</span>
-            <h3>Sub-10MB Edge Footprint</h3>
+            <h3>Self-Contained Validator</h3>
             <p>
-              Single static binary with zero external services. No Docker, no Kubernetes, no Postgres,
-              and no Kafka required. Runs on Raspberry Pis and cloud VMs alike.
+              Embedded persistence avoids mandatory database sidecars. Release artifacts carry checksums,
+              SBOMs, and provenance; operators must benchmark their target platform.
             </p>
           </div>
           <div className="card">
@@ -246,30 +242,27 @@ export default function Home() {
 
       {/* Target Use Cases */}
       <section>
-        <h2>🎯 High-Value Production Use Cases</h2>
+        <h2>🎯 High-Value Pilot Use Cases</h2>
         <div className="card-grid">
           <div className="card">
             <span className="card-icon">🏛️</span>
             <h3>USMCA &amp; G8 Sovereign Settlement (USDV)</h3>
             <p>
-              Institutional digital dollar collateralized 1:1 by short-term US Treasuries and Fed RRP,
-              eliminating foreign exchange settlement risk across multilateral trade corridors.
+              Experimental asset controls and reserve-evidence commitments for operator-managed regulated settlement pilots.
             </p>
           </div>
           <div className="card">
             <span className="card-icon">🤝</span>
             <h3>Settler Reconciliation &amp; Audit OS</h3>
             <p>
-              Native on-chain anchor and payout substrate for the Settler reconciliation engine, ensuring
-              enterprise proofpack integrity with mathematical zero-variance guarantee.
+              Evidence anchors and deterministic payout adapters for Settler reconciliation runs, with source records retained off-chain.
             </p>
           </div>
           <div className="card">
             <span className="card-icon">🌐</span>
             <h3>Universal Multi-Chain Rails</h3>
             <p>
-              Trustless cross-chain SPV header tracking, UTXO proof verification, zero-reorg L2 sequencing,
-              and native EVM JSON-RPC connectivity across Bitcoin, Ethereum, and major crypto networks.
+              Experimental Bitcoin header/proof primitives and a limited Ethereum JSON-RPC compatibility layer, with production chain operations still gated.
             </p>
           </div>
           <div className="card">

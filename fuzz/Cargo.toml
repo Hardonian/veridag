@@ -1,0 +1,25 @@
+[package]
+name = "veridag-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+veridag-codec = { version = "1.0.0", path = "../implementations/rust/crates/codec" }
+veridag-dag = { version = "1.0.0", path = "../implementations/rust/crates/dag" }
+veridag-transaction = { version = "1.0.0", path = "../implementations/rust/crates/transaction" }
+
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "canonical-decoders"
+path = "fuzz_targets/canonical_decoders.rs"
+test = false
+doc = false
+bench = false
+

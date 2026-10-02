@@ -15,12 +15,9 @@ jobs:
   rust:
     name: fmt + clippy + test + release build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: implementations/rust
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
         with:
           components: rustfmt, clippy, rust-src
       - uses: Swatinem/rust-cache@v2
@@ -52,12 +49,9 @@ jobs:
   cross-edge:
     name: edge target (aarch64-unknown-linux-gnu)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: implementations/rust
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
         with:
           targets: aarch64-unknown-linux-gnu
       - uses: Swatinem/rust-cache@v2
@@ -82,8 +76,10 @@ jobs:
           node-version: 22
       - name: install & test
         run: |
-          npm ci || npm install
+          npm ci
           npm test
+          npm run build
+          npm run verify-package
 
   # Python SDK conformance on every PR.
   sdk-python:
@@ -101,7 +97,23 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          uv run python -m unittest discover -s tests
+          uv sync --extra dev --locked
+          uv run pytest -q
+          uv build
+
+  industry-packs:
+    name: Industry pack manifests and adapters
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@1.95
+      - name: validate manifests
+        run: python scripts/validate-industry-packs.py
+      - name: test adapters
+        run: cargo test -p veridag-industry
 
   # Verify the Next.js site builds without errors.
   site:
@@ -117,5 +129,41 @@ jobs:
           node-version: 22
       - name: install & build
         run: |
-          npm ci || npm install
+          npm ci
           npm run build
+
+  solidity:
+    name: Solidity tests and fuzzing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: format
+        run: forge fmt --check
+      - name: unit, fuzz, and invariant tests
+        run: forge test -vvv
+
+  docker-devnet:
+    name: Docker devnet build, agreement, and restart recovery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: validate Compose configuration
+        run: docker compose config --quiet
+      - name: build and start validators
+        run: docker compose up -d --build
+      - name: soak and restart one validator
+        run: python3 scripts/devnet-soak.py --duration 45 --interval 3 --restart-service node4
+      - name: capture validator logs
+        if: always()
+        run: docker compose logs --no-color > docker-devnet.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-devnet-logs
+          path: docker-devnet.log
+      - name: stop validators
+        if: always()
+        run: docker compose down --volumes

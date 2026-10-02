@@ -1,0 +1,23 @@
+name: fuzz
+
+on:
+  pull_request:
+    paths:
+      - "implementations/rust/crates/codec/**"
+      - "implementations/rust/crates/transaction/**"
+      - "implementations/rust/crates/dag/**"
+      - "fuzz/**"
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  canonical-decoders:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@nightly
+      - run: cargo install cargo-fuzz --locked
+      - name: fuzz canonical decoders
+        run: cargo fuzz run canonical-decoders --fuzz-dir fuzz -- -max_total_time=60 -timeout=5
+

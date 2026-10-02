@@ -1,17 +1,17 @@
-# USDV: USMCA & G8 Sovereign Multilateral Settlement Architecture
+# USDV: Experimental Regulated-Settlement Architecture
 
-**USDV (Veridag Dollar)** is an institutional sovereign digital dollar engineered for **USMCA** (United States-Mexico-Canada Agreement) cross-border trade corridors and **G8 economic forum** multilateral settlement, anchored by direct US Treasury collateral and built natively on the Veridag DAG-BFT consensus substrate.
+**USDV (Veridag Dollar)** is an experimental asset and control model for regulated-settlement pilots on Veridag. The code does not create reserve backing, legal authorization, custody, or regulatory compliance; those are deployment responsibilities of an authorized operator.
 
 ---
 
 ## 1. Executive Summary
 
-Traditional cross-border settlement and commercial stablecoins (USDT, USDC) rely either on opaque centralized databases or high-fee, reorg-vulnerable smart contracts prone to settlement delay and counterparty exposure. USDV establishes an institutional sovereign financial rail by providing:
+The prototype demonstrates the following technical building blocks:
 
-- **Direct US Strategic & Treasury Alignment:** 100% backed by short-term US Treasury Bills ($\le 90$ days), overnight reverse repurchase agreements (RRP), and FDIC-insured cash deposits, with cryptographic Proof of Reserves (PoR) committed into every state root.
-- **USMCA Cross-Border Trade Corridor Clearing:** Sub-100ms wave finality removes foreign exchange settlement risk (Herstatt risk), cross-border clearing friction, and correspondent banking delays across United States, Canada, and Mexico trade flows.
-- **G8-Grade Multilateral Settlement Invariants:** Compliant with CPMI-IOSCO Principles for Financial Market Infrastructures (PFMI) and Basel III liquidity standards, guaranteeing deterministic settlement without MEV re-ordering.
-- **Capability-Gated Institutional Compliance:** Programmable, multi-sig capability keys enforce real-time OFAC sanctions screening, FATF Travel Rule compliance, address freeze/unfreeze, and court-ordered fund quarantine without unilateral backdoors.
+- **Reserve evidence commitments:** Signed reserve figures can be committed to state and used to bound protocol-side minting. The software does not verify custodians or reserve assets.
+- **Deterministic settlement:** Fixed-precision transitions and checkpoint commitments support measurable corridor pilots; no latency or risk-elimination claim is made without deployment evidence.
+- **Policy controls:** Separate capabilities govern minting, burning, freezing, pausing, and reserve updates. Sanctions data and legal decisions are supplied by the operator.
+- **Control mapping:** Architecture can be assessed against PFMI, Basel, and jurisdiction-specific requirements, but no conformance or approval is implied.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -22,13 +22,13 @@ Traditional cross-border settlement and commercial stablecoins (USDT, USDC) rely
 │                              │ • FDIC-Insured Cash Deposits │
 ├──────────────────────────────┼──────────────────────────────┤
 │ 📜 Proof of Reserves Oracle  │ • Signed Attestation Epochs  │
-│                              │ • BNY Mellon / State Street  │
+│                              │ • Operator-selected custodian│
 ├──────────────────────────────┼──────────────────────────────┤
 │ 🛡️ Invariant State Engine    │ • Supply <= Reserves         │
 │                              │ • Supply == Sum(Balances)    │
 │                              │ • 6-Decimal Fixed Precision  │
 ├──────────────────────────────┼──────────────────────────────┤
-│ ⚡ Settlement Substrate       │ • Sub-100ms Wave Finality    │
+│ ⚡ Settlement Substrate       │ • Measured per deployment    │
 │                              │ • Pure-Function DAG-BFT      │
 └──────────────────────────────┴──────────────────────────────┘
 ```

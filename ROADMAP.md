@@ -11,9 +11,10 @@ ordering, execution, state (BMH-1), checkpoints, membership, upgrades.
 
 ## Phase 1 — Formal consensus model (DONE in this tree)
 
-`formal/quint/consensus.qnt` + `invariants.qnt`: validators, rounds, vertices,
-parents, equivocation, quorum commit rule, Agreement/Finality/Integrity
-invariants. Checked with `quint typecheck` and `quint run --invariant`.
+`formal/quint/consensus.qnt`, `instance4.qnt`, and `consensus_test.qnt`:
+validators, rounds, vertices, parents, equivocation, quorum commit rule, and
+Agreement/Finality/Integrity invariants. Checked with `quint typecheck`,
+`quint test`, and `quint run --invariant`.
 
 ## Phase 2 — Protocol vectors (DONE in this tree)
 
@@ -125,16 +126,16 @@ multiplication, and C/Zig foreign acceleration hooks under strict `#![forbid(uns
 `veridag-stablecoin`: US-aligned sovereign digital dollar for USMCA trade corridor clearing
 and G8 economic forum multilateral treasury settlement. 100% reserve-backed (US Treasuries,
 FDIC cash deposits, Reverse Repo), cryptographically verified Proof-of-Reserves (PoR) in
-state roots, capability-gated mint/burn/pause, and real-time OFAC compliance sanctions
+state roots, capability-gated mint/burn/pause, and hooks for operator-supplied sanctions
 screening. Normative spec 19. Mathematical conservation-of-value invariant checked across
 all transitions.
 
-## Phase 19 — Iron-Clad Ethereum Infrastructure Substrate (DONE in this tree)
+## Phase 19 — Ethereum Interoperability Substrate (EXPERIMENTAL)
 
-`veridag-ethereum`: EVM JSON-RPC provider (`eth_chainId`, `eth_blockNumber`, `eth_getBalance`),
-BMH-1 Merkle inclusion proof generator for L1 contracts, and two-way cross-chain bridge
-primitives. Production Solidity contracts: `USDV.sol`, `VeridagLightClient.sol`, and
-`VeridagBridge.sol`. Normative spec 20.
+`veridag-ethereum`: EVM JSON-RPC compatibility types (`eth_chainId`, `eth_blockNumber`,
+`eth_getBalance`), BMH-1 proof generation, and cross-chain bridge primitives.
+Pre-audit Solidity prototypes: `USDV.sol`, `VeridagLightClient.sol`, and
+`VeridagBridge.sol`. This is not an EVM implementation or trustless light client.
 
 ## Phase 20 — Dynamic Validator Membership & Reconfiguration (DONE in this tree)
 
@@ -154,11 +155,11 @@ for validator node operations, consensus round timing, commit rates, and DAG thr
 and deserialization, and state sync primitives enabling newly onboarded institutional validators
 to bootstrap to consensus height without replaying historical DAG waves.
 
-## Phase 23 — Enterprise Cloud KMS & HSM Signer Substrate (DONE in this tree)
+## Phase 23 — Cloud KMS & HSM Signer Boundary (INTERFACE ONLY)
 
 `veridag-crypto`: Pluggable key management abstraction (`KeySigner` trait) with local software
-implementation (`LocalKeySigner`) and institutional hardware security module / Cloud KMS driver
-(`RemoteKmsSigner`) supporting AWS KMS, Google Cloud KMS, Azure Key Vault, and PKCS#11 HSMs.
+implementation (`LocalKeySigner`). `RemoteKmsSigner` is a fail-closed integration
+boundary; AWS, Google Cloud, Azure, and PKCS#11 providers remain future work.
 
 ## Phase 24 — Multi-Chain Asset Integration & Speculative Batch Compactor (DONE in this tree)
 
@@ -183,9 +184,10 @@ ReadyLayer, nlsqlc, mcpwall, and TokenGoblin. Normative spec 22.
 
 ## Release status
 
-`0.1.0-alpha` — reference implementation compiles clean (`cargo clippy
---workspace --all-targets --all-features -- -D warnings`), all workspace tests
-green, release binary builds (`panic = "abort"`, `strip = true`) and the demo
-produces identical state roots + checkpoints across 4 validators. See
-`docs/quickstart.md` for universal onboarding and `docs/architecture.md` for
-the system design.
+Pre-GA. The numbered phases above record protocol and reference-implementation
+milestones; `DONE in this tree` does not by itself mean production-ready or
+independently audited. The workspace tests and strict Clippy gate pass, and the
+four-validator development network reaches agreement over QUIC. Production
+promotion additionally requires the runtime, security, packaging, recovery,
+benchmark, and external-review gates tracked in
+[`docs/capability-matrix.md`](docs/capability-matrix.md).

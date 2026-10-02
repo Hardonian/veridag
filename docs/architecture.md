@@ -44,7 +44,7 @@ benchmark numbers. Every hot-path choice is made to stay predictable and cheap:
 |-------|----------------|
 | `veridag-protocol-types` | Canonical identifiers, core types, domain tags |
 | `veridag-codec` | VCE-1 encoder/decoder (canonical wire form) |
-| `veridag-crypto` | BLAKE3 hashing, Ed25519 sign/verify, domain preimages, pluggable `KeySigner` (AWS/GCP/Azure KMS, PKCS#11 HSM) |
+| `veridag-crypto` | BLAKE3 hashing, Ed25519 sign/verify, domain preimages, and a fail-closed `KeySigner` integration boundary; cloud KMS/HSM providers are not implemented |
 | `veridag-merkle` | BMH-1 state commitments + inclusion proofs |
 | `veridag-transaction` | Transaction model, validation, anti-replay |
 | `veridag-capabilities` | Object-capability authorization tokens and enforcement |
@@ -134,6 +134,7 @@ from the consensus-critical QUIC mesh.
 
 ## Capabilities summary
 
-The reference implementation spans Phases 0–26 of the protocol roadmap. All
-phases are complete and tested. See `ROADMAP.md` for per-phase details and
-`CHANGELOG.md` for the release history.
+The reference implementation contains artifacts associated with Phases 0–26 of
+the protocol roadmap, at capability levels ranging from integrated beta to
+interface-only. See `capability-matrix.md` for deployment status, `ROADMAP.md`
+for milestone history, and `CHANGELOG.md` for the release history.

@@ -6,12 +6,43 @@ software version (see `protocol/specification/17-upgrades.md`).
 
 ## [Unreleased]
 
-_No unreleased changes._
+### Added
+- Docker devnet agreement/progress soak with single-validator restart evidence.
+- CI gates for the container devnet, Foundry fuzz/invariant tests, Slither, the
+  Quint model, industry manifests, SDKs, and the production site build.
+- An explicit release-readiness checklist separating executable software gates
+  from independent audit, multi-region operations, and regulatory approvals.
+- A seeded canonical-decoder libFuzzer corpus and a memory-bounded Docker fuzz
+  command matching the nightly CI campaign.
+
+### Changed
+- Container builds now use a bounded build context, cached Rust compilation,
+  and a single build job to remain reliable under Docker Desktop resource caps.
+- Validator recovery re-advertises its persisted frontier and performs bounded,
+  overlapping DAG catch-up after restart.
+- The real-QUIC devnet test now waits for a target-round quorum instead of the
+  first target-round vertex, eliminating a timing-dependent checkpoint race.
+- Solidity bridge and checkpoint paths use reentrancy protection, checked token
+  results, replay protection, and checks-effects-interactions ordering.
+- Rust workspace packages now publish in dependency order without requiring
+  unpublished internal dev-dependencies. Release bundles retain SHA-256
+  manifests, SPDX SBOMs, and tag-bound provenance attestations.
+- `just` recipes now run through native PowerShell on Windows and Bash on Unix,
+  including the containerized fuzz and complete release-gate entry points.
+- Formal verification now uses a repository-pinned Quint npm toolchain in both
+  local release gates and CI instead of an implicit global installation.
+
+### Status
+- Repository-local gates are green. Veridag remains pre-GA; no repository
+  artifact substitutes for an independent audit, production operating record,
+  or jurisdiction-specific authorization.
 
 ## [1.0.0] - 2026-09-29
 
-Production go-live release. All 26 protocol phases complete, tested, and
-production-hardened.
+Reference implementation release covering the numbered protocol milestones.
+This version number is not a production-readiness, audit, or regulatory claim;
+promotion remains governed by `docs/capability-matrix.md` and
+`docs/release-readiness.md`.
 
 ### Added
 - Structured logging via `tracing-subscriber` with `RUST_LOG` env filter and
@@ -77,11 +108,15 @@ settlement pipeline is complete and tested across Phases 0–26.
 - Phase 16: `veridag-da` — 2D Reed-Solomon tensor erasure coding with iterative recovery and validator replication schemes.
 - Phase 17: `veridag-da::hw_accel` — Chunk-unrolled SIMD vector XOR and batch GF(2^8) acceleration hooks.
 - Phase 18: `veridag-stablecoin` — USMCA & G8 multilateral sovereign digital dollar (USDV), Proof-of-Reserves, and OFAC sanctions compliance.
-- Phase 19: `veridag-ethereum` — EVM JSON-RPC provider, BMH-1 Merkle inclusion proofs, and Solidity contracts (`USDV.sol`, `VeridagBridge.sol`, `VeridagLightClient.sol`).
+- Phase 19: `veridag-ethereum` — Experimental EVM JSON-RPC compatibility types,
+  BMH-1 Merkle inclusion proofs, and pre-audit Solidity contracts
+  (`USDV.sol`, `VeridagBridge.sol`, `VeridagLightClient.sol`).
 - Phase 20: `veridag-consensus` — Dynamic committee reconfiguration with weighted stakes (2W/3 + 1) and seamless epoch handovers.
 - Phase 21: `veridag-metrics` — Enterprise OpenMetrics/Prometheus exposition exporter with DAG throughput and TPS telemetry.
 - Phase 22: `veridag-storage` — State snapshotting, archival pruning policies, and institutional fast sync protocol.
-- Phase 23: `veridag-crypto` — Pluggable `KeySigner` substrate supporting AWS KMS, GCP KMS, Azure Key Vault, and PKCS#11 HSMs.
+- Phase 23: `veridag-crypto` — Pluggable `KeySigner` boundary with a local
+  signer. AWS KMS, GCP KMS, Azure Key Vault, and PKCS#11 providers are not
+  implemented in this release.
 - Phase 24: `veridag-execution` — Native multi-chain asset typing (`Usdv`, `Btc`, `Eth`, `Sol`) and speculative parallel batch compaction.
 - Phase 25: `veridag-bitcoin` — Bitcoin SPV client with canonical 80-byte header parser, nBits PoW validation, and UTXO bridge codecs.
 - Phase 26: Hardonian Stack & Settler Native Layer — Deep integration with Settler reconciliation engine, proofpack anchors, and sovereign AI stack.

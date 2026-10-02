@@ -137,6 +137,8 @@ pub mod object_type {
     pub const SETTLER_ANCHOR: u32 = 5;
     /// Consortium tenant registry object.
     pub const CONSORTIUM_TENANT: u32 = 6;
+    /// Privacy-preserving cross-industry evidence anchor.
+    pub const EVIDENCE_ANCHOR: u32 = 7;
 }
 
 // --- VCE-1 canonical encodings for protocol types ---------------------------

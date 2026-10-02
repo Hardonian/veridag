@@ -1,0 +1,12 @@
+{
+  "name": "veridag-quint-model",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned Quint toolchain for the Veridag consensus model",
+  "devDependencies": {
+    "@informalsystems/quint": "0.33.0"
+  },
+  "overrides": {
+    "adm-zip": "0.6.1"
+  }
+}

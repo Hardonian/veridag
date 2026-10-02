@@ -20,7 +20,7 @@ export const metadata = {
   openGraph: {
     title: "Veridag — Deterministic Distributed Trust Fabric",
     description:
-      "Pure-function DAG-BFT consensus, zero-unsafe Rust core, native capability security, and sub-10MB edge footprint.",
+      "Pre-GA DAG-BFT protocol, zero-unsafe Rust core, capability security, and cross-industry evidence anchoring.",
     url: "https://veridag.dev",
     siteName: "Veridag",
     type: "website",
@@ -31,6 +31,7 @@ const nav = [
   { href: "/", label: "Home" },
   { href: "/protocol", label: "Protocol" },
   { href: "/architecture", label: "Architecture" },
+  { href: "/industries", label: "Industries" },
   { href: "/explorer", label: "Explorer" },
   { href: "/faucet", label: "Faucet" },
   { href: "/enterprise", label: "Enterprise" },
@@ -52,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <span className="brand-icon">⚡</span>
               <span>Veridag</span>
             </Link>
-            <span className="brand-badge">v1.0.0</span>
+            <span className="brand-badge">PRE-GA</span>
           </div>
           <nav>
             {nav.map((n) => (

@@ -1,6 +1,6 @@
 # 19 — Normative Specification: USMCA & G8 Multilateral Sovereign Settlement (USDV)
 
-**Status:** Normative  
+**Status:** Experimental application profile
 **Version:** 1.0  
 **Scope:** Veridag Native Sovereign Digital Dollar, US Treasury Alignment, USMCA Trade Corridor Clearing, Proof of Reserves (PoR), and Compliance Engine  
 
@@ -8,14 +8,14 @@
 
 ## 1. Overview
 
-**USDV (Veridag Dollar)** is an institutional sovereign digital dollar engineered for **USMCA** (United States-Mexico-Canada Agreement) cross-border trade corridors and **G8 economic forum** multilateral treasury settlement, with direct US Treasury collateral alignment and built natively on the Veridag DAG-BFT consensus substrate.
+**USDV (Veridag Dollar)** specifies an experimental regulated-asset profile on the Veridag substrate. It defines deterministic accounting and authorization rules; it does not assert reserve backing, custody, legal status, or regulatory approval.
 
-Unlike algorithmic or weakly-governed tokens, USDV guarantees:
+Conforming implementations provide these protocol properties:
 
-1. **Direct US Treasury Collateral Invariant:** Total circulating supply is mathematically bounded by cryptographically attested institutional reserves (US Treasury bills with maturities $\le 90$ days, overnight reverse repurchase agreements, and FDIC-insured cash deposits).
-2. **USMCA Trade Corridor Clearing:** Sub-100ms wave finality eliminates foreign exchange settlement (Herstatt) risk and counterparty exposure across North American cross-border commercial transactions.
+1. **Attested Reserve Bound:** Total circulating supply is bounded by the latest accepted reserve attestation. Authenticity and asset quality remain operator responsibilities.
+2. **Deterministic Corridor Processing:** Accepted instructions settle according to the consensus rules; performance and risk reduction must be established for each deployment.
 3. **Deterministic Micro-Unit Accounting:** Fixed 6-decimal precision ($10^{-6}$ USD) stored in 128-bit integers (`u128`), ensuring zero loss of precision across multi-billion-dollar transaction batches.
-4. **Capability-Enforced Treaty & Statutory Compliance:** Minting, burning, sanctions enforcement, and reserve updates require distinct, unforgeable cryptographic capabilities. Real-time OFAC and FATF screening without unilateral backdoor vulnerabilities.
+4. **Capability-Enforced Policy Actions:** Minting, burning, freezes, and reserve updates require distinct capabilities. External screening services and authorized operators supply policy decisions.
 
 ---
 

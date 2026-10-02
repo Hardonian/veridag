@@ -16,7 +16,7 @@ export default function Quickstart() {
       </div>
 
       <h2>1. Prerequisites &amp; Setup</h2>
-      <p>Veridag requires only standard <strong>Rust 1.85+</strong> (edition 2021):</p>
+      <p>Veridag requires standard <strong>Rust 1.95+</strong> (edition 2021):</p>
       <pre><code>{`# Linux, macOS, WSL2:
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 rustup default stable
@@ -55,10 +55,10 @@ cd veridag`}</code></pre>
 
       <h2>4. Launching the HTTP / JSON-RPC Node Daemon</h2>
       <p>
-        Start the production validator node daemon with the built-in HTTP RPC server listening on port <code>8080</code>:
+        Start a local development validator with explicit development credentials and genesis state:
       </p>
-      <pre><code>{`# Launch validator node daemon with HTTP RPC enabled
-cargo run -p veridag-node -- run --validator-seed 1 --rpc 0.0.0.0:8080
+      <pre><code>{`# Launch a local validator with persistent state
+cargo run -p veridag-node -- daemon --seed 1 --dev-genesis --rpc 127.0.0.1:8080 --data-dir ./data/node-1
 
 # In another terminal, query node health & state root
 curl http://127.0.0.1:8080/v1/health

@@ -1,0 +1,16 @@
+.git
+.github
+.kilo
+target
+**/target
+**/node_modules
+site/.next
+**/.venv
+**/__pycache__
+**/*.pyc
+sdks/python/build
+sdks/python/dist
+sdks/python/*.egg-info
+formal/quint/_apalache-out
+release
+*.log

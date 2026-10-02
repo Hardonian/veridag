@@ -3,11 +3,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 1 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node2:8000,node3:8000,node4:8000
+    command: daemon --seed 1 --dev-genesis --insecure-rpc --data-dir /var/lib/veridag --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node2:8000,node3:8000,node4:8000
     ports:
       - "8001:8000"
       - "8081:8080"
     restart: unless-stopped
+    volumes:
+      - node1-data:/var/lib/veridag
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/v1/health"]
       interval: 10s
@@ -19,11 +21,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 2 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node3:8000,node4:8000
+    command: daemon --seed 2 --dev-genesis --insecure-rpc --data-dir /var/lib/veridag --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node3:8000,node4:8000
     ports:
       - "8002:8000"
       - "8082:8080"
     restart: unless-stopped
+    volumes:
+      - node2-data:/var/lib/veridag
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/v1/health"]
       interval: 10s
@@ -35,11 +39,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 3 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node4:8000
+    command: daemon --seed 3 --dev-genesis --insecure-rpc --data-dir /var/lib/veridag --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node4:8000
     ports:
       - "8003:8000"
       - "8083:8080"
     restart: unless-stopped
+    volumes:
+      - node3-data:/var/lib/veridag
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/v1/health"]
       interval: 10s
@@ -51,14 +57,22 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: daemon --seed 4 --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node3:8000
+    command: daemon --seed 4 --dev-genesis --insecure-rpc --data-dir /var/lib/veridag --bind 0.0.0.0:8000 --rpc 0.0.0.0:8080 --peers node1:8000,node2:8000,node3:8000
     ports:
       - "8004:8000"
       - "8084:8080"
     restart: unless-stopped
+    volumes:
+      - node4-data:/var/lib/veridag
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/v1/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+
+volumes:
+  node1-data:
+  node2-data:
+  node3-data:
+  node4-data:
