@@ -5,41 +5,37 @@ export default function EnterprisePage() {
     <div>
       <h1>Enterprise &amp; Institutional Gateway</h1>
       <p className="tagline">
-        Sovereign multilateral settlement, 100% Treasury-backed digital dollars (USDV), and cross-border trade clearing across the USMCA trade corridor.
+        Pre-GA infrastructure for deterministic multi-party workflows, evidence anchoring, and regulated settlement pilots.
       </p>
 
       {/* Hero Pillars */}
       <div className="card-grid" style={{ margin: "28px 0" }}>
         <div className="card">
           <span className="card-icon">🏛️</span>
-          <h3>100% US Treasury Backed</h3>
+          <h3>Reserve Evidence Model</h3>
           <p>
-            USDV is backed exclusively by short-term US Treasury Bills (4–13 weeks), Federal Reserve Overnight Reverse Repo,
-            and FDIC-insured cash held in segregated bankruptcy-remote trust accounts.
+            Reserve-attestation commitments and capability-gated asset controls are implemented for pilot use. Backing, custody, and attestations are responsibilities of the issuing operator.
           </p>
         </div>
         <div className="card">
           <span className="card-icon">🚛</span>
           <h3>USMCA Trade Clearing</h3>
           <p>
-            Compliant under USMCA Chapter 19 (Digital Trade). Replaces 72-hour correspondent banking wires with
-            sub-300ms atomic gross settlement and zero currency slippage.
+            ISO 20022 adapters and deterministic settlement primitives can support corridor pilots. Legal compliance, finality requirements, and performance must be validated per deployment.
           </p>
         </div>
         <div className="card">
           <span className="card-icon">🔐</span>
-          <h3>FIPS 140-2 Cloud KMS</h3>
+          <h3>External Key Boundary</h3>
           <p>
-            Hardware Security Module (HSM) signing substrate supporting AWS KMS, GCP Cloud KMS, Azure Key Vault,
-            and PKCS#11 devices for regulated banking institutions.
+            Local key-file loading is implemented with permission checks. The cloud KMS/HSM interface fails closed until a reviewed provider integration is installed.
           </p>
         </div>
         <div className="card">
           <span className="card-icon">🛡️</span>
           <h3>Real-Time OFAC Screening</h3>
           <p>
-            Autonomous consensus-level sanctions filtering built directly into the deterministic state machine,
-            blocking prohibited counterparties before checkpoint commitment.
+            Capability controls support operator-supplied policy decisions before execution. Veridag does not ship a sanctions-list data service or make compliance determinations.
           </p>
         </div>
       </div>
@@ -98,7 +94,7 @@ export default function EnterprisePage() {
       {/* Institutional Virtual Data Room & Diligence */}
       <h2>Institutional Due Diligence &amp; Data Room</h2>
       <p>
-        The complete institutional diligence archive is accessible to qualified investors, banking partners, and consortium candidates:
+        The repository contains planning and control-mapping artifacts for technical diligence. Legal opinions, audit reports, commercial terms, and third-party certifications must be supplied by the operating entity:
       </p>
 
       <div className="card-grid">
@@ -109,7 +105,7 @@ export default function EnterprisePage() {
             <li>SEC / Howey Test Non-Security Legal Opinion</li>
             <li>OFAC Sanctions Filtering &amp; Freeze Policy</li>
             <li>USMCA Chapter 19 Digital Trade Memorandum</li>
-            <li>Enterprise Master Services Agreement (MSA) &amp; 99.999% SLA</li>
+            <li>Draft enterprise agreement and deployment-specific SLO template</li>
           </ul>
         </div>
         <div className="card">
@@ -156,7 +152,7 @@ export default function EnterprisePage() {
             Developer Testnet Faucet
           </Link>
           <Link href="/explorer" className="btn-secondary">
-            Live DAG Explorer
+            Demonstration Explorer
           </Link>
         </div>
       </div>

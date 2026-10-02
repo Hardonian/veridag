@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "supply-chain.gs1-epcis",
+  "name": "GS1 EPCIS Traceability",
+  "standard": "GS1 EPCIS 2.0.1",
+  "normative_url": "https://ref.gs1.org/standards/epcis/2.0.1/",
+  "profile": "Gs1Epcis",
+  "media_types": ["application/json", "application/ld+json"],
+  "rust_adapter": "veridag_industry::IndustryProfile::Gs1Epcis",
+  "data_policy": "anchor-digest-only",
+  "status": "experimental"
+}

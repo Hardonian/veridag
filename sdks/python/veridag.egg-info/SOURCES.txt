@@ -1,7 +1,10 @@
+README.md
 pyproject.toml
+tests/test_client.py
 tests/test_conformance.py
 veridag/__init__.py
 veridag/builder.py
+veridag/client.py
 veridag/codec.py
 veridag/crypto.py
 veridag/types.py

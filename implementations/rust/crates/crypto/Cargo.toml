@@ -5,14 +5,16 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
-veridag-protocol-types = { path = "../protocol-types" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
 blake3.workspace = true
 ed25519-dalek.workspace = true
 getrandom = "0.4"
 thiserror.workspace = true
-veridag-metrics = { path = "../metrics", optional = true }
+veridag-metrics = { version = "1.0.0", path = "../metrics", optional = true }
 criterion = { version = "0.8", optional = true, default-features = false }
 
 [lints]

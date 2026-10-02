@@ -2,9 +2,17 @@
 
 ## Reporting
 
-Report vulnerabilities privately to the maintainers. Do not open public issues for
-security reports. Include: affected component, protocol version, reproduction or
-trace, impact assessment, and whether the issue is consensus-visible.
+**Do not open public GitHub issues for security vulnerabilities.**
+
+Use GitHub's private [Security Advisory](https://github.com/Hardonian/veridag/security/advisories/new)
+feature to report vulnerabilities confidentially. Maintainers will acknowledge
+within 72 hours and coordinate a disclosure timeline.
+
+Include in your report:
+- Affected component and protocol version
+- Steps to reproduce or a minimal trace
+- Impact assessment (consensus-visible? execution-visible? DoS?)
+- Whether the issue has already been exploited or disclosed elsewhere
 
 ## Scope
 

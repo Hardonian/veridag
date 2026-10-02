@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "manufacturing.opc-ua-events",
+  "name": "OPC UA Event Evidence",
+  "standard": "OPC UA 1.05",
+  "normative_url": "https://profiles.opcfoundation.org/document/1",
+  "profile": "OpcUa",
+  "media_types": ["application/json"],
+  "rust_adapter": "veridag_industry::IndustryProfile::OpcUa",
+  "data_policy": "anchor-digest-only",
+  "status": "experimental"
+}

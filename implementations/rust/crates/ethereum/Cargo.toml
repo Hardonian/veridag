@@ -5,15 +5,17 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description = "Veridag Ethereum infrastructure: EVM JSON-RPC, L1 Light Client proofs, and cross-chain bridge substrate"
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
-veridag-checkpoint = { path = "../checkpoint" }
-veridag-codec = { path = "../codec" }
-veridag-crypto = { path = "../crypto" }
-veridag-merkle = { path = "../merkle" }
-veridag-object-state = { path = "../object-state" }
-veridag-protocol-types = { path = "../protocol-types" }
-veridag-stablecoin = { path = "../stablecoin" }
+veridag-checkpoint = { version = "1.0.0", path = "../checkpoint" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-merkle = { version = "1.0.0", path = "../merkle" }
+veridag-object-state = { version = "1.0.0", path = "../object-state" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
+veridag-stablecoin = { version = "1.0.0", path = "../stablecoin" }
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 hex.workspace = true

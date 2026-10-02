@@ -11,4 +11,5 @@ The security model is the combination of:
   canonical-interpretation invariants in `../protocol/specification/00-overview.md`).
 
 We claim only what is demonstrated by the formal model and the test suite in this
-tree. We do not claim production readiness without external audits.
+tree. Production deployment guidance is in `ops/deployment.md`. The threat model
+and attack surface validation pipeline are in `threat-model.md`.

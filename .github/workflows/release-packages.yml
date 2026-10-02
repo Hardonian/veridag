@@ -6,28 +6,59 @@ on:
       - "v*.*.*"
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+  artifact-metadata: write
+
 jobs:
   crates-io:
     name: Publish Rust SDK to crates.io
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.95
       - name: verify conformance
         run: |
           cargo test -p veridag-sdk
+      - name: verify publishable workspace
+        run: cargo publish --workspace --locked --dry-run
+      - name: stage Rust release artifacts
+        run: |
+          mkdir -p release/rust
+          cp ./target/package/veridag-*.crate release/rust/
+      - name: generate Rust SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: .
+          format: spdx-json
+          output-file: release/rust/sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: checksum Rust artifacts
+        run: |
+          cd release/rust
+          sha256sum ./*.crate ./sbom.spdx.json > SHA256SUMS
+      - name: attest Rust package provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest@v4
+        with:
+          subject-path: release/rust/*.crate
+      - name: retain Rust release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: veridag-rust-${{ github.run_id }}
+          path: release/rust/
+          if-no-files-found: error
       - name: publish to crates.io
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets['CARGO_REGISTRY_TOKEN'] }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN || '' }}
         run: |
           if [ -n "$CARGO_REGISTRY_TOKEN" ]; then
-            cargo publish -p veridag-protocol-types --no-verify || true
-            cargo publish -p veridag-codec --no-verify || true
-            cargo publish -p veridag-crypto --no-verify || true
-            cargo publish -p veridag-sdk
+            cargo publish --workspace --locked
           else
-            echo "CARGO_REGISTRY_TOKEN not configured; dry-run mode"
-            cargo publish -p veridag-sdk --dry-run
+            echo "CARGO_REGISTRY_TOKEN not configured; verified dry-run only"
           fi
 
   npm:
@@ -42,12 +73,43 @@ jobs:
       - name: run conformance test
         working-directory: sdks/typescript
         run: |
-          npm ci || npm install
+          npm ci
           npm test
+          npm run build
+          npm run verify-package
+          npm audit --omit=dev
+          npm pack
+      - name: stage npm release artifact
+        run: |
+          mkdir -p release/npm
+          mv ./sdks/typescript/veridag-sdk-*.tgz release/npm/
+      - name: generate npm SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: sdks/typescript
+          format: spdx-json
+          output-file: release/npm/sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: checksum npm artifacts
+        run: |
+          cd release/npm
+          sha256sum ./*.tgz ./sbom.spdx.json > SHA256SUMS
+      - name: attest npm package provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest@v4
+        with:
+          subject-path: release/npm/*.tgz
+      - name: retain npm release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: veridag-npm-${{ github.run_id }}
+          path: release/npm/
+          if-no-files-found: error
       - name: publish to npm
         working-directory: sdks/typescript
         env:
-          NODE_AUTH_TOKEN: ${{ secrets['NPM_TOKEN'] }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || '' }}
         run: |
           if [ -n "$NODE_AUTH_TOKEN" ]; then
             npm publish --access public
@@ -69,12 +131,40 @@ jobs:
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           export PATH="$HOME/.local/bin:$PATH"
-          uv run python -m unittest discover -s tests
+          uv sync --extra dev --locked
+          uv run pytest -q
           uv build
+      - name: stage Python release artifacts
+        run: |
+          mkdir -p release/python
+          cp sdks/python/dist/* release/python/
+      - name: generate Python SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          path: sdks/python
+          format: spdx-json
+          output-file: release/python/sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+      - name: checksum Python artifacts
+        run: |
+          cd release/python
+          sha256sum veridag-* sbom.spdx.json > SHA256SUMS
+      - name: attest Python package provenance
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/attest@v4
+        with:
+          subject-path: release/python/veridag-*
+      - name: retain Python release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: veridag-python-${{ github.run_id }}
+          path: release/python/
+          if-no-files-found: error
       - name: publish to PyPI
         working-directory: sdks/python
         env:
-          UV_PUBLISH_TOKEN: ${{ secrets['PYPI_TOKEN'] }}
+          UV_PUBLISH_TOKEN: ${{ secrets.PYPI_TOKEN || '' }}
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           if [ -n "$UV_PUBLISH_TOKEN" ]; then

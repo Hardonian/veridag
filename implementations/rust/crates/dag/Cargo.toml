@@ -5,12 +5,14 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../codec" }
-veridag-crypto = { path = "../crypto" }
-veridag-protocol-types = { path = "../protocol-types" }
-veridag-storage = { path = "../storage" }
+veridag-codec = { version = "1.0.0", path = "../codec" }
+veridag-crypto = { version = "1.0.0", path = "../crypto" }
+veridag-protocol-types = { version = "1.0.0", path = "../protocol-types" }
+veridag-storage = { version = "1.0.0", path = "../storage" }
 thiserror.workspace = true
 
 [lints]

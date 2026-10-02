@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "healthcare.hl7-fhir-provenance",
+  "name": "HL7 FHIR Provenance and AuditEvent",
+  "standard": "HL7 FHIR R5",
+  "normative_url": "https://hl7.org/fhir/provenance.html",
+  "profile": "Hl7Fhir",
+  "media_types": ["application/fhir+json"],
+  "rust_adapter": "veridag_industry::IndustryProfile::Hl7Fhir",
+  "data_policy": "anchor-digest-only-no-phi",
+  "status": "experimental"
+}
