@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "id": "finance.iso-20022",
+  "name": "ISO 20022 Settlement Evidence",
+  "standard": "ISO 20022 pacs.008.001.08 and pacs.002.001.10",
+  "normative_url": "https://www.iso20022.org/",
+  "profile": "Iso20022",
+  "media_types": ["application/xml"],
+  "rust_adapter": "veridag_stablecoin::iso20022",
+  "data_policy": "regulated-pack-separate-from-core",
+  "status": "experimental"
+}

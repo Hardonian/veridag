@@ -311,7 +311,7 @@ impl Default for EvmJsonRpcProvider {
         Self {
             chain_id: DEFAULT_EVM_CHAIN_ID,
             network_id: DEFAULT_EVM_CHAIN_ID,
-            client_version: "Veridag/v0.1.0-ironclad/rust1.85".to_string(),
+            client_version: "Veridag/v1.0.0-pre-ga/rust".to_string(),
         }
     }
 }
@@ -322,7 +322,7 @@ impl EvmJsonRpcProvider {
         Self {
             chain_id,
             network_id: chain_id,
-            client_version: "Veridag/v0.1.0-ironclad/rust1.85".to_string(),
+            client_version: "Veridag/v1.0.0-pre-ga/rust".to_string(),
         }
     }
 

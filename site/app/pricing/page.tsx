@@ -320,7 +320,7 @@ export default function PricingPage() {
               <span className="badge" style={{ background: "rgba(52, 211, 153, 0.15)", color: "var(--accent-emerald-bright)", borderColor: "var(--accent-emerald-bright)" }}>
                 INSTITUTIONAL
               </span>
-              <span style={{ fontSize: "12px", color: "var(--accent-emerald-bright)", fontFamily: "var(--font-mono)" }}>SLA 99.999%</span>
+              <span style={{ fontSize: "12px", color: "var(--accent-emerald-bright)", fontFamily: "var(--font-mono)" }}>PILOT TERMS</span>
             </div>
             <h3 style={{ fontSize: "24px", marginBottom: "8px" }}>Consortium Member</h3>
             <p className="muted" style={{ fontSize: "14px", marginBottom: "20px" }}>
@@ -346,7 +346,7 @@ export default function PricingPage() {
                 <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> 24/7 Dedicated Protocol Engineering Slack Bridge
               </li>
               <li style={{ display: "flex", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> SOC-2 Type II Attestation Evidence Package
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> SOC 2 control-mapping evidence package (not an audit report)
               </li>
             </ul>
           </div>
@@ -376,7 +376,7 @@ export default function PricingPage() {
                 <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Private Sovereign Consensus Subnet Orchestration
               </li>
               <li style={{ display: "flex", gap: "8px" }}>
-                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> On-Premise Cloud HSM (AWS CloudHSM / Google KMS) Key Gating
+                <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Reviewed custom KMS/HSM provider integration
               </li>
               <li style={{ display: "flex", gap: "8px" }}>
                 <span style={{ color: "var(--accent-emerald-bright)" }}>✓</span> Custom Wasm Precompiles &amp; Tailored Execution Logic
@@ -414,10 +414,10 @@ export default function PricingPage() {
           </div>
           <div>
             <h4 style={{ color: "var(--accent-emerald-bright)", fontSize: "16px", marginBottom: "6px" }}>
-              SOC-2 Type II Certified
+              SOC 2 Control Mapping
             </h4>
             <p className="muted" style={{ fontSize: "13px" }}>
-              Full AICPA Trust Services Criteria mapping covering CC6 Logical Access, A1 Byzantine Availability, and PI1 Canonical VCE-1 Processing Integrity.
+              Engineering evidence is mapped to selected AICPA Trust Services Criteria. No independent SOC 2 report or certification is included.
             </p>
           </div>
           <div>

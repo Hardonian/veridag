@@ -13,7 +13,7 @@ const rounds = [
   { round: 4, wave: 1, leader: "V0", vertices: ["0xaaaa...", "0xbbbb...", "0xcccc...", "0xdddd..."], committed: true },
 ];
 
-const mockTxs = [
+const demonstrationTxs = [
   { id: "0x8f12cb7e...", type: "USDV Transfer", from: "alice (0x9a4f...)", to: "bob (0x7e22...)", amount: "40.00 USDV", status: "Finalized" },
   { id: "0xca49aa10...", type: "Settler Anchor", from: "settler-us", to: "State Anchor", amount: "rec_01 (0-var)", status: "Finalized" },
   { id: "0x33ee91ca...", type: "Bitcoin SPV", from: "BtcTracker", to: "Block 840,000", amount: "Header Valid", status: "Verified" },
@@ -27,7 +27,7 @@ export default function ExplorerPage() {
     <div>
       <h1>VeriDAG Consensus &amp; State Explorer</h1>
       <p className="tagline">
-        Live inspection of Narwhal-style DAG rounds, BaselineDagBft commit anchors, and BMH-1 Merkle state roots.
+        Static demonstration data showing how DAG rounds, commit anchors, and BMH-1 roots can be presented. This page is not connected to a live network.
       </p>
 
       {/* Network Metrics Header */}
@@ -132,7 +132,7 @@ export default function ExplorerPage() {
             </tr>
           </thead>
           <tbody>
-            {mockTxs.map((tx, idx) => (
+            {demonstrationTxs.map((tx, idx) => (
               <tr key={idx} style={{ borderBottom: "1px solid var(--border-subtle)", fontFamily: "var(--font-mono)", fontSize: "13px" }}>
                 <td style={{ padding: "12px 16px", color: "var(--accent-cyan-bright)" }}>{tx.id}</td>
                 <td style={{ padding: "12px 16px", color: "var(--text-main)", fontFamily: "var(--font-sans)", fontWeight: 600 }}>{tx.type}</td>
@@ -152,7 +152,7 @@ export default function ExplorerPage() {
 
       <h2>3. Node Observability Telemetry</h2>
       <p>
-        Live Prometheus / OpenMetrics scrape output exposed by <code>veridag-metrics</code>:
+        Example Prometheus / OpenMetrics scrape output exposed by <code>veridag-metrics</code>:
       </p>
       <pre><code>{`# HELP veridag_consensus_round Current round height of the Narwhal DAG
 # TYPE veridag_consensus_round gauge

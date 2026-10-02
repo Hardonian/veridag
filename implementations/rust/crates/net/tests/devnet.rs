@@ -133,7 +133,11 @@ async fn run_validator(
     // This makes all validators converge regardless of gossip timing.
     let target_round = rounds; // rounds parameter is the target max round
     let deadline = std::time::Instant::now() + Duration::from_secs(20);
-    while dag.round_vertices_max().unwrap_or(0) < target_round
+    // A single fast peer can advertise `target_round` before the other
+    // validators' vertices for that round arrive. Wait for a quorum at the
+    // target rather than merely observing its first vertex; otherwise the
+    // final commit/checkpoint calculation is timing-dependent.
+    while !dag.quorum_reached(target_round, committee.quorum())
         && std::time::Instant::now() < deadline
     {
         while let Ok((tag, payload)) = rx.try_recv() {

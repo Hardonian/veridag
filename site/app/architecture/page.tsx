@@ -24,7 +24,7 @@ export default function Architecture() {
         <div className="card">
           <span className="card-icon">📐</span>
           <h3>Deterministic Execution</h3>
-          <p>Sequential oracle guarantees bit-for-bit reproducible state roots across different CPUs, OSs, and compiler optimization levels.</p>
+          <p>A sequential oracle and conformance vectors check reproducible state roots. Additional platform matrices remain a GA release gate.</p>
         </div>
         <div className="card">
           <span className="card-icon">📦</span>

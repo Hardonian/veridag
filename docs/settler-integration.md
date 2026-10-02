@@ -4,10 +4,10 @@
 
 [Settler](https://github.com/Hardonian/Settler) is the enterprise reconciliation intelligence and audit operating system in the Hardonian / AIAS sovereign stack. Settler ingests transactions from disparate financial sources (Stripe, Shopify, bank feeds, ERPs, PSPs, and TigerBeetle ledger), matches them deterministically, and produces cryptographic **Evidence Manifests** and **Proofpacks**.
 
-**Veridag** serves as the **Sovereign Execution and Monetary Settlement Substrate** for Settler:
-1. **Irrevocable Finality:** Veridag's DAG-BFT consensus wave commits provide zero-reorg, sub-100ms finality for Settler's adjudicated payouts.
+**Veridag** provides an experimental anchoring and settlement adapter for Settler:
+1. **Deterministic finality:** DAG-BFT wave commits provide ordered checkpoints within the documented committee fault model. Latency is measured per deployment.
 2. **Deterministic Settlement:** Disbursing USDV (or wrapped BTC/ETH) directly to merchant, provider, or partner accounts on Veridag based on Settler reconciliation runs.
-3. **On-Chain Audit Anchors:** Every reconciliation proofpack is anchored permanently in Veridag's state tree via `SettlerReconciliationAnchor` (`object_type::SETTLER_ANCHOR = 5`), producing an immutable link between off-chain financial data and on-chain monetary transfers.
+3. **Audit anchors:** Selected reconciliation proofpack hashes can be anchored in Veridag state via `SettlerReconciliationAnchor` (`object_type::SETTLER_ANCHOR = 5`), linking retained off-chain evidence to a checkpoint.
 
 ---
 

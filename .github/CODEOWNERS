@@ -1,0 +1,26 @@
+# CODEOWNERS
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default: every PR requires review from the core team
+*                                           @Hardonian
+
+# Protocol specification — requires explicit sign-off
+/protocol/                                  @Hardonian
+/formal/                                    @Hardonian
+
+# Consensus & execution — highest-risk paths
+/implementations/rust/crates/consensus/     @Hardonian
+/implementations/rust/crates/execution/     @Hardonian
+/implementations/rust/crates/crypto/        @Hardonian
+/implementations/rust/crates/dag/           @Hardonian
+
+# SDK public APIs
+/sdks/                                      @Hardonian
+/implementations/rust/crates/sdk/           @Hardonian
+
+# CI & release infrastructure
+/.github/                                   @Hardonian
+
+# Site / documentation
+/site/                                      @Hardonian
+/docs/                                      @Hardonian

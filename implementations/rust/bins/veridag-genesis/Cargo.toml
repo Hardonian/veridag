@@ -5,15 +5,18 @@ edition.workspace = true
 license.workspace = true
 authors.workspace = true
 description.workspace = true
+repository.workspace = true
+homepage.workspace = true
 
 [dependencies]
-veridag-codec = { path = "../../crates/codec" }
-veridag-crypto = { path = "../../crates/crypto" }
-veridag-protocol-types = { path = "../../crates/protocol-types" }
+veridag-codec = { version = "1.0.0", path = "../../crates/codec" }
+veridag-crypto = { version = "1.0.0", path = "../../crates/crypto" }
+veridag-protocol-types = { version = "1.0.0", path = "../../crates/protocol-types" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 hex.workspace = true
+anyhow.workspace = true
 
 [lints]
 workspace = true
